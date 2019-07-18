@@ -175,7 +175,7 @@ int main()
 
     llvm::sys::path::replace_extension(output_so_path, "so");
 
-    auto compile_command_line = "clang++ -O2 -L/usr/local/opt/llvm/lib -lLLVM " + output_bc_path + " " + ljf_runtime_path + " -shared -o " + output_so_path;
+    auto compile_command_line = "clang++ -L/usr/local/opt/llvm/lib -lLLVM " + output_bc_path + " " + ljf_runtime_path + " -shared -o " + output_so_path;
     llvm::errs() << compile_command_line << '\n';
     if (auto e = std::system(compile_command_line.str().c_str()))
     {
@@ -208,7 +208,7 @@ int main()
     }
 
     auto module_main_fptr = reinterpret_cast<LJFObject *(*)(LJFObject *, LJFObject *)>(addr);
-    LJFObject *arg = ljf_new_object_with_native_data(1000);
+    LJFObject *arg = ljf_new_object_with_native_data(1<<17);
     auto env = ljf::internal::create_environment();
     ljf_set_object_to_environment(env, "n", arg);
     try

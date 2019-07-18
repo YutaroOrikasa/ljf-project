@@ -10,6 +10,9 @@ BUILD_DIR ?= build
 LIBLLVM_CXXFLAGS = -I/usr/local/opt/llvm/include
 LIBLLVM_LDFLAGS =  -L/usr/local/opt/llvm/lib -lLLVM
 
+CFLAGS ?=
+CXXFLAGS ?=
+LDFLAGS ?=
 override CFLAGS += $(LIBLLVM_CXXFLAGS)
 override CXXFLAGS += $(LIBLLVM_CXXFLAGS)
 override LDFLAGS += $(LIBLLVM_LDFLAGS)

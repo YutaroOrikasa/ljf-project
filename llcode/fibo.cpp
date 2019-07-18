@@ -26,8 +26,8 @@ LJFObject* intOpLt(LJFObject* env, LJFObject* tmp) {
     auto a_val = ljf_get_native_data(a);
     auto b_val = ljf_get_native_data(b);
 
-    std::cout << "a=" << a_val << " b=" << b_val << "\n";
-    std::cout << "bool=" << (a_val < b_val) << "\n";
+    // std::cout << "a=" << a_val << " b=" << b_val << "\n";
+    // std::cout << "bool=" << (a_val < b_val) << "\n";
     return a_val < b_val ? true_ : false_;
 }
 
@@ -42,6 +42,10 @@ LJFObject* intOpAdd(LJFObject* env, LJFObject* tmp) {
     auto c_val = a_val + b_val;
     auto c = ljf_new_object_with_native_data(c_val);
 
+    // std::cout << "intOpAdd: " << a_val << " + " << b_val << " = " << c_val << std::endl;
+    // std::cout << "intOpAdd: ljf_get_native_data(c): " << ljf_get_native_data(c) << std::endl;
+    assert(ljf_get_native_data(c) == c_val);
+
     auto Int = ljf_get_object_from_environment(env, "Int");
     assert(Int);
     auto tmp_arg = ljf_new_object();
@@ -49,7 +53,7 @@ LJFObject* intOpAdd(LJFObject* env, LJFObject* tmp) {
     ljf_call_function(ljf_get_function_id_from_function_table(Int, "init"),
         ljf_get_object_from_hidden_table(Int, "init.env"),
         tmp_arg);
-    return c;
+       return c;
 }
 
 LJFObject* intInit(LJFObject* env, LJFObject* tmp) {
@@ -119,7 +123,7 @@ LJFObject* fibo_loop_ljf(LJFObject* env) {
     }
     const auto tmp_arg1 = ljf_new_object();
     ljf_set_object_to_table(tmp_arg1, "a", n);
-    ljf_set_object_to_table(tmp_arg1, "b", const0);
+    ljf_set_object_to_table(tmp_arg1, "b", const1);
     if (ljf_call_function(opEq, ljf_undefined, tmp_arg1) == true_) {
         return f_n1;
     }
@@ -159,16 +163,16 @@ LJFObject* fibo_loop_ljf(LJFObject* env) {
         ljf_set_object_to_table(tmp_arg4, "b", const1);
         k = ljf_call_function(opAdd2, env, tmp_arg4);
 
-        std::cout << "k = " << ljf_get_native_data(k) << "\n";
-        std::cout << "f_n2 = " << ljf_get_native_data(f_n2) << "\n";
+        // std::cout << "k = " << ljf_get_native_data(k) << "\n";
+        // std::cout << "f_n2 = " << ljf_get_native_data(f_n2) << "\n";
     }
     return f_n2;
 }
 
-long fibo_loop(const int n) {
+uint64_t fibo_loop(uint64_t n) {
 
-    long f_n1 = 1;
-    long f_n0 = 0;
+    uint64_t f_n1 = 1;
+    uint64_t f_n0 = 0;
     if (n == 0) {
         return f_n0;
     }
@@ -176,8 +180,8 @@ long fibo_loop(const int n) {
         return f_n1;
     }
 
-    int k = 1;
-    long f_n2 = 0;
+    uint64_t k = 1;
+    uint64_t f_n2 = 0;
     while (k < n)
     {
         f_n2 = f_n0 + f_n1;
@@ -212,13 +216,35 @@ extern "C" LJFObject* module_main(LJFObject* env, LJFObject* module_func_table) 
         auto intOpAddId = ljf_get_function_id_from_function_table(module_func_table, "intOpAdd");
         ljf_set_function_id_to_function_table(Int, "+", intOpAddId);
 
+        {
+            auto n = ljf_get_native_data(ljf_get_object_from_environment(env, "n"));
+            std::cout << "n " << n << std::endl;
+            auto start = std::chrono::system_clock::now();
+            auto r = fibo_loop(n);
+            auto end = std::chrono::system_clock::now();
+            auto elapsed = end - start;
+            std::cout << r << std::endl;
+            std::cout << "elapsed ms (native) " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
+        }
         auto start = std::chrono::system_clock::now();
         auto r = fibo_loop_ljf(env);
         auto end = std::chrono::system_clock::now();
         auto elapsed = end - start;
         std::cout << r << std::endl;
         std::cout << ljf_get_native_data(r) << std::endl;
-        std::cout << "elapsed " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
+        std::cout << "elapsed ms " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
+
+        // for (size_t i = 0; i <= 100; i++)
+        // {
+        //     auto f = fibo_loop(i);
+        //     ljf_set_object_to_environment(env, "n", ljf_new_object_with_native_data(i));
+        //     auto fl = ljf_get_native_data(fibo_loop_ljf(env));
+        //     if (f != fl) {
+        //         std::cout << "n = " << i << ": (fibo: " << f << ") != (fibo-ljf: " << fl << ")" << std::endl;
+        //         break;
+        //     }
+        // }
+        
         return r;
         // module_main(Object::create(nullptr));
     } catch(const std::exception& e) {

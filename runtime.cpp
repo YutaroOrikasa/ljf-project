@@ -52,7 +52,7 @@ public:
     std::unordered_map<std::string, ObjectPtr> hidden_table_;
     std::vector<ObjectPtr> array_;
     std::unordered_map<std::string, FunctionId> function_id_table_;
-    using native_data_t = std::uint16_t;
+    using native_data_t = std::uint64_t;
     const native_data_t native_data_ = 0;
     int ref_count_ = 0;
 public:
