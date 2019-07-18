@@ -208,7 +208,7 @@ int main()
     }
 
     auto module_main_fptr = reinterpret_cast<LJFObject *(*)(LJFObject *, LJFObject *)>(addr);
-    LJFObject *arg = ljf_new_object_with_native_data(10);
+    LJFObject *arg = ljf_new_object_with_native_data(1000);
     auto env = ljf::internal::create_environment();
     ljf_set_object_to_environment(env, "n", arg);
     try

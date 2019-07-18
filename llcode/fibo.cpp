@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 
 #include <ljf/runtime.hpp>
 
@@ -211,9 +212,13 @@ extern "C" LJFObject* module_main(LJFObject* env, LJFObject* module_func_table) 
         auto intOpAddId = ljf_get_function_id_from_function_table(module_func_table, "intOpAdd");
         ljf_set_function_id_to_function_table(Int, "+", intOpAddId);
 
+        auto start = std::chrono::system_clock::now();
         auto r = fibo_loop_ljf(env);
+        auto end = std::chrono::system_clock::now();
+        auto elapsed = end - start;
         std::cout << r << std::endl;
         std::cout << ljf_get_native_data(r) << std::endl;
+        std::cout << "elapsed " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
         return r;
         // module_main(Object::create(nullptr));
     } catch(const std::exception& e) {
