@@ -3,6 +3,8 @@
 #include <llvm/AsmParser/Parser.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/IR/ModuleSummaryIndex.h>
 #include <llvm/Support/raw_ostream.h>
@@ -13,30 +15,35 @@
 #include <llvm/ADT/SmallString.h>
 
 #include <iostream>
+#include <map>
 
 #include <cstdlib>
 #include <dlfcn.h>
 
-#include "ljf/runtime.hpp"
+#include <ljf/runtime.hpp>
+#include "./runtime-internal.hpp"
 
-ljf::Environment* ljf_internal_new_environment();
-
-struct SmallString : llvm::SmallString<32> {
+struct SmallString : llvm::SmallString<32>
+{
     SmallString() = default;
     // using llvm::SmallString<32>::SmallString;
 
-    /* implicit */ SmallString(const llvm::Twine& tw) {
+    /* implicit */ SmallString(const llvm::Twine &tw)
+    {
         tw.toVector(*this);
     }
 };
 
 int main()
 {
+    std::map<LJFFunctionId, llvm::Function *> func_to_register;
+    auto module_func_table = ljf_new_object();
     auto ljf_runtime_path = SmallString("build/runtime.so");
     auto input_ll_file = SmallString("build/llcode/fibo.cpp.ll");
-    llvm::LLVMContext context;
+    llvm::LLVMContext llvm_context;
     llvm::SMDiagnostic err;
-    auto [module, index] = llvm::parseAssemblyFileWithIndex(input_ll_file, err, context);
+    llvm::IRBuilder ir_builder{llvm_context};
+    auto [module, index] = llvm::parseAssemblyFileWithIndex(input_ll_file, err, llvm_context);
     if (!module)
     {
         llvm::errs() << "module null\n";
@@ -46,7 +53,7 @@ int main()
 
     for (auto &func : module->functions())
     {
-        llvm::errs() << "*** begin editing"
+        llvm::errs() << "*** begin registering function"
                      << "\n";
         const auto name = func.getName();
 
@@ -68,15 +75,6 @@ int main()
             continue;
         }
 
-        if (name == "_Z11module_main9AnyObject")
-        {
-            // skip _Z11module_main9AnyObject()
-            llvm::errs() << "*** skip " << name << ": "
-                         << *func.getFunctionType()
-                         << "\n";
-            continue;
-        }
-
         if (func.isDeclaration())
         {
             // skip declare ty @func(ty...)
@@ -86,15 +84,60 @@ int main()
             continue;
         }
 
-        llvm::errs() << "editing " << name << ": ";
+        llvm::errs() << "registering " << name << ": ";
 
-        llvm::errs() << *func.getFunctionType() << "\n";
+        auto id = ljf::register_llvm_function(&func);
+        func_to_register[id] = &func;
+        ljf_set_function_id_to_function_table(module_func_table, func.getName().data(), id);
 
         // func.setLinkage(llvm::GlobalValue::LinkageTypes::InternalLinkage);
 
-        llvm::errs() << "*** end editing"
+        llvm::errs() << "*** end registering function"
                      << "\n";
+    } // end for
+
+    {
+        auto void_ty = llvm::Type::getVoidTy(llvm_context);
+        auto i8_ty = llvm::Type::getInt8Ty(llvm_context);
+        auto i8_ptr_ty = llvm::PointerType::get(i8_ty, 0);
+        // auto ljf_object_ty = llvm::StructType::create(llvm_context, "LJFObject");
+        // auto ljf_object_ptr_ty = llvm::PointerType::get(ljf_object_ty, 0);
+        auto ljf_module_init_fn_ty = llvm::FunctionType::get(void_ty, {});
+        auto ljf_module_init_fn = llvm::Function::Create(ljf_module_init_fn_ty, llvm::Function::ExternalLinkage, "ljf_module_init", *module);
+
+        auto i64_ty = llvm::Type::getInt64Ty(llvm_context);
+        auto ljf_internal_set_native_function_ty = llvm::FunctionType::get(void_ty, {i64_ty, i8_ptr_ty}, false);
+        auto ljf_internal_set_native_function = llvm::Function::Create(ljf_internal_set_native_function_ty, llvm::Function::ExternalLinkage, "ljf_internal_set_native_function", *module);
+
+        auto bb = llvm::BasicBlock::Create(llvm_context, "entry", ljf_module_init_fn);
+        ir_builder.SetInsertPoint(bb);
+
+        for (const auto &[id, fn] : func_to_register)
+        {
+            auto id_const = llvm::ConstantInt::get(i64_ty, id);
+            auto casted_fn_ptr = ir_builder.CreateBitCast(fn, i8_ptr_ty);
+            ir_builder.CreateCall(ljf_internal_set_native_function, {id_const, casted_fn_ptr});
+        }
+        ir_builder.CreateRetVoid();
     }
+
+    {
+        // dump
+        std::error_code EC;
+        llvm::ToolOutputFile out{"./_dump.ll", EC, llvm::sys::fs::OF_None};
+        if (EC)
+        {
+            llvm::errs() << "llvm::ToolOutputFile ctor: " << EC.message() << '\n';
+            exit(1);
+        }
+
+        out.os() << *module;
+        out.keep();
+
+        // out is flushed and closed by ~ToolOutputFile.
+    }
+
+    assert(!llvm::verifyModule(*module, &llvm::errs()) && "invalid llvm module generated");
 
     // auto input_ll_file_path_obj = std::filesystem::path(input_ll_file);
 
@@ -105,8 +148,8 @@ int main()
     auto output_bc_dirname = llvm::sys::path::parent_path(output_bc_path);
 
     if (auto err_code = llvm::sys::fs::create_directories(output_bc_dirname,
-                                          /* IgnoreExisting */ true,
-                                          llvm::sys::fs::perms::owner_all))
+                                                          /* IgnoreExisting */ true,
+                                                          llvm::sys::fs::perms::owner_all))
     {
         std::cerr << "create_directory(" << output_bc_dirname.str() << ") failed with error code " << err_code << "\n";
         exit(1);
@@ -127,52 +170,68 @@ int main()
         // out is flushed and closed by ~ToolOutputFile.
     }
 
-
     // compile
     SmallString output_so_path = "./tmp/" + input_ll_file;
 
     llvm::sys::path::replace_extension(output_so_path, "so");
 
-
-    auto compile_command_line = "clang++ -L/usr/local/opt/llvm/lib -lLLVM "
-        + output_bc_path + " " + ljf_runtime_path + " -shared -o " + output_so_path;
+    auto compile_command_line = "clang++ -O2 -L/usr/local/opt/llvm/lib -lLLVM " + output_bc_path + " " + ljf_runtime_path + " -shared -o " + output_so_path;
     llvm::errs() << compile_command_line << '\n';
-    if (auto e = std::system(compile_command_line.str().c_str())) {
+    if (auto e = std::system(compile_command_line.str().c_str()))
+    {
         llvm::errs() << "compile failed: " << e << '\n';
         exit(1);
     }
 
     // load
     auto handle = dlopen(output_so_path.c_str(), RTLD_LAZY);
-    if (!handle) {
+    if (!handle)
+    {
         llvm::errs() << "load failed (dlopen): " << dlerror() << '\n';
         exit(1);
     }
     llvm::errs() << "HOGE\n";
 
-    auto symbol = dlsym(handle, "module_main");
-    if (!symbol) {
+    auto ljf_module_init_addr = dlsym(handle, "ljf_module_init");
+    if (!ljf_module_init_addr)
+    {
+        llvm::errs() << "load failed (dlsym): " << dlerror() << '\n';
+        exit(1);
+    }
+    reinterpret_cast<void (*)()>(ljf_module_init_addr)();
+
+    auto addr = dlsym(handle, "module_main");
+    if (!addr)
+    {
         llvm::errs() << "load failed (dlsym): " << dlerror() << '\n';
         exit(1);
     }
 
-    auto module_main_fptr = reinterpret_cast<LJFObject* (*)(LJFObject*)>(symbol);
-    LJFObject* arg = ljf_new_object_with_native_data(10);
-    auto env = ljf_internal_new_environment();
+    auto module_main_fptr = reinterpret_cast<LJFObject *(*)(LJFObject *, LJFObject *)>(addr);
+    LJFObject *arg = ljf_new_object_with_native_data(10);
+    auto env = ljf::internal::create_environment();
     ljf_set_object_to_environment(env, "n", arg);
-    try {
-        LJFObject* ret = module_main_fptr(env);
-        if (!ret) {
-            std::cerr << "result: " << "undefined" << std::endl;
+    try
+    {
+        LJFObject *ret = module_main_fptr(env, module_func_table);
+        if (!ret)
+        {
+            std::cerr << "result: "
+                      << "undefined" << std::endl;
             return 1;
         }
         auto val = ljf_get_native_data(ret);
         std::cerr << "result: " << val << std::endl;
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception &e)
+    {
         llvm::errs() << "module_main() exception: " << e.what() << "\n";
         exit(1);
-    } catch (...) {
-        llvm::errs() << "module_main() exception: unknown" << "\n";
+    }
+    catch (...)
+    {
+        llvm::errs() << "module_main() exception: unknown"
+                     << "\n";
         exit(1);
     }
     return 0;

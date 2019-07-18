@@ -69,7 +69,7 @@ run: $(BUILD_DIR)/$(EXECUTABLE_FILE)
 	$(BUILD_DIR)/$(EXECUTABLE_FILE)
 
 clean:
-	rm -rf build tmp
+	rm -rf build tmp _dump.ll
 
 print-source-files:
 	@echo $(SOURCE_FILES)

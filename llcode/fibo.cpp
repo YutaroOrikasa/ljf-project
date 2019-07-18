@@ -5,6 +5,7 @@
 LJFObject* const true_ = ljf_new_object_with_native_data(1);
 LJFObject* const false_ = ljf_new_object_with_native_data(0);
 
+extern "C" {
 LJFObject* intOpEq(LJFObject* env, LJFObject* tmp) {
 
     auto a = ljf_get_object_from_environment(env, "a");
@@ -187,24 +188,27 @@ long fibo_loop(const int n) {
 
 }
 
-extern "C" LJFObject* module_main(LJFObject* env) {
+} // extern "C"
+
+extern "C" LJFObject* module_main(LJFObject* env, LJFObject* module_func_table) {
 
     try {
+
 
         auto Int = ljf_new_object();
         ljf_set_object_to_environment(env, "Int", Int);
 
-        auto intInitId = ljf_register_native_function(&intInit);
+        auto intInitId = ljf_get_function_id_from_function_table(module_func_table, "intInit");
         ljf_set_function_id_to_function_table(Int, "init", intInitId);
         ljf_set_object_to_hidden_table(Int, "init.env", env);
 
-        auto intOpEqId = ljf_register_native_function(&intOpEq);
+        auto intOpEqId = ljf_get_function_id_from_function_table(module_func_table, "intOpEq");
         ljf_set_function_id_to_function_table(Int, "==", intOpEqId);
 
-        auto intOpLtId = ljf_register_native_function(&intOpLt);
+        auto intOpLtId = ljf_get_function_id_from_function_table(module_func_table, "intOpLt");
         ljf_set_function_id_to_function_table(Int, "<", intOpLtId);
 
-        auto intOpAddId = ljf_register_native_function(&intOpAdd);
+        auto intOpAddId = ljf_get_function_id_from_function_table(module_func_table, "intOpAdd");
         ljf_set_function_id_to_function_table(Int, "+", intOpAddId);
 
         auto r = fibo_loop_ljf(env);

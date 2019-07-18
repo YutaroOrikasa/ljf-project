@@ -253,9 +253,10 @@ private:
 
     FunctionId add(const FunctionData& f) {
         std::lock_guard lk {mutex_};
+        const auto id = size_;
         size_++;
-        function_table_.insert_or_assign(size_, f);
-        return size_;
+        function_table_.insert_or_assign(id, f);
+        return id;
     }
 public:
 
@@ -265,6 +266,19 @@ public:
 
     FunctionId add_llvm(llvm::Function* fn) {
         return add({fn, nullptr});
+    }
+
+    void set_native(FunctionId id, FunctionPtr fn) {
+        std::lock_guard lk {mutex_};
+        try
+        {
+            function_table_.at(id).naive_function = fn;
+        }
+        catch(const std::out_of_range&)
+        {
+            throw ljf::runtime_error("error: set function to invalid function id");
+        }
+        
     }
 
     FunctionData& get(FunctionId id) {
@@ -297,6 +311,10 @@ namespace {
 
 }
 
+FunctionId register_llvm_function(llvm::Function* f) {
+    return function_table.add_llvm(f);
+}
+
 void check_not_null(const Object* obj) {
     if (!obj) {
         throw runtime_error("null pointer exception");
@@ -307,23 +325,34 @@ void check_not_null(const Object* obj) {
 
 using namespace ljf;
 
+namespace ljf::internal
+{
+    Environment* create_environment() {
+        auto env = new Environment;
+        auto env_maps = ljf_new_object();
+        ljf_set_object_to_hidden_table(env, "ljf.env.maps", env_maps);
 
-Environment* ljf_internal_new_environment() {
-    auto env = new Environment;
-    auto env_maps = ljf_new_object();
-    ljf_set_object_to_hidden_table(env, "ljf.env.maps", env_maps);
+        // set maps[0]
+        env_maps->array_.push_back(ljf_new_object());
 
-    // set maps[0]
-    env_maps->array_.push_back(ljf_new_object());
+        return env;
+    }
+} // namespace ljf::internal
 
-    return env;
+
+
+
+extern "C"
+void ljf_internal_set_native_function(FunctionId id, FunctionPtr fn) {
+    function_table.set_native(id, fn);
 }
 
 namespace {
+    
 
     Environment*
     create_callee_environment(Environment* parent, Object* arg) {
-        auto callee_env = ljf_internal_new_environment();
+        auto callee_env = internal::create_environment();
         auto callee_env_maps = ljf_get_object_from_hidden_table(callee_env, "ljf.env.maps");
 
         // set maps[1]
