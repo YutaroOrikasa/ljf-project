@@ -67,7 +67,140 @@ LJFObject* intInit(LJFObject* env, LJFObject* tmp) {
     return ljf_undefined;
 }
 
-LJFObject* fibo_loop_ljf(LJFObject* env) {
+LJFObject* fibo_loop_ljf(LJFObject* env, LJFObject*) {
+    // TODO: temporary storage
+
+    auto Int = ljf_get_object_from_environment(env, "Int");
+    auto intInit = ljf_get_function_id_from_function_table(Int, "init");
+    // auto intInitEnv = ljf_get_object_from_hidden_table(Int, "init.env");
+
+    {
+        auto tmp_arg = ljf_new_object();
+        ljf_set_object_to_table(tmp_arg, "self", ljf_get_object_from_environment(env, "n"));
+        ljf_call_function(intInit, env, tmp_arg);
+    }
+
+    // long f_n1 = 1;
+    {
+        auto f_n1 = ljf_new_object_with_native_data(1);
+        auto tmp_arg00 = ljf_new_object();
+        ljf_set_object_to_table(tmp_arg00, "self", f_n1);
+        ljf_call_function(intInit, env, tmp_arg00);
+        ljf_set_object_to_environment(env, "f_n1", f_n1);
+    }
+    
+
+    // long f_n0 = 0;
+    {
+        auto f_n0 = ljf_new_object_with_native_data(0);
+        auto tmp_arg01 = ljf_new_object();
+        ljf_set_object_to_table(tmp_arg01, "self", f_n0);
+        ljf_call_function(intInit, env, tmp_arg01);
+        ljf_set_object_to_environment(env, "f_n0", f_n0);
+    }
+
+    const auto const0 = ljf_new_object_with_native_data(0);
+    {
+        auto tmp_arg = ljf_new_object();
+        ljf_set_object_to_table(tmp_arg, "self", const0);
+        ljf_call_function(intInit, env, tmp_arg);
+    }
+    // if (n == 0) {
+    //     return f_n0;
+    // }
+    {
+        const auto tmp_arg0 = ljf_new_object();
+        auto n = ljf_get_object_from_environment(env, "n");
+        ljf_set_object_to_table(tmp_arg0, "a", n);
+        ljf_set_object_to_table(tmp_arg0, "b", const0);
+        auto n_class = ljf_get_object_from_table(n, "class");
+        const auto opEq = ljf_get_function_id_from_function_table(n_class, "==");
+        if (ljf_call_function(opEq, ljf_undefined, tmp_arg0) == true_) {
+            return ljf_get_object_from_environment(env, "f_n0");
+        }
+    }
+    
+
+    // if (n == 1) {
+    //     return f_n1;
+    // }
+    const auto const1 = ljf_new_object_with_native_data(1);
+    {
+        auto tmp_arg = ljf_new_object();
+        ljf_set_object_to_table(tmp_arg, "self", const1);
+        ljf_call_function(intInit, env, tmp_arg);
+    }
+    {
+        const auto tmp_arg1 = ljf_new_object();
+        auto n = ljf_get_object_from_environment(env, "n");
+        ljf_set_object_to_table(tmp_arg1, "a", n);
+        ljf_set_object_to_table(tmp_arg1, "b", const1);
+        auto n_class = ljf_get_object_from_table(n, "class");
+        const auto opEq = ljf_get_function_id_from_function_table(n_class, "==");
+        if (ljf_call_function(opEq, ljf_undefined, tmp_arg1) == true_) {
+            return ljf_get_object_from_environment(env, "f_n1");
+        }
+    }
+    
+    // int k = 1;
+    // long f_n2 = 0;
+    ljf_set_object_to_environment(env, "k", const1);
+    ljf_set_object_to_environment(env, "f_n2", const0);
+
+    while (true)
+    {
+        // while (k < n)
+        {
+            auto k = ljf_get_object_from_environment(env, "k");
+            auto k_class = ljf_get_object_from_table(k, "class");
+            const auto opLt = ljf_get_function_id_from_function_table(k_class, "<");
+            const auto tmp_arg2 = ljf_new_object();
+            ljf_set_object_to_table(tmp_arg2, "a", k);
+            ljf_set_object_to_table(tmp_arg2, "b", ljf_get_object_from_environment(env, "n"));
+            if (ljf_call_function(opLt, ljf_undefined, tmp_arg2) == false_) {
+                break;
+            }
+        }
+
+        // f_n2 = f_n0 + f_n1;
+        {
+            auto f_n0 = ljf_get_object_from_environment(env, "f_n0");
+            auto f_n0_class = ljf_get_object_from_table(f_n0, "class");
+            const auto opAdd = ljf_get_function_id_from_function_table(f_n0_class, "+");
+            const auto tmp_arg3 = ljf_new_object();
+            ljf_set_object_to_table(tmp_arg3, "a", f_n0);
+            ljf_set_object_to_table(tmp_arg3, "b", ljf_get_object_from_environment(env, "f_n1"));
+            auto f_n2 = ljf_call_function(opAdd, env, tmp_arg3);
+            ljf_set_object_to_environment(env, "f_n2", f_n2);
+        }
+        
+        // f_n0 = f_n1;
+        // f_n1 = f_n2;
+        {
+            ljf_set_object_to_environment(env, "f_n0", ljf_get_object_from_environment(env, "f_n1"));
+            ljf_set_object_to_environment(env, "f_n1", ljf_get_object_from_environment(env, "f_n2"));
+        }
+
+        // k++;
+        {
+            auto k = ljf_get_object_from_environment(env, "k");
+            auto k_class = ljf_get_object_from_table(k, "class");
+            const auto opAdd2 = ljf_get_function_id_from_function_table(k_class, "+");
+            const auto tmp_arg4 = ljf_new_object();
+            ljf_set_object_to_table(tmp_arg4, "a", k);
+            ljf_set_object_to_table(tmp_arg4, "b", const1);
+            auto k2 = ljf_call_function(opAdd2, env, tmp_arg4);
+            ljf_set_object_to_environment(env, "k", k2);
+
+        }
+
+        // std::cout << "k = " << ljf_get_native_data(ljf_get_object_from_environment(env, "k")) << "\n";
+        // std::cout << "f_n2 = " << ljf_get_native_data(ljf_get_object_from_environment(env, "f_n2")) << "\n";
+    }
+    return ljf_get_object_from_environment(env, "f_n2");
+}
+
+LJFObject* fibo_loop_ljf_local_ptr(LJFObject* env) {
     // TODO: temporary storage
 
     auto n = ljf_get_object_from_environment(env, "n");
@@ -215,7 +348,7 @@ extern "C" LJFObject* module_main(LJFObject* env, LJFObject* module_func_table) 
 
         auto intOpAddId = ljf_get_function_id_from_function_table(module_func_table, "intOpAdd");
         ljf_set_function_id_to_function_table(Int, "+", intOpAddId);
-
+        LJFObject* r;
         {
             auto n = ljf_get_native_data(ljf_get_object_from_environment(env, "n"));
             std::cout << "n " << n << std::endl;
@@ -226,14 +359,27 @@ extern "C" LJFObject* module_main(LJFObject* env, LJFObject* module_func_table) 
             std::cout << r << std::endl;
             std::cout << "elapsed ms (native) " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
         }
-        auto start = std::chrono::system_clock::now();
-        auto r = fibo_loop_ljf(env);
-        auto end = std::chrono::system_clock::now();
-        auto elapsed = end - start;
-        std::cout << r << std::endl;
-        std::cout << ljf_get_native_data(r) << std::endl;
-        std::cout << "elapsed ms " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
-
+        // {
+        //     std::cout << "-- fibo_loop_ljf_local_ptr --" << std::endl;
+        //     auto start = std::chrono::system_clock::now();
+        //     auto r = fibo_loop_ljf_local_ptr(env);
+        //     auto end = std::chrono::system_clock::now();
+        //     auto elapsed = end - start;
+        //     std::cout << r << std::endl;
+        //     std::cout << ljf_get_native_data(r) << std::endl;
+        //     std::cout << "elapsed ms " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
+        // }
+        {
+            std::cout << "-- fibo_loop_ljf --" << std::endl;
+            auto start = std::chrono::system_clock::now();
+            auto fn = ljf_get_function_id_from_function_table(module_func_table, "fibo_loop_ljf");
+            r = ljf_call_function(fn, env, ljf_new_object());
+            auto end = std::chrono::system_clock::now();
+            auto elapsed = end - start;
+            std::cout << r << std::endl;
+            std::cout << ljf_get_native_data(r) << std::endl;
+            std::cout << "elapsed ms " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
+        }
         // for (size_t i = 0; i <= 100; i++)
         // {
         //     auto f = fibo_loop(i);

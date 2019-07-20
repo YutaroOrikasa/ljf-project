@@ -14,6 +14,8 @@
 #include <llvm/Support/Path.h>
 #include <llvm/ADT/SmallString.h>
 
+#include <google/profiler.h>
+
 #include <iostream>
 #include <map>
 
@@ -34,8 +36,17 @@ struct SmallString : llvm::SmallString<32>
     }
 };
 
-int main()
+int main(int argc, const char** argv)
 {
+    std::vector<std::string> arg(argv, argv + argc);
+    assert(arg.size() >= 1);
+    if (arg.size() == 1)
+    {
+        arg.push_back("");
+    }
+
+    auto clang_opt = arg[1];
+    
     std::map<LJFFunctionId, llvm::Function *> func_to_register;
     auto module_func_table = ljf_new_object();
     auto ljf_runtime_path = SmallString("build/runtime.so");
@@ -175,7 +186,7 @@ int main()
 
     llvm::sys::path::replace_extension(output_so_path, "so");
 
-    auto compile_command_line = "clang++ -L/usr/local/opt/llvm/lib -lLLVM " + output_bc_path + " " + ljf_runtime_path + " -shared -o " + output_so_path;
+    auto compile_command_line = "clang++ " + clang_opt + " -Wl,-no_pie -L/usr/local/opt/llvm/lib -lLLVM " + output_bc_path + " " + ljf_runtime_path + " -shared -o " + output_so_path;
     llvm::errs() << compile_command_line << '\n';
     if (auto e = std::system(compile_command_line.str().c_str()))
     {
@@ -208,12 +219,14 @@ int main()
     }
 
     auto module_main_fptr = reinterpret_cast<LJFObject *(*)(LJFObject *, LJFObject *)>(addr);
-    LJFObject *arg = ljf_new_object_with_native_data(1<<17);
+    LJFObject *n = ljf_new_object_with_native_data(1<<17);
     auto env = ljf::internal::create_environment();
-    ljf_set_object_to_environment(env, "n", arg);
+    ljf_set_object_to_environment(env, "n", n);
     try
     {
+        ProfilerStart("main.prof");
         LJFObject *ret = module_main_fptr(env, module_func_table);
+        ProfilerStop();
         if (!ret)
         {
             std::cerr << "result: "

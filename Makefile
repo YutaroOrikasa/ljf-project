@@ -54,7 +54,7 @@ $(BUILD_DIR)/%.c.o: %.c
 # C++ file
 $(BUILD_DIR)/%.cpp.o: %.cpp
 	mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) $< -o $@ -c
+	$(CXX) $(CXXFLAGS) -g $< -o $@ -c
 
 # C ll file
 $(BUILD_DIR)/%.c.ll: %.c
@@ -66,10 +66,13 @@ $(BUILD_DIR)/%.cpp.ll: %.cpp
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -emit-llvm -S $< -o $@ -c
 
-.PHONY: run clean print-source-files
+.PHONY: run prof clean print-source-files
 
 run: $(BUILD_DIR)/$(EXECUTABLE_FILE)
-	$(BUILD_DIR)/$(EXECUTABLE_FILE)
+	$(BUILD_DIR)/$(EXECUTABLE_FILE) "$(CXXFLAGS)"
+
+pprof-web: run
+	pprof --web build/main main.prof
 
 clean:
 	rm -rf build tmp _dump.ll

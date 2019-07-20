@@ -381,8 +381,14 @@ namespace {
 
 Object* ljf_get_object_from_table(Object* obj, const char* key) {
     check_not_null(obj);
+    std::lock_guard lk {obj->mutex_};
 
-    return obj->hash_table_[key];
+    if (!obj->hash_table_.count(key))
+    {
+        return ljf_undefined;
+    }
+    
+    return obj->hash_table_.at(key);
 }
 
 void ljf_set_object_to_table(Object* obj, const char* key, Object* value) {
@@ -397,8 +403,13 @@ void ljf_set_object_to_table(Object* obj, const char* key, Object* value) {
 
 Object* ljf_get_object_from_hidden_table(Object* obj, const char* key) {
     check_not_null(obj);
-    
-    return obj->hidden_table_[key];
+    std::lock_guard lk {obj->mutex_};
+
+    if (!obj->hidden_table_.count(key))
+    {
+        return ljf_undefined;
+    }
+    return obj->hidden_table_.at(key);
 }
 
 void ljf_set_object_to_hidden_table(Object* obj, const char* key, Object* value) {
