@@ -36,7 +36,7 @@ struct SmallString : llvm::SmallString<32>
     }
 };
 
-int main(int argc, const char** argv)
+int main(int argc, const char **argv)
 {
     std::vector<std::string> arg(argv, argv + argc);
     assert(arg.size() >= 1);
@@ -46,7 +46,7 @@ int main(int argc, const char** argv)
     }
 
     auto clang_opt = arg[1];
-    
+
     std::map<LJFFunctionId, llvm::Function *> func_to_register;
     auto module_func_table = ljf_new_object();
     auto ljf_runtime_path = SmallString("build/runtime.so");
@@ -219,7 +219,7 @@ int main(int argc, const char** argv)
     }
 
     auto module_main_fptr = reinterpret_cast<LJFObject *(*)(LJFObject *, LJFObject *)>(addr);
-    LJFObject *n = ljf_new_object_with_native_data(1<<17);
+    LJFObject *n = ljf_new_object_with_native_data(1 << 17);
     auto env = ljf::internal::create_environment();
     ljf_set_object_to_environment(env, "n", n);
     try
