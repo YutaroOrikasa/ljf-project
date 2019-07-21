@@ -66,16 +66,16 @@ $(BUILD_DIR)/%.cpp.ll: %.cpp
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -emit-llvm -S $< -o $@ -c
 
-.PHONY: run prof clean print-source-files
+.PHONY: run pprof-web clean print-source-files
 
 run: $(BUILD_DIR)/$(EXECUTABLE_FILE)
 	$(BUILD_DIR)/$(EXECUTABLE_FILE) "$(CXXFLAGS)"
 
-pprof-web: run
+pprof-web:
 	pprof --web build/main main.prof
 
 clean:
-	rm -rf build tmp _dump.ll
+	rm -rf build tmp _dump.ll main.prof
 
 print-source-files:
 	@echo $(SOURCE_FILES)

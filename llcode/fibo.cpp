@@ -1,10 +1,219 @@
 #include <iostream>
 #include <chrono>
+#include <cstdint>
+#include <vector>
+#include <limits.h>
+#include <iomanip>
+#include <memory>
 
 #include <ljf/runtime.hpp>
 
 LJFObject *const true_ = ljf_new_object_with_native_data(1);
 LJFObject *const false_ = ljf_new_object_with_native_data(0);
+
+LJFObject *const break_ = ljf_new_object_with_native_data(0);
+LJFObject *const return_ = ljf_new_object_with_native_data(0);
+LJFObject *const continue_ = ljf_new_object_with_native_data(0);
+
+class BigInt
+{
+private:
+    bool is_neg_;
+    uint32_t value_;
+    std::vector<uint32_t> big_values_;
+
+public:
+    explicit BigInt(int64_t value) : is_neg_(value < 0)
+    {
+        if (INT32_MIN <= value && value <= INT32_MAX)
+        {
+            value_ = value;
+        }
+        else
+        {
+            uint32_t low = value;
+            uint32_t high = value >> 32;
+            value_ = low;
+            big_values_.push_back(high);
+        }
+        // std::cout << "new BigInt"
+        //           << "\n";
+        // dump(std::cout);
+    }
+
+    BigInt *add(const BigInt *rhs) const
+    {
+        int64_t value = this->small() + rhs->small();
+        // std::cout << "*** value: " << value << " = " << this->small() << " + " << rhs->small() << "\n";
+
+        if (this->is_small() && rhs->is_small())
+        {
+            return new BigInt(value);
+        }
+
+        auto ret = new BigInt(0);
+
+        const uint32_t small = value;
+        uint32_t carry = value >> 32;
+
+        ret->value_ = small;
+
+        auto common_size = std::min(this->big_values_.size(), rhs->big_values_.size());
+
+        for (size_t i = 0; i < common_size; i++)
+        {
+            int64_t left = this->big_values_.at(i);
+            int64_t right = rhs->big_values_.at(i);
+            int64_t carry64 = carry;
+
+            int64_t result = carry64 + left + right;
+
+            const int32_t small = result;
+            carry = result >> 32;
+
+            // std::cout << "--------\n";
+            // std::cout << "left: " << left << "\n";
+            // std::cout << "right: " << right << "\n";
+            // std::cout << "carry64: " << carry64 << "\n";
+            // std::cout << "\n";
+
+            // std::cout << "result: " << result << "\n";
+            // std::cout << "small: " << small << "\n";
+            // std::cout << "carry: " << carry << "\n";
+            // std::cout << "\n";
+
+            ret->big_values_.push_back(small);
+        }
+
+        auto bigger = this->big_values_.size() > rhs->big_values_.size() ? this : rhs;
+
+        for (size_t i = common_size; i < bigger->big_values_.size(); i++)
+        {
+            int64_t b = bigger->big_values_.at(i);
+            int64_t carry64 = carry;
+            int64_t result = carry64 + b;
+            const uint32_t small = result;
+            carry = result >> 32;
+
+            // std::cout << "--------\n";
+            // std::cout << "b: " << b << "\n";
+            // std::cout << "carry64: " << carry64 << "\n";
+            // std::cout << "\n";
+
+            // std::cout << "result: " << result << "\n";
+            // std::cout << "small: " << small << "\n";
+            // std::cout << "carry: " << carry << "\n";
+            // std::cout << "\n";
+
+            ret->big_values_.push_back(small);
+        }
+
+        if (carry != 0)
+        {
+            ret->big_values_.push_back(carry);
+        }
+
+        ret->is_neg_ = (*--ret->big_values_.end() < 0);
+        return ret;
+    }
+
+    bool equals(const BigInt *other) const
+    {
+
+        if (this->value_ != other->value_)
+        {
+            return false;
+        }
+
+        auto common_size = std::min(this->big_values_.size(), other->big_values_.size());
+
+        for (size_t i = 0; i < common_size; i++)
+        {
+            if (this->big_values_.at(i) != other->big_values_.at(i))
+            {
+                return false;
+            }
+        }
+
+        auto bigger = this->big_values_.size() > other->big_values_.size() ? this : other;
+
+        for (size_t i = common_size; i < bigger->big_values_.size(); i++)
+        {
+            int64_t b = bigger->big_values_.at(i);
+            if (b != 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    bool equals(int32_t value) const
+    {
+        if (!is_small())
+        {
+            return false;
+        }
+
+        return value_ == value;
+    }
+
+    template <typename Out>
+    Out &dump(Out &out) const
+    {
+        out << "is_neg_: " << is_neg_ << "\n";
+        out << "value_: " << value_ << "\n";
+        out << "vector: [";
+        for (auto &&v : big_values_)
+        {
+            out << v << ", ";
+        }
+        out << "]\n";
+        return out;
+    }
+
+    size_t big_size() const 
+    {
+        return big_values_.size();
+    }
+
+    template <typename Out>
+    friend auto &operator<<(Out &out, const BigInt &bi);
+
+private:
+    bool is_small() const
+    {
+        return big_values_.size() == 0;
+    }
+
+    int64_t small() const
+    {
+        if (is_neg_)
+        {
+            return static_cast<int32_t>(value_);
+        }
+        else
+        {
+            return static_cast<uint32_t>(value_);
+        }
+    }
+};
+
+template <typename Out>
+auto &operator<<(Out &out, const BigInt &bi)
+{
+    std::string str;
+    out << std::hex;
+    out << "0x";
+    for (int i = bi.big_values_.size() - 1; i >= 0; i--)
+    {
+        out << (uint32_t)bi.big_values_.at(i);
+    }
+    out << (uint32_t)bi.value_;
+    out << std::resetiosflags(std::ios_base::basefield);
+    return out;
+}
 
 extern "C"
 {
@@ -69,6 +278,60 @@ extern "C"
         ljf_set_object_to_table(self, "class", Int);
 
         return ljf_undefined;
+    }
+
+    LJFObject *fibo_loop_ljf_loop_closure_fn(LJFObject *env, LJFObject *)
+    {
+        const auto const1 = ljf_new_object_with_native_data(1);
+        // while (k < n)
+        {
+            auto k = ljf_get_object_from_environment(env, "k");
+            auto k_class = ljf_get_object_from_table(k, "class");
+            const auto opLt = ljf_get_function_id_from_function_table(k_class, "<");
+            const auto tmp_arg2 = ljf_new_object();
+            ljf_set_object_to_table(tmp_arg2, "a", k);
+            ljf_set_object_to_table(tmp_arg2, "b", ljf_get_object_from_environment(env, "n"));
+            if (ljf_call_function(opLt, ljf_undefined, tmp_arg2) == false_)
+            {
+                return break_;
+            }
+        }
+
+        // f_n2 = f_n0 + f_n1;
+        {
+            auto f_n0 = ljf_get_object_from_environment(env, "f_n0");
+            auto f_n0_class = ljf_get_object_from_table(f_n0, "class");
+            const auto opAdd = ljf_get_function_id_from_function_table(f_n0_class, "+");
+            const auto tmp_arg3 = ljf_new_object();
+            ljf_set_object_to_table(tmp_arg3, "a", f_n0);
+            ljf_set_object_to_table(tmp_arg3, "b", ljf_get_object_from_environment(env, "f_n1"));
+            auto f_n2 = ljf_call_function(opAdd, env, tmp_arg3);
+            ljf_set_object_to_environment(env, "f_n2", f_n2);
+        }
+
+        // f_n0 = f_n1;
+        // f_n1 = f_n2;
+        {
+            ljf_set_object_to_environment(env, "f_n0", ljf_get_object_from_environment(env, "f_n1"));
+            ljf_set_object_to_environment(env, "f_n1", ljf_get_object_from_environment(env, "f_n2"));
+        }
+
+        // k++;
+        {
+            auto k = ljf_get_object_from_environment(env, "k");
+            auto k_class = ljf_get_object_from_table(k, "class");
+            const auto opAdd2 = ljf_get_function_id_from_function_table(k_class, "+");
+            const auto tmp_arg4 = ljf_new_object();
+            ljf_set_object_to_table(tmp_arg4, "a", k);
+            ljf_set_object_to_table(tmp_arg4, "b", const1);
+            auto k2 = ljf_call_function(opAdd2, env, tmp_arg4);
+            ljf_set_object_to_environment(env, "k", k2);
+        }
+
+        // std::cout << "k = " << ljf_get_native_data(ljf_get_object_from_environment(env, "k")) << "\n";
+        // std::cout << "f_n2 = " << ljf_get_native_data(ljf_get_object_from_environment(env, "f_n2")) << "\n";
+
+        return continue_;
     }
 
     LJFObject *fibo_loop_ljf(LJFObject *env, LJFObject *)
@@ -154,53 +417,11 @@ extern "C"
 
         while (true)
         {
-            // while (k < n)
+            auto controle = fibo_loop_ljf_loop_closure_fn(env, nullptr);
+            if (controle == break_)
             {
-                auto k = ljf_get_object_from_environment(env, "k");
-                auto k_class = ljf_get_object_from_table(k, "class");
-                const auto opLt = ljf_get_function_id_from_function_table(k_class, "<");
-                const auto tmp_arg2 = ljf_new_object();
-                ljf_set_object_to_table(tmp_arg2, "a", k);
-                ljf_set_object_to_table(tmp_arg2, "b", ljf_get_object_from_environment(env, "n"));
-                if (ljf_call_function(opLt, ljf_undefined, tmp_arg2) == false_)
-                {
-                    break;
-                }
+                break;
             }
-
-            // f_n2 = f_n0 + f_n1;
-            {
-                auto f_n0 = ljf_get_object_from_environment(env, "f_n0");
-                auto f_n0_class = ljf_get_object_from_table(f_n0, "class");
-                const auto opAdd = ljf_get_function_id_from_function_table(f_n0_class, "+");
-                const auto tmp_arg3 = ljf_new_object();
-                ljf_set_object_to_table(tmp_arg3, "a", f_n0);
-                ljf_set_object_to_table(tmp_arg3, "b", ljf_get_object_from_environment(env, "f_n1"));
-                auto f_n2 = ljf_call_function(opAdd, env, tmp_arg3);
-                ljf_set_object_to_environment(env, "f_n2", f_n2);
-            }
-
-            // f_n0 = f_n1;
-            // f_n1 = f_n2;
-            {
-                ljf_set_object_to_environment(env, "f_n0", ljf_get_object_from_environment(env, "f_n1"));
-                ljf_set_object_to_environment(env, "f_n1", ljf_get_object_from_environment(env, "f_n2"));
-            }
-
-            // k++;
-            {
-                auto k = ljf_get_object_from_environment(env, "k");
-                auto k_class = ljf_get_object_from_table(k, "class");
-                const auto opAdd2 = ljf_get_function_id_from_function_table(k_class, "+");
-                const auto tmp_arg4 = ljf_new_object();
-                ljf_set_object_to_table(tmp_arg4, "a", k);
-                ljf_set_object_to_table(tmp_arg4, "b", const1);
-                auto k2 = ljf_call_function(opAdd2, env, tmp_arg4);
-                ljf_set_object_to_environment(env, "k", k2);
-            }
-
-            // std::cout << "k = " << ljf_get_native_data(ljf_get_object_from_environment(env, "k")) << "\n";
-            // std::cout << "f_n2 = " << ljf_get_native_data(ljf_get_object_from_environment(env, "f_n2")) << "\n";
         }
         return ljf_get_object_from_environment(env, "f_n2");
     }
@@ -337,6 +558,37 @@ extern "C"
         return f_n2;
     }
 
+    std::shared_ptr<BigInt> fibo_loop_big_int(uint64_t n)
+    {
+        auto f_n1 = std::make_shared<BigInt>(1);
+        auto f_n0 = std::make_shared<BigInt>(0);
+
+        if (n == 0)
+        {
+            return f_n0;
+        }
+
+        if (n == 1)
+        {
+            return f_n1;
+        }
+        uint64_t k = 1;
+        auto f_n2 = std::make_shared<BigInt>(0);
+
+        while (k < n)
+        {
+            // std::cout << "lhs=" << *f_n0 << " + rhs=" << *f_n1 << "\n";
+            f_n2.reset(f_n0->add(f_n1.get()));
+            // std::cout << "result=" << *f_n2 << "\n";
+            // f_n2->dump(std::cout);
+            f_n0 = f_n1;
+            f_n1 = f_n2;
+            k++;
+            // std::cout << "k=" << k << ": " << *f_n2 << std::endl;
+        }
+        return f_n2;
+    }
+
 } // extern "C"
 
 extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
@@ -369,6 +621,19 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
             auto end = std::chrono::system_clock::now();
             auto elapsed = end - start;
             std::cout << r << std::endl;
+            std::cout << "elapsed ms (native) " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
+        }
+        {
+            std::cout << "-- fibo_loop_big_int --" << std::endl;
+            auto n = ljf_get_native_data(ljf_get_object_from_environment(env, "n"));
+            std::cout << "n " << n << std::endl;
+            auto start = std::chrono::system_clock::now();
+            auto r = fibo_loop_big_int(n);
+            auto end = std::chrono::system_clock::now();
+            auto elapsed = end - start;
+            std::cout << *r << std::endl;
+            std::cout << "big_size: " << r->big_size() << std::endl;
+            std::cout << "mem size: " << r->big_size() * sizeof(int32_t) << std::endl;
             std::cout << "elapsed ms (native) " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
         }
         // {
