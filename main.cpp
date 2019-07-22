@@ -25,6 +25,8 @@
 #include <ljf/runtime.hpp>
 #include "./runtime-internal.hpp"
 
+using namespace ljf;
+
 struct SmallString : llvm::SmallString<32>
 {
     SmallString() = default;
@@ -48,7 +50,7 @@ int main(int argc, const char **argv)
     auto clang_opt = arg[1];
 
     std::map<LJFFunctionId, llvm::Function *> func_to_register;
-    auto module_func_table = ljf_new_object();
+    ObjectHolder module_func_table = ljf_new_object();
     auto ljf_runtime_path = SmallString("build/runtime.so");
     auto input_ll_file = SmallString("build/llcode/fibo.cpp.ll");
     llvm::LLVMContext llvm_context;
@@ -99,7 +101,7 @@ int main(int argc, const char **argv)
 
         auto id = ljf::register_llvm_function(&func);
         func_to_register[id] = &func;
-        ljf_set_function_id_to_function_table(module_func_table, func.getName().data(), id);
+        ljf_set_function_id_to_function_table(module_func_table.get(), func.getName().data(), id);
 
         // func.setLinkage(llvm::GlobalValue::LinkageTypes::InternalLinkage);
 
@@ -219,13 +221,14 @@ int main(int argc, const char **argv)
     }
 
     auto module_main_fptr = reinterpret_cast<LJFObject *(*)(LJFObject *, LJFObject *)>(addr);
-    LJFObject *n = ljf_new_object_with_native_data(1 << 17);
-    auto env = ljf::internal::create_environment();
-    ljf_set_object_to_environment(env, "n", n);
+    ObjectHolder n = ljf_new_object_with_native_data(1 << 17);
+    auto env_holder = ljf::internal::create_environment();
+    auto env = env_holder.get();
+    ljf_set_object_to_environment(env, "n", n.get());
     try
     {
         ProfilerStart("main.prof");
-        LJFObject *ret = module_main_fptr(env, module_func_table);
+        LJFObject *ret = module_main_fptr(env, module_func_table.get());
         ProfilerStop();
         if (!ret)
         {

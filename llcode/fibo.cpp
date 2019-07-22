@@ -7,13 +7,20 @@
 #include <memory>
 
 #include <ljf/runtime.hpp>
+#include "../runtime-internal.hpp"
 
-LJFObject *const true_ = ljf_new_object_with_native_data(1);
-LJFObject *const false_ = ljf_new_object_with_native_data(0);
-
-LJFObject *const break_ = ljf_new_object_with_native_data(0);
-LJFObject *const return_ = ljf_new_object_with_native_data(0);
-LJFObject *const continue_ = ljf_new_object_with_native_data(0);
+namespace holders {
+ljf::ObjectHolder const true_ = ljf_new_object_with_native_data(1);
+ljf::ObjectHolder const false_ = ljf_new_object_with_native_data(0);
+ljf::ObjectHolder const break_ = ljf_new_object_with_native_data(0);
+ljf::ObjectHolder const return_ = ljf_new_object_with_native_data(0);
+ljf::ObjectHolder const continue_ = ljf_new_object_with_native_data(0);
+}
+const auto true_ = holders::true_.get();
+const auto false_ = holders::false_.get();
+const auto break_ = holders::break_.get();
+const auto return_ = holders::return_.get();
+const auto continue_ = holders::continue_.get();
 
 class BigInt
 {
@@ -254,6 +261,7 @@ extern "C"
 
         auto c_val = a_val + b_val;
         auto c = ljf_new_object_with_native_data(c_val);
+        ljf_push_object_to_array(tmp, c);
 
         // std::cout << "intOpAdd: " << a_val << " + " << b_val << " = " << c_val << std::endl;
         // std::cout << "intOpAdd: ljf_get_native_data(c): " << ljf_get_native_data(c) << std::endl;
@@ -262,6 +270,8 @@ extern "C"
         auto Int = ljf_get_object_from_environment(env, "Int");
         assert(Int);
         auto tmp_arg = ljf_new_object();
+        ljf_push_object_to_array(tmp, tmp_arg);
+
         ljf_set_object_to_table(tmp_arg, "self", c);
         ljf_call_function(ljf_get_function_id_from_function_table(Int, "init"),
                           ljf_get_object_from_hidden_table(Int, "init.env"),
@@ -280,19 +290,23 @@ extern "C"
         return ljf_undefined;
     }
 
-    LJFObject *fibo_loop_ljf_loop_closure_fn(LJFObject *env, LJFObject *)
+    LJFObject *fibo_loop_ljf_loop_closure_fn(LJFObject *env, LJFObject *tmp)
     {
+        // std::cout << "fibo_loop_ljf_loop_closure_fn: k: " << ljf_get_object_from_environment(env, "k") << std::endl;
         const auto const1 = ljf_new_object_with_native_data(1);
+        ljf_push_object_to_array(tmp, const1);
         // while (k < n)
         {
             auto k = ljf_get_object_from_environment(env, "k");
             auto k_class = ljf_get_object_from_table(k, "class");
             const auto opLt = ljf_get_function_id_from_function_table(k_class, "<");
             const auto tmp_arg2 = ljf_new_object();
+            ljf_push_object_to_array(tmp, tmp_arg2);
             ljf_set_object_to_table(tmp_arg2, "a", k);
             ljf_set_object_to_table(tmp_arg2, "b", ljf_get_object_from_environment(env, "n"));
             if (ljf_call_function(opLt, ljf_undefined, tmp_arg2) == false_)
             {
+                // std::cout << "break_" << std::endl;
                 return break_;
             }
         }
@@ -303,10 +317,14 @@ extern "C"
             auto f_n0_class = ljf_get_object_from_table(f_n0, "class");
             const auto opAdd = ljf_get_function_id_from_function_table(f_n0_class, "+");
             const auto tmp_arg3 = ljf_new_object();
+            ljf_push_object_to_array(tmp, tmp_arg3);
             ljf_set_object_to_table(tmp_arg3, "a", f_n0);
             ljf_set_object_to_table(tmp_arg3, "b", ljf_get_object_from_environment(env, "f_n1"));
             auto f_n2 = ljf_call_function(opAdd, env, tmp_arg3);
+            // std::cout << "DEBUG10" << std::endl;
+
             ljf_set_object_to_environment(env, "f_n2", f_n2);
+            // std::cout << "DEBUG11" << std::endl;
         }
 
         // f_n0 = f_n1;
@@ -322,6 +340,7 @@ extern "C"
             auto k_class = ljf_get_object_from_table(k, "class");
             const auto opAdd2 = ljf_get_function_id_from_function_table(k_class, "+");
             const auto tmp_arg4 = ljf_new_object();
+            ljf_push_object_to_array(tmp, tmp_arg4);
             ljf_set_object_to_table(tmp_arg4, "a", k);
             ljf_set_object_to_table(tmp_arg4, "b", const1);
             auto k2 = ljf_call_function(opAdd2, env, tmp_arg4);
@@ -330,45 +349,56 @@ extern "C"
 
         // std::cout << "k = " << ljf_get_native_data(ljf_get_object_from_environment(env, "k")) << "\n";
         // std::cout << "f_n2 = " << ljf_get_native_data(ljf_get_object_from_environment(env, "f_n2")) << "\n";
-
+        // std::cout << "fibo_loop_ljf_loop_closure_fn: k2: " << ljf_get_object_from_environment(env, "k") << std::endl;
+        // std::cout << "continue_ = " << continue_ << std::endl;
         return continue_;
     }
 
-    LJFObject *fibo_loop_ljf(LJFObject *env, LJFObject *)
+    LJFObject *fibo_loop_ljf(LJFObject *env, LJFObject *tmp)
     {
-        // TODO: temporary storage
 
         auto Int = ljf_get_object_from_environment(env, "Int");
+        // std::cout << "DEBUG" << std::endl;
         auto intInit = ljf_get_function_id_from_function_table(Int, "init");
         // auto intInitEnv = ljf_get_object_from_hidden_table(Int, "init.env");
 
+        // std::cout << "DEBUG2" << std::endl;
         {
             auto tmp_arg = ljf_new_object();
+            ljf_push_object_to_array(tmp, tmp_arg);
             ljf_set_object_to_table(tmp_arg, "self", ljf_get_object_from_environment(env, "n"));
             ljf_call_function(intInit, env, tmp_arg);
         }
+        // std::cout << "DEBUG3" << std::endl;
 
         // long f_n1 = 1;
         {
             auto f_n1 = ljf_new_object_with_native_data(1);
+            ljf_push_object_to_array(tmp, f_n1);
             auto tmp_arg00 = ljf_new_object();
+            ljf_push_object_to_array(tmp, tmp_arg00);
             ljf_set_object_to_table(tmp_arg00, "self", f_n1);
             ljf_call_function(intInit, env, tmp_arg00);
+            // std::cout << "DEBUG4" << std::endl;
             ljf_set_object_to_environment(env, "f_n1", f_n1);
         }
 
         // long f_n0 = 0;
         {
             auto f_n0 = ljf_new_object_with_native_data(0);
+            ljf_push_object_to_array(tmp, f_n0);
             auto tmp_arg01 = ljf_new_object();
+            ljf_push_object_to_array(tmp, tmp_arg01);
             ljf_set_object_to_table(tmp_arg01, "self", f_n0);
             ljf_call_function(intInit, env, tmp_arg01);
             ljf_set_object_to_environment(env, "f_n0", f_n0);
         }
 
         const auto const0 = ljf_new_object_with_native_data(0);
+        ljf_push_object_to_array(tmp, const0);
         {
             auto tmp_arg = ljf_new_object();
+            ljf_push_object_to_array(tmp, tmp_arg);
             ljf_set_object_to_table(tmp_arg, "self", const0);
             ljf_call_function(intInit, env, tmp_arg);
         }
@@ -377,6 +407,8 @@ extern "C"
         // }
         {
             const auto tmp_arg0 = ljf_new_object();
+            ljf_push_object_to_array(tmp, tmp_arg0);
+            
             auto n = ljf_get_object_from_environment(env, "n");
             ljf_set_object_to_table(tmp_arg0, "a", n);
             ljf_set_object_to_table(tmp_arg0, "b", const0);
@@ -392,13 +424,16 @@ extern "C"
         //     return f_n1;
         // }
         const auto const1 = ljf_new_object_with_native_data(1);
+        ljf_push_object_to_array(tmp, const1);
         {
             auto tmp_arg = ljf_new_object();
+            ljf_push_object_to_array(tmp, tmp_arg);
             ljf_set_object_to_table(tmp_arg, "self", const1);
             ljf_call_function(intInit, env, tmp_arg);
         }
         {
             const auto tmp_arg1 = ljf_new_object();
+            ljf_push_object_to_array(tmp, tmp_arg1);
             auto n = ljf_get_object_from_environment(env, "n");
             ljf_set_object_to_table(tmp_arg1, "a", n);
             ljf_set_object_to_table(tmp_arg1, "b", const1);
@@ -417,9 +452,14 @@ extern "C"
 
         while (true)
         {
-            auto controle = fibo_loop_ljf_loop_closure_fn(env, nullptr);
+            // std::cout << "fibo_loop_ljf: k: " << ljf_get_object_from_environment(env, "k") << std::endl;
+            auto fn_obj = ljf_get_object_from_environment(env, "fibo_loop_ljf_loop_closure_fn");
+            auto fn_id = ljf_get_function_id_from_function_table(fn_obj, "call");
+            auto controle = ljf_call_function(fn_id, env, nullptr);
             if (controle == break_)
             {
+                // std::cout << "controle = " << controle << std::endl;
+                // std::cout << "controle == break_" << std::endl;
                 break;
             }
         }
@@ -612,6 +652,11 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
 
         auto intOpAddId = ljf_get_function_id_from_function_table(module_func_table, "intOpAdd");
         ljf_set_function_id_to_function_table(Int, "+", intOpAddId);
+
+        auto fibo_loop_ljf_loop_closure_fn_id = ljf_get_function_id_from_function_table(module_func_table, "fibo_loop_ljf_loop_closure_fn");
+        auto fibo_loop_ljf_loop_closure_fn_obj = ljf_new_object();
+        ljf_set_object_to_environment(env, "fibo_loop_ljf_loop_closure_fn", fibo_loop_ljf_loop_closure_fn_obj);
+        ljf_set_function_id_to_function_table(fibo_loop_ljf_loop_closure_fn_obj, "call", fibo_loop_ljf_loop_closure_fn_id);
         LJFObject *r;
         {
             auto n = ljf_get_native_data(ljf_get_object_from_environment(env, "n"));

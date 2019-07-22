@@ -33,8 +33,10 @@ extern "C" {
     LJFObject* ljf_get_object_from_hidden_table(LJFObject* obj, const char* key);
     void ljf_set_object_to_hidden_table(LJFObject* obj, const char* key, LJFObject* value);
 
-    LJFFunctionId ljf_get_function_id_from_function_table(const LJFObject* obj, const char* key);
+    LJFFunctionId ljf_get_function_id_from_function_table(LJFObject* obj, const char* key);
     void ljf_set_function_id_to_function_table(LJFObject* obj, const char* key, LJFFunctionId function_id);
+
+    void ljf_push_object_to_array(LJFObject* obj, LJFObject* value);
 
     LJFObject* ljf_call_function(LJFFunctionId function_id, LJFObject* env, LJFObject* arg);
 
@@ -47,4 +49,7 @@ extern "C" {
     void ljf_set_object_to_environment(ljf::Environment* env, const char* key, LJFObject* value);
 
     LJFFunctionId ljf_register_native_function(LJFObject* (*fn)(LJFObject* env, LJFObject* tmp));
+
+    size_t ljf_array_size(LJFObject* obj);
+    LJFObject* ljf_get_object_from_array(LJFObject* obj, size_t index);
 }
