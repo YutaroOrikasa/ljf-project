@@ -687,9 +687,9 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
         {
             auto n = ljf_get_native_data(ljf_get_object_from_environment(env, "n"));
             std::cout << "n " << n << std::endl;
-            auto start = std::chrono::system_clock::now();
+            auto start = std::chrono::high_resolution_clock::now();
             auto r = fibo_loop(n);
-            auto end = std::chrono::system_clock::now();
+            auto end = std::chrono::high_resolution_clock::now();
             auto elapsed = end - start;
             std::cout << r << std::endl;
             std::cout << "elapsed ms (native) " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
@@ -699,9 +699,9 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
             auto n = ljf_get_native_data(ljf_get_object_from_environment(env, "n"));
             std::cout << "n " << n << std::endl;
             mygperf::ProfilerStart("tmp/fibo-bigint.prof");
-            auto start = std::chrono::system_clock::now();
+            auto start = std::chrono::high_resolution_clock::now();
             auto r = fibo_loop_big_int(n);
-            auto end = std::chrono::system_clock::now();
+            auto end = std::chrono::high_resolution_clock::now();
             mygperf::ProfilerStop();
             auto elapsed = end - start;
             std::cout << *r << std::endl;
