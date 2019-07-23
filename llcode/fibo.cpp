@@ -11,6 +11,30 @@
 #include <ljf/runtime.hpp>
 #include "../runtime-internal.hpp"
 
+namespace mygperf
+{
+    #ifdef FIBO_PROF
+    constexpr bool fibo_prof = true;
+    #else
+    constexpr bool fibo_prof = false;
+    #endif
+
+    void ProfilerStart(const char* arg) {
+        if (fibo_prof)
+        {
+            ::ProfilerStart(arg);
+        }
+    }
+
+    void ProfilerStop() {
+        if (fibo_prof)
+        {
+            ::ProfilerStop();
+        }
+    }
+} // namespace mygperf
+
+
 namespace holders {
 ljf::ObjectHolder const true_ = ljf_new_object_with_native_data(1);
 ljf::ObjectHolder const false_ = ljf_new_object_with_native_data(0);
@@ -674,11 +698,11 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
             std::cout << "-- fibo_loop_big_int --" << std::endl;
             auto n = ljf_get_native_data(ljf_get_object_from_environment(env, "n"));
             std::cout << "n " << n << std::endl;
-            ProfilerStart("tmp/fibo-bigint.prof");
+            mygperf::ProfilerStart("tmp/fibo-bigint.prof");
             auto start = std::chrono::system_clock::now();
             auto r = fibo_loop_big_int(n);
             auto end = std::chrono::system_clock::now();
-            ProfilerStop();
+            mygperf::ProfilerStop();
             auto elapsed = end - start;
             std::cout << *r << std::endl;
             std::cout << "big_size: " << r->big_size() << std::endl;
@@ -697,12 +721,12 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
         // }
         {
             std::cout << "-- fibo_loop_ljf --" << std::endl;
-            ProfilerStart("tmp/fibo-ljf.prof");
+            mygperf::ProfilerStart("tmp/fibo-ljf.prof");
             auto start = std::chrono::system_clock::now();
             auto fn = ljf_get_function_id_from_function_table(module_func_table, "fibo_loop_ljf");
             r = ljf_call_function(fn, env, ljf_new_object());
             auto end = std::chrono::system_clock::now();
-            ProfilerStop();
+            mygperf::ProfilerStop();
             auto elapsed = end - start;
             std::cout << r << std::endl;
             std::cout << ljf_get_native_data(r) << std::endl;

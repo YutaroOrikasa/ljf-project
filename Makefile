@@ -69,7 +69,7 @@ $(BUILD_DIR)/%.cpp.ll: %.cpp
 .PHONY: run pprof-web clean print-source-files
 
 run: $(BUILD_DIR)/$(EXECUTABLE_FILE)
-	$(BUILD_DIR)/$(EXECUTABLE_FILE) "$(CXXFLAGS)"
+	$(BUILD_DIR)/$(EXECUTABLE_FILE) "$(CXXFLAGS) $(LDFLAGS)"
 
 pprof-web:
 	# pprof --web build/main tmp/main.prof

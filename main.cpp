@@ -49,6 +49,8 @@ int main(int argc, const char **argv)
 
     auto clang_opt = arg[1];
 
+    std::cerr << "clang_opt: " << clang_opt << "\n";
+
     std::map<LJFFunctionId, llvm::Function *> func_to_register;
     ObjectHolder module_func_table = ljf_new_object();
     auto ljf_runtime_path = SmallString("build/runtime.so");
@@ -188,7 +190,7 @@ int main(int argc, const char **argv)
 
     llvm::sys::path::replace_extension(output_so_path, "so");
 
-    SmallString compile_command_line = "clang++ -lprofiler " + clang_opt + " -L/usr/local/opt/llvm/lib -lLLVM " + output_bc_path + " " + ljf_runtime_path + " -shared -o " + output_so_path;
+    SmallString compile_command_line = "clang++ " + clang_opt + " -L/usr/local/opt/llvm/lib -lLLVM " + output_bc_path + " " + ljf_runtime_path + " -shared -o " + output_so_path;
     llvm::errs() << compile_command_line << '\n';
     if (auto e = std::system(compile_command_line.c_str()))
     {
