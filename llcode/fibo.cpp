@@ -62,6 +62,8 @@ public:
 
         auto ret = new BigInt(0);
 
+        auto bigger = this->big_values_.size() > rhs->big_values_.size() ? this : rhs;
+        ret->big_values_.reserve(bigger->big_values_.size() + 1);
         const uint32_t small = value;
         uint32_t carry = value >> 32;
 
@@ -93,8 +95,6 @@ public:
 
             ret->big_values_.push_back(small);
         }
-
-        auto bigger = this->big_values_.size() > rhs->big_values_.size() ? this : rhs;
 
         for (size_t i = common_size; i < bigger->big_values_.size(); i++)
         {
