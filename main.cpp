@@ -188,7 +188,7 @@ int main(int argc, const char **argv)
 
     llvm::sys::path::replace_extension(output_so_path, "so");
 
-    auto compile_command_line = "clang++ " + clang_opt + " -Wl,-no_pie -L/usr/local/opt/llvm/lib -lLLVM " + output_bc_path + " " + ljf_runtime_path + " -shared -o " + output_so_path;
+    auto compile_command_line = "clang++ -lprofiler " + clang_opt + " -L/usr/local/opt/llvm/lib -lLLVM " + output_bc_path + " " + ljf_runtime_path + " -shared -o " + output_so_path;
     llvm::errs() << compile_command_line << '\n';
     if (auto e = std::system(compile_command_line.str().c_str()))
     {
@@ -221,15 +221,15 @@ int main(int argc, const char **argv)
     }
 
     auto module_main_fptr = reinterpret_cast<LJFObject *(*)(LJFObject *, LJFObject *)>(addr);
-    ObjectHolder n = ljf_new_object_with_native_data(1 << 17);
+    ObjectHolder n = ljf_new_object_with_native_data(1 << 17); // 1 << 21
     auto env_holder = ljf::internal::create_environment();
     auto env = env_holder.get();
     ljf_set_object_to_environment(env, "n", n.get());
     try
     {
-        ProfilerStart("main.prof");
+        // ProfilerStart("tmp/main.prof");
         LJFObject *ret = module_main_fptr(env, module_func_table.get());
-        ProfilerStop();
+        // ProfilerStop();
         if (!ret)
         {
             std::cerr << "result: "

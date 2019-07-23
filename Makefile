@@ -72,10 +72,12 @@ run: $(BUILD_DIR)/$(EXECUTABLE_FILE)
 	$(BUILD_DIR)/$(EXECUTABLE_FILE) "$(CXXFLAGS)"
 
 pprof-web:
-	pprof --web build/main main.prof
+	# pprof --web build/main tmp/main.prof
+	pprof --web build/main tmp/fibo-bigint.prof
+	pprof --web build/main tmp/fibo-ljf.prof
 
 clean:
-	rm -rf build tmp _dump.ll main.prof
+	rm -rf build tmp _dump.ll 
 
 print-source-files:
 	@echo $(SOURCE_FILES)
