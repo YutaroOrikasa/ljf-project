@@ -188,9 +188,9 @@ int main(int argc, const char **argv)
 
     llvm::sys::path::replace_extension(output_so_path, "so");
 
-    auto compile_command_line = "clang++ -lprofiler " + clang_opt + " -L/usr/local/opt/llvm/lib -lLLVM " + output_bc_path + " " + ljf_runtime_path + " -shared -o " + output_so_path;
+    SmallString compile_command_line = "clang++ -lprofiler " + clang_opt + " -L/usr/local/opt/llvm/lib -lLLVM " + output_bc_path + " " + ljf_runtime_path + " -shared -o " + output_so_path;
     llvm::errs() << compile_command_line << '\n';
-    if (auto e = std::system(compile_command_line.str().c_str()))
+    if (auto e = std::system(compile_command_line.c_str()))
     {
         llvm::errs() << "compile failed: " << e << '\n';
         exit(1);
