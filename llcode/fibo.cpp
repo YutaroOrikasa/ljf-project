@@ -97,6 +97,8 @@ public:
 
         for (size_t i = 0; i < common_size; i++)
         {
+            // void DEBUG_loop_start();
+            // DEBUG_loop_start();
             int64_t left = this->big_values_.at(i);
             int64_t right = rhs->big_values_.at(i);
             int64_t carry64 = carry;
@@ -118,6 +120,9 @@ public:
             // std::cout << "\n";
 
             ret->big_values_.push_back(small);
+
+            // void DEBUG_loop_end();
+            // DEBUG_loop_end();
         }
 
         for (size_t i = common_size; i < bigger->big_values_.size(); i++)
