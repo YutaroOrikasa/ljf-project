@@ -688,6 +688,8 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
         auto fibo_loop_ljf_loop_closure_fn_obj = ljf_new_object();
         ljf_set_object_to_environment(env, "fibo_loop_ljf_loop_closure_fn", fibo_loop_ljf_loop_closure_fn_obj);
         ljf_set_function_id_to_function_table(fibo_loop_ljf_loop_closure_fn_obj, "call", fibo_loop_ljf_loop_closure_fn_id);
+
+        ljf_set_object_to_environment(env, "n", ljf_new_object_with_native_data(1 << 17)); // 1 << 21
         LJFObject *r;
         {
             auto n = ljf_get_native_data(ljf_get_object_from_environment(env, "n"));
