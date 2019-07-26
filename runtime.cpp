@@ -101,6 +101,7 @@ public:
 
         if (!hash_table_.count(key))
         {
+            // std::cerr << "ljf get(): no such key: " << key << std::endl;
             return ljf_undefined;
         }
 
@@ -828,6 +829,7 @@ Object *ljf_get_object_from_environment(Environment *env, const char *key)
 
     if (!maps)
     {
+        env->dump();
         throw ljf::runtime_error("ljf_get_object_from_environment: not a Environment");
     }
 

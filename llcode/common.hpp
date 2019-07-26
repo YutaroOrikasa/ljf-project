@@ -182,3 +182,17 @@ extern "C" inline void initIntClass(LJFObject *env, LJFObject *module_func_table
     auto intOpSubId = ljf_get_function_id_from_function_table(module_func_table, "intOpSub");
     ljf_set_function_id_to_function_table(Int, "-", intOpSubId);
 }
+
+static LJFObject *newInt(LJFObject *env, LJFObject *tmp, uint64_t i)
+{
+    auto Int_class = ljf_get_object_from_environment(env, "Int");
+    auto Int_class_env = ljf_get_object_from_hidden_table(Int_class, "env");
+    auto Int_init = ljf_get_function_id_from_function_table(Int_class, "init");
+    auto r = ljf_new_object_with_native_data(i);
+    ljf_push_object_to_array(tmp, r);
+    auto args = ljf_new_object();
+    ljf_push_object_to_array(tmp, args);
+    ljf_set_object_to_table(args, "self", r);
+    ljf_call_function(Int_init, Int_class_env, args);
+    return r;
+}

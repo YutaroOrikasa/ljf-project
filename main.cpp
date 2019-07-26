@@ -41,20 +41,20 @@ struct SmallString : llvm::SmallString<32>
 int main(int argc, const char **argv)
 {
     std::vector<std::string> arg(argv, argv + argc);
-    assert(arg.size() >= 1);
-    if (arg.size() == 1)
+    assert(arg.size() >= 2);
+    if (arg.size() == 2)
     {
         arg.push_back("");
     }
 
-    auto clang_opt = arg[1];
+    auto clang_opt = arg[2];
 
     std::cerr << "clang_opt: " << clang_opt << "\n";
 
     std::map<LJFFunctionId, llvm::Function *> func_to_register;
     ObjectHolder module_func_table = ljf_new_object();
     auto ljf_runtime_path = SmallString("build/runtime.so");
-    auto input_ll_file = SmallString("build/llcode/fibo.cpp.ll");
+    auto input_ll_file = SmallString(arg[1]);
     llvm::LLVMContext llvm_context;
     llvm::SMDiagnostic err;
     llvm::IRBuilder ir_builder{llvm_context};
