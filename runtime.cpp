@@ -10,7 +10,6 @@
 
 #include <llvm/IR/Function.h>
 
-
 #include "ljf/runtime.hpp"
 #include "runtime-internal.hpp"
 #include "ljf/initmsg.hpp"
@@ -62,7 +61,6 @@ struct Done
 };
 static Done done;
 
-
 namespace ljf
 {
 
@@ -79,8 +77,9 @@ class Object
 private:
     std::mutex mutex_;
     std::shared_ptr<TypeObject> type_object_;
-    std::unordered_map<std::string, ObjectPtr> hash_table_;
-    std::unordered_map<std::string, ObjectPtr> hidden_table_;
+    std::unordered_map<std::string, size_t> hash_table_;
+    std::unordered_map<std::string, size_t> hidden_table_;
+    std::vector<ObjectPtr> array_table_;
     std::vector<ObjectPtr> array_;
     std::unordered_map<std::string, FunctionId> function_id_table_;
     using native_data_t = std::uint64_t;
@@ -105,7 +104,7 @@ public:
             return ljf_undefined;
         }
 
-        return hash_table_.at(key);
+        return array_table_.at(hash_table_.at(key));
     }
     // void set(const std::string &key, ObjectPtr value)
     // {
@@ -116,13 +115,23 @@ public:
     {
 
         auto &table = (visiblity == visible) ? hash_table_ : hidden_table_;
-        Object *old_value;
+        Object *old_value = nullptr;
         {
             std::lock_guard lk{mutex_};
+            if (table.count(key))
+            {
+                size_t index = table.at(key);
 
-            Object *&elem_ref = table[key];
-            old_value = elem_ref;
-            elem_ref = value;
+                Object *&elem_ref = array_table_.at(index);
+                old_value = elem_ref;
+                elem_ref = value;
+            }
+            else
+            {
+                size_t index = array_table_.size();
+                array_table_.push_back(value);
+                table[key] = index;
+            }
         }
         // assert(value != 0);
         // assert(value);
@@ -131,13 +140,13 @@ public:
 
         decrement_ref_count(old_value);
     }
-    Object* get_object_from_table(TableVisiblity visiblity, const char *key)
+    Object *get_object_from_table(TableVisiblity visiblity, const char *key)
     {
 
         auto &table = (visiblity == visible) ? hash_table_ : hidden_table_;
         std::lock_guard lk{mutex_};
 
-        return table.at(key);
+        return array_table_.at(table.at(key));
     }
 
     FunctionId get_function_id(const std::string &key)
@@ -171,9 +180,9 @@ public:
         std::lock_guard lk{mutex_};
         return array_.at(index);
     }
-    void array_set_at(uint64_t index, Object* value)
+    void array_set_at(uint64_t index, Object *value)
     {
-        Object* old_value;
+        Object *old_value;
         {
             std::lock_guard lk{mutex_};
             auto &elem_ref = array_.at(index);
@@ -185,7 +194,7 @@ public:
         decrement_ref_count(old_value);
     }
 
-    void array_push(Object* value)
+    void array_push(Object *value)
     {
         {
             std::lock_guard lk{mutex_};
@@ -195,9 +204,9 @@ public:
         increment_ref_count(value);
     }
 
-
     // native data
-    uint64_t get_native_data() const {
+    uint64_t get_native_data() const
+    {
         return native_data_;
     }
 
@@ -218,12 +227,7 @@ public:
         // std::cout << "~Object() " << this << " dump\n";
         // dump();
 
-        for (auto &&[_, obj] : hash_table_)
-        {
-            decrement_ref_count(obj);
-        }
-
-        for (auto &&[_, obj] : hidden_table_)
+        for (auto &&obj : array_table_)
         {
             decrement_ref_count(obj);
         }
@@ -237,8 +241,8 @@ public:
     friend void increment_ref_count(Object *obj);
     friend void decrement_ref_count(Object *obj);
 
-    void dump() {
-        std::lock_guard lk{mutex_};
+    void dump()
+    {
         std::cout << "{\n";
         std::cout << "    {\n";
         for (auto &&[key, value] : hash_table_)
@@ -247,13 +251,19 @@ public:
         }
         std::cout << "    }\n";
 
-        
         std::cout << "    hidden: {\n";
         for (auto &&[key, value] : hidden_table_)
         {
             std::cout << "        " << key << ": " << value << "\n";
         }
         std::cout << "    }\n";
+
+        std::cout << "    array table: [";
+        for (auto &&v : array_table_)
+        {
+            std::cout << v << ", ";
+        }
+        std::cout << "]\n";
 
         std::cout << "    array: [";
         for (auto &&v : array_)
@@ -266,9 +276,7 @@ public:
         std::cout << "    ref_count: " << ref_count_ << "\n";
 
         std::cout << "}\n";
-        
     }
-
 };
 
 void increment_ref_count(Object *obj)
@@ -302,7 +310,7 @@ void decrement_ref_count(Object *obj)
     obj->unlock();
 }
 
-ObjectHolder::ObjectHolder(Object* o) noexcept : obj_(o)
+ObjectHolder::ObjectHolder(Object *o) noexcept : obj_(o)
 {
     increment_ref_count(obj_);
 }
@@ -315,7 +323,7 @@ ObjectHolder::ObjectHolder(ObjectHolder &&other) noexcept : obj_(other.obj_)
     other.obj_ = nullptr;
 }
 
-ObjectHolder& ObjectHolder::operator=(Object* o) noexcept
+ObjectHolder &ObjectHolder::operator=(Object *o) noexcept
 {
     decrement_ref_count(obj_);
     obj_ = o;
@@ -323,18 +331,17 @@ ObjectHolder& ObjectHolder::operator=(Object* o) noexcept
     return *this;
 }
 
-ObjectHolder& ObjectHolder::operator=(const ObjectHolder &other) noexcept
+ObjectHolder &ObjectHolder::operator=(const ObjectHolder &other) noexcept
 {
     return (*this = other.obj_);
 }
-ObjectHolder& ObjectHolder::operator=(ObjectHolder &&other) noexcept
+ObjectHolder &ObjectHolder::operator=(ObjectHolder &&other) noexcept
 {
     decrement_ref_count(obj_);
     obj_ = other.obj_;
     other.obj_ = nullptr;
     return *this;
 }
-
 
 ObjectHolder::~ObjectHolder()
 {
@@ -475,7 +482,7 @@ public:
         {
             return;
         }
-        
+
         decrement_ref_count(returned_object_);
         returned_object_ = obj;
         increment_ref_count(obj);
@@ -609,7 +616,7 @@ namespace ljf::internal
 {
 
 ObjectHolder
-create_environment(bool prepare_0th_frame/*=true*/)
+create_environment(bool prepare_0th_frame /*=true*/)
 {
 
     ObjectHolder env = ljf_new_object();
@@ -640,7 +647,6 @@ create_callee_environment(Environment *parent, Object *arg)
     auto callee_env = internal::create_environment(bool(arg));
     auto callee_env_maps = ljf_get_object_from_hidden_table(callee_env.get(), "ljf.env.maps");
 
-    
     if (arg)
     {
         // set maps[1]
@@ -704,7 +710,7 @@ void ljf_set_object_to_table(Object *obj, const char *key, Object *value)
 Object *ljf_get_object_from_hidden_table(Object *obj, const char *key)
 {
     check_not_null(obj);
-    
+
     return obj->get_object_from_table(hidden, key);
 }
 
@@ -777,20 +783,18 @@ Object *ljf_call_function(FunctionId function_id, Environment *env, Object *arg)
     // std::cout << "arg\n";
     // if (arg)
     // {
-    //     arg->dump();   
+    //     arg->dump();
     // }
     // else
     // {
     //     std::cout << "nullptr\n";
     // }
-    
-    
-    
+
     auto &func_data = function_table.get(function_id);
     // std::cout << func_data.naive_llvm_function->getName().str() << "\n";
 
     auto callee_env = create_callee_environment(env, arg);
- 
+
     auto arg_type = callee_env->calculate_type();
 
     auto &data_for_arg_type = func_data.data_for_arg_type[*arg_type];
@@ -849,7 +853,6 @@ Object *ljf_get_object_from_environment(Environment *env, const char *key)
             return value;
         }
     }
-    
 
     return ljf_undefined;
 }
