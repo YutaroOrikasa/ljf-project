@@ -1,8 +1,12 @@
+#include <stdint.h>
+#include <iostream>
+
 #include <gperftools/profiler.h>
 
 #include <ljf/runtime.hpp>
 
 #include "../runtime-internal.hpp"
+
 namespace mygperf
 {
 #ifdef FIBO_PROF
@@ -183,7 +187,7 @@ extern "C" inline void initIntClass(LJFObject *env, LJFObject *module_func_table
     ljf_set_function_id_to_function_table(Int, "-", intOpSubId);
 }
 
-static LJFObject *newInt(LJFObject *env, LJFObject *tmp, uint64_t i)
+inline LJFObject *newInt(LJFObject *env, LJFObject *tmp, uint64_t i)
 {
     auto Int_class = ljf_get_object_from_environment(env, "Int");
     auto Int_class_env = ljf_get_object_from_hidden_table(Int_class, "env");
@@ -195,4 +199,20 @@ static LJFObject *newInt(LJFObject *env, LJFObject *tmp, uint64_t i)
     ljf_set_object_to_table(args, "self", r);
     ljf_call_function(Int_init, Int_class_env, args);
     return r;
+}
+
+inline void add_func_obj_to_env(LJFObject *env, LJFObject *module_func_table, const char *func_name)
+{
+    auto func_id = ljf_get_function_id_from_function_table(module_func_table, func_name);
+    auto func_obj = ljf_new_object();
+    ljf_push_object_to_array(env, func_obj);
+    ljf_set_function_id_to_function_table(func_obj, "call", func_id);
+    ljf_set_object_to_hidden_table(func_obj, "env", env);
+    ljf_set_object_to_environment(env, func_name, func_obj);
+}
+
+inline void add_func_id_to_obj(LJFObject *obj, const char *func_name, LJFObject *module_func_table, const char *module_func_name)
+{
+    auto func_id = ljf_get_function_id_from_function_table(module_func_table, module_func_name);
+    ljf_set_function_id_to_function_table(obj, func_name, func_id);
 }

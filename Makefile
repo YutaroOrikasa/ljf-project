@@ -10,6 +10,8 @@ BUILD_DIR ?= build
 LIBLLVM_CXXFLAGS = -I/usr/local/opt/llvm/include
 LIBLLVM_LDFLAGS =  -L/usr/local/opt/llvm/lib -lLLVM
 
+BENCH_NAME ?=
+
 CFLAGS ?=
 CXXFLAGS ?=
 LDFLAGS ?=
@@ -69,7 +71,7 @@ $(BUILD_DIR)/%.cpp.ll: %.cpp
 .PHONY: run pprof-web clean print-source-files
 
 run: $(BUILD_DIR)/$(EXECUTABLE_FILE)
-	$(BUILD_DIR)/$(EXECUTABLE_FILE) "build/llcode/tarai.cpp.ll" "$(CXXFLAGS) $(LDFLAGS)"
+	$(BUILD_DIR)/$(EXECUTABLE_FILE) "build/llcode/$(BENCH_NAME).cpp.ll" "$(CXXFLAGS) $(LDFLAGS)"
 
 pprof-web:
 	# pprof --web build/main tmp/main.prof
