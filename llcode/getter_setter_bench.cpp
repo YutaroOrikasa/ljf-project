@@ -180,7 +180,7 @@ uint64_t direct_getter_setter_bench_ljf(LJFObject *env, uint64_t n)
     for (size_t i = 0; i < n; i++)
     {
         auto r = k + ljf_get_native_data(direct_getGS(env, G.get()).get());
-        setGS(env, S.get(), r);
+        direct_setGS(env, S.get(), r);
         auto tmp = G;
         G = S;
         S = tmp;
