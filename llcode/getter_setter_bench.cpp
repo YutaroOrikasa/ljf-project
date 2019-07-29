@@ -93,7 +93,7 @@ static ljf::ObjectHolder newGS(LJFObject *env, uint64_t v)
     return self;
 }
 
-static ljf::ObjectHolder getGS(LJFObject *env, LJFObject *gs)
+static ljf::ObjectHolder call_GS_get(LJFObject *env, LJFObject *gs)
 {
 
     auto args = ljf_new_object();
@@ -103,7 +103,7 @@ static ljf::ObjectHolder getGS(LJFObject *env, LJFObject *gs)
     return ljf_call_function(fid, env, args);
 }
 
-static void setGS(LJFObject *env, LJFObject *gs, uint64_t v)
+static void call_GS_set(LJFObject *env, LJFObject *gs, uint64_t v)
 {
 
     auto args = ljf_new_object();
@@ -124,14 +124,14 @@ uint64_t getter_setter_bench_ljf(LJFObject *env, uint64_t n)
 
     for (size_t i = 0; i < n; i++)
     {
-        auto r = k + ljf_get_native_data(getGS(env, G.get()).get());
-        setGS(env, S.get(), r);
+        auto r = k + ljf_get_native_data(call_GS_get(env, G.get()).get());
+        call_GS_set(env, S.get(), r);
         auto tmp = G;
         G = S;
         S = tmp;
     }
 
-    return ljf_get_native_data(getGS(env, S.get()).get());
+    return ljf_get_native_data(call_GS_get(env, S.get()).get());
 }
 
 // ------------------- direct_call
@@ -189,6 +189,77 @@ uint64_t direct_getter_setter_bench_ljf(LJFObject *env, uint64_t n)
     return ljf_get_native_data(direct_getGS(env, S.get()).get());
 }
 
+// ------------------- direct_call_index_access
+namespace direct_call_index_access
+{
+
+LJFObject *GS_get(LJFObject *args, LJFObject *tmp)
+{
+    // auto self = ljf_get_object_from_table(args, "self");
+    auto self = ljf_internal_get_object_by_index(args, 0);
+    // auto v_ = ljf_get_object_from_table(self, "_value");
+    auto v = ljf_internal_get_object_by_index(self, 1);
+    // assert(v == v_);
+    return v;
+}
+
+LJFObject *GS_set(LJFObject *args, LJFObject *tmp)
+{
+    // auto self = ljf_get_object_from_table(args, "self");
+    auto self = ljf_internal_get_object_by_index(args, 0);
+    // auto v = ljf_get_object_from_table(args, "v");
+    auto v = ljf_internal_get_object_by_index(args, 1);
+    // assert(v);
+    // ljf_set_object_to_table(self, "_value", v);
+    ljf_internal_set_object_by_index(self, 1, v);
+    return ljf_undefined;
+}
+
+static ljf::ObjectHolder call_GS_get(LJFObject *env, LJFObject *gs)
+{
+
+    auto args = ljf_new_object();
+    ljf::ObjectHolder args_h = args;
+    ljf_internal_resize_object_array_table_size(args, 1);
+    // ljf_set_object_to_table(args, "self", gs);
+    ljf_internal_set_object_by_index(args, 0, gs);
+    return GS_get(args, nullptr);
+}
+
+static void call_GS_set(LJFObject *env, LJFObject *gs, uint64_t v)
+{
+
+    auto args = ljf_new_object();
+    ljf::ObjectHolder args_h = args;
+    ljf_internal_resize_object_array_table_size(args, 2);
+    // ljf_set_object_to_table(args, "self", gs);
+    ljf_internal_set_object_by_index(args, 0, gs);
+    ljf::ObjectHolder v_h = ljf_new_object_with_native_data(v);
+    // ljf_set_object_to_table(args, "v", v_h.get());
+    ljf_internal_set_object_by_index(args, 1, v_h.get());
+    GS_set(args, nullptr);
+}
+uint64_t getter_setter_bench_ljf(LJFObject *env, uint64_t n)
+{
+    uint64_t k = 1;
+
+    auto G = newGS(env, 0);
+    auto S = newGS(env, 0);
+
+    for (size_t i = 0; i < n; i++)
+    {
+        auto r = k + ljf_get_native_data(call_GS_get(env, G.get()).get());
+        call_GS_set(env, S.get(), r);
+
+        auto tmp = G;
+        G = S;
+        S = tmp;
+    }
+
+    return ljf_get_native_data(direct_getGS(env, S.get()).get());
+}
+} // namespace direct_call_index_access
+
 template <typename F>
 void bench_ljf(const char *name, LJFObject *env, size_t n, const F &bench_fn)
 {
@@ -224,17 +295,20 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
         std::cout << "elapsed ms " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
     }
 
-    {
-        std::cout << "-- getter_setter_bench_ljf --" << std::endl;
-        auto start = std::chrono::high_resolution_clock::now();
-        auto r = getter_setter_bench_ljf(env, n);
-        auto end = std::chrono::high_resolution_clock::now();
-        auto elapsed = end - start;
-        std::cout << "getter_setter_bench_ljf(" << n << ") = " << r << std::endl;
-        std::cout << "elapsed ms " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
-    }
+    // {
+    //     std::cout << "-- getter_setter_bench_ljf --" << std::endl;
+    //     auto start = std::chrono::high_resolution_clock::now();
+    //     auto r = getter_setter_bench_ljf(env, n);
+    //     auto end = std::chrono::high_resolution_clock::now();
+    //     auto elapsed = end - start;
+    //     std::cout << "getter_setter_bench_ljf(" << n << ") = " << r << std::endl;
+    //     std::cout << "elapsed ms " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
+    // }
 
+    bench_ljf("direct_call_index_access::getter_setter_bench_ljf", env, n, direct_call_index_access::getter_setter_bench_ljf);
     bench_ljf("direct_getter_setter_bench_ljf", env, n, direct_getter_setter_bench_ljf);
+    bench_ljf("getter_setter_bench_ljf", env, n, getter_setter_bench_ljf);
+    std::cout << "-------------" << std::endl;
 
     return env;
 }
