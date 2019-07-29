@@ -125,7 +125,7 @@ public:
             elem_ref = value;
         }
         // assert(value != 0);
-        assert(value);
+        // assert(value);
 
         increment_ref_count(value);
 
@@ -191,7 +191,7 @@ public:
             std::lock_guard lk{mutex_};
             array_.push_back(value);
         }
-        assert(value); // DEBUG
+        // assert(value); // DEBUG
         increment_ref_count(value);
     }
 
@@ -471,6 +471,11 @@ private:
 public:
     void hold_returned_object(Object *obj)
     {
+        if (obj == returned_object_)
+        {
+            return;
+        }
+        
         decrement_ref_count(returned_object_);
         returned_object_ = obj;
         increment_ref_count(obj);
@@ -793,7 +798,9 @@ Object *ljf_call_function(FunctionId function_id, Environment *env, Object *arg)
 
     FunctionPtr func_ptr = func_data.naive_function;
     TemporaryStorage tmp;
+
     auto ret = func_ptr(callee_env.get(), &tmp);
+
     thread_local_root->hold_returned_object(ret);
 
     // std::cout << "END " << func_data.naive_llvm_function->getName().str() << "\n";
