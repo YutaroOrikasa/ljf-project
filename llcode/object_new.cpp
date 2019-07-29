@@ -26,4 +26,6 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
         auto elapsed = end - start;
         std::cout << "elapsed ms " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
     }
+
+    return env;
 }

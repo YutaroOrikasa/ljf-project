@@ -197,7 +197,7 @@ void bench_ljf(const char *name, LJFObject *env, size_t n, const F &bench_fn)
     auto r = bench_fn(env, n);
     auto end = std::chrono::high_resolution_clock::now();
     auto elapsed = end - start;
-    std::cout << name << "(" << n << ") = " << n << std::endl;
+    std::cout << name << "(" << n << ") = " << r << std::endl;
     std::cout << "elapsed ms " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
 }
 
@@ -220,7 +220,7 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
         auto r = getter_setter_bench(n);
         auto end = std::chrono::high_resolution_clock::now();
         auto elapsed = end - start;
-        std::cout << "getter_setter_bench(" << n << ") = " << n << std::endl;
+        std::cout << "getter_setter_bench(" << n << ") = " << r << std::endl;
         std::cout << "elapsed ms " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
     }
 
@@ -230,7 +230,7 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
         auto r = getter_setter_bench_ljf(env, n);
         auto end = std::chrono::high_resolution_clock::now();
         auto elapsed = end - start;
-        std::cout << "getter_setter_bench_ljf(" << n << ") = " << n << std::endl;
+        std::cout << "getter_setter_bench_ljf(" << n << ") = " << r << std::endl;
         std::cout << "elapsed ms " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
     }
 

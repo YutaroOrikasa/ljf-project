@@ -244,4 +244,6 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
         std::cout << "tarai(" << x << ", " << y << ", " << z << ") = " << r << std::endl;
         std::cout << "elapsed ms (native) " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
     }
+
+    return env;
 }

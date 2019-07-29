@@ -13,7 +13,6 @@
 
 #include "common.hpp"
 
-
 class BigInt
 {
 private:
@@ -177,7 +176,7 @@ public:
         return out;
     }
 
-    size_t big_size() const 
+    size_t big_size() const
     {
         return big_values_.size();
     }
@@ -339,7 +338,7 @@ extern "C"
         {
             const auto tmp_arg0 = ljf_new_object();
             ljf_push_object_to_array(tmp, tmp_arg0);
-            
+
             auto n = ljf_get_object_from_environment(env, "n");
             ljf_set_object_to_table(tmp_arg0, "a", n);
             ljf_set_object_to_table(tmp_arg0, "b", const0);
@@ -528,39 +527,38 @@ extern "C"
         }
         return f_n2;
     }
+} // extern "C"
 
-    std::shared_ptr<BigInt> fibo_loop_big_int(uint64_t n)
+std::shared_ptr<BigInt> fibo_loop_big_int(uint64_t n)
+{
+    auto f_n1 = std::make_shared<BigInt>(1);
+    auto f_n0 = std::make_shared<BigInt>(0);
+
+    if (n == 0)
     {
-        auto f_n1 = std::make_shared<BigInt>(1);
-        auto f_n0 = std::make_shared<BigInt>(0);
-
-        if (n == 0)
-        {
-            return f_n0;
-        }
-
-        if (n == 1)
-        {
-            return f_n1;
-        }
-        uint64_t k = 1;
-        auto f_n2 = std::make_shared<BigInt>(0);
-
-        while (k < n)
-        {
-            // std::cout << "lhs=" << *f_n0 << " + rhs=" << *f_n1 << "\n";
-            f_n2.reset(f_n0->add(f_n1.get()));
-            // std::cout << "result=" << *f_n2 << "\n";
-            // f_n2->dump(std::cout);
-            f_n0 = f_n1;
-            f_n1 = f_n2;
-            k++;
-            // std::cout << "k=" << k << ": " << *f_n2 << std::endl;
-        }
-        return f_n2;
+        return f_n0;
     }
 
-} // extern "C"
+    if (n == 1)
+    {
+        return f_n1;
+    }
+    uint64_t k = 1;
+    auto f_n2 = std::make_shared<BigInt>(0);
+
+    while (k < n)
+    {
+        // std::cout << "lhs=" << *f_n0 << " + rhs=" << *f_n1 << "\n";
+        f_n2.reset(f_n0->add(f_n1.get()));
+        // std::cout << "result=" << *f_n2 << "\n";
+        // f_n2->dump(std::cout);
+        f_n0 = f_n1;
+        f_n1 = f_n2;
+        k++;
+        // std::cout << "k=" << k << ": " << *f_n2 << std::endl;
+    }
+    return f_n2;
+}
 
 extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
 {

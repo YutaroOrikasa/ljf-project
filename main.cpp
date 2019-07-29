@@ -14,7 +14,7 @@
 #include <llvm/Support/Path.h>
 #include <llvm/ADT/SmallString.h>
 
-#include <google/profiler.h>
+#include <gperftools/profiler.h>
 
 #include <iostream>
 #include <map>

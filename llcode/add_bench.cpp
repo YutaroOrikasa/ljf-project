@@ -163,4 +163,6 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
         std::cout << "add_bench(" << n << ") = " << ljf_get_native_data(r) << std::endl;
         std::cout << "elapsed ms " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
     }
+
+    return env;
 }
