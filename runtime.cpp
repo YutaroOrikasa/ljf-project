@@ -115,30 +115,24 @@ public:
     {
 
         auto &table = (visiblity == visible) ? hash_table_ : hidden_table_;
-        Object *old_value = nullptr;
+
+        size_t index;
         {
             std::lock_guard lk{mutex_};
-            if (table.count(key))
+            if (!table.count(key))
             {
-                size_t index = table.at(key);
-
-                Object *&elem_ref = array_table_.at(index);
-                old_value = elem_ref;
-                elem_ref = value;
+                index = array_table_new_index();
+                table[key] = index;
             }
             else
             {
-                size_t index = array_table_.size();
-                array_table_.push_back(value);
-                table[key] = index;
+                index = table.at(key);
             }
         }
         // assert(value != 0);
         // assert(value);
 
-        increment_ref_count(value);
-
-        decrement_ref_count(old_value);
+        array_table_set_index(index, value);
     }
     Object *get_object_from_table(TableVisiblity visiblity, const char *key)
     {
@@ -157,6 +151,36 @@ public:
     void set_function_id(const std::string &key, FunctionId function_id)
     {
         function_id_table_.insert_or_assign(key, function_id);
+    }
+
+    Object *&array_table_get_index(uint64_t index)
+    {
+        return array_table_[index];
+    }
+
+    Object *&array_table_set_index(uint64_t index, Object *value)
+    {
+        increment_ref_count(value);
+        decrement_ref_count(array_table_[index]);
+        return array_table_[index] = value;
+    }
+
+    uint64_t array_table_new_index()
+    {
+        uint64_t index = array_table_.size();
+        array_table_.push_back(ljf_undefined);
+        return index;
+    }
+
+    void array_table_reserve(uint64_t size)
+    {
+        throw ljf::runtime_error("unsupported operation");
+        // array_table_.reserve(size);
+    }
+
+    void array_table_resize(uint64_t size)
+    {
+        array_table_.resize(size);
     }
 
     void lock()
@@ -290,6 +314,8 @@ void increment_ref_count(Object *obj)
 
 void decrement_ref_count(Object *obj)
 {
+    // std::cerr << "decrement_ref_count() obj: " << obj << std::endl;
+
     if (!obj)
     {
         return;
@@ -345,6 +371,7 @@ ObjectHolder &ObjectHolder::operator=(ObjectHolder &&other) noexcept
 
 ObjectHolder::~ObjectHolder()
 {
+    // std::cerr << "ObjectHolder::~ObjectHolder() this: " << this << ", obj_: " << obj_ << std::endl;
     decrement_ref_count(obj_);
 }
 
@@ -875,4 +902,26 @@ void ljf_set_object_to_environment(Environment *env, const char *key, Object *va
 FunctionId ljf_register_native_function(Object *(*fn)(Environment *, TemporaryStorage *))
 {
     return function_table.add_native(fn);
+}
+
+// ----- internal -----
+
+LJFObject *ljf_internal_get_object_by_index(LJFObject *obj, uint64_t index)
+{
+    return obj->array_table_get_index(index);
+}
+
+void ljf_internal_set_object_by_index(LJFObject *obj, uint64_t index, LJFObject *value)
+{
+    obj->array_table_set_index(index, value);
+}
+
+void ljf_internal_reserve_object_array_table_size(LJFObject *obj, uint64_t size)
+{
+    obj->array_table_reserve(size);
+}
+
+void ljf_internal_resize_object_array_table_size(LJFObject *obj, uint64_t size)
+{
+    obj->array_table_resize(size);
 }

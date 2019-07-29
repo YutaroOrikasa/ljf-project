@@ -69,3 +69,11 @@ namespace ljf::internal
 
     ObjectHolder create_environment(bool prepare_0th_frame=true);
 }
+
+extern "C"
+{
+    LJFObject *ljf_internal_get_object_by_index(LJFObject *obj, uint64_t index);
+    void ljf_internal_set_object_by_index(LJFObject *obj, uint64_t index, LJFObject *value);
+    void ljf_internal_reserve_object_array_table_size(LJFObject *obj, uint64_t size);
+    void ljf_internal_resize_object_array_table_size(LJFObject *obj, uint64_t size);
+}
