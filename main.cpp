@@ -27,6 +27,19 @@
 
 using namespace ljf;
 
+bool verbose = false;
+auto &verbs()
+{
+    if (verbose)
+    {
+        return llvm::errs();
+    }
+    else
+    {
+        return llvm::nulls();
+    }
+}
+
 struct SmallString : llvm::SmallString<32>
 {
     SmallString() = default;
@@ -68,14 +81,14 @@ int main(int argc, const char **argv)
 
     for (auto &func : module->functions())
     {
-        llvm::errs() << "*** begin registering function"
+        verbs() << "*** begin registering function"
                      << "\n";
         const auto name = func.getName();
 
         if (name == "main")
         {
             // skip main()
-            llvm::errs() << "*** skip " << name << ": "
+            verbs() << "*** skip " << name << ": "
                          << *func.getFunctionType()
                          << "\n";
             continue;
@@ -84,7 +97,7 @@ int main(int argc, const char **argv)
         if (name == "module_main")
         {
             // skip module_main()
-            llvm::errs() << "*** skip " << name << ": "
+            verbs() << "*** skip " << name << ": "
                          << *func.getFunctionType()
                          << "\n";
             continue;
@@ -93,13 +106,13 @@ int main(int argc, const char **argv)
         if (func.isDeclaration())
         {
             // skip declare ty @func(ty...)
-            llvm::errs() << "*** skip declaration of " << name << ": "
+            verbs() << "*** skip declaration of " << name << ": "
                          << *func.getFunctionType()
                          << "\n";
             continue;
         }
 
-        llvm::errs() << "registering " << name << ": ";
+        verbs() << "registering " << name << ": ";
 
         auto id = ljf::register_llvm_function(&func);
         func_to_register[id] = &func;
@@ -107,7 +120,7 @@ int main(int argc, const char **argv)
 
         // func.setLinkage(llvm::GlobalValue::LinkageTypes::InternalLinkage);
 
-        llvm::errs() << "*** end registering function"
+        verbs() << "*** end registering function"
                      << "\n";
     } // end for
 

@@ -329,8 +329,10 @@ void decrement_ref_count(Object *obj)
         obj->unlock();
         delete obj;
 
-        assert(allocated_memory_size >= sizeof(Object));
-        allocated_memory_size -= sizeof(Object);
+        // Commented out for experimentation.
+        //
+        // assert(allocated_memory_size >= sizeof(Object));
+        // allocated_memory_size -= sizeof(Object);
         return;
     }
     obj->unlock();

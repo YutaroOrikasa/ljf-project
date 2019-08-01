@@ -28,7 +28,8 @@ def getter_setter_bench(n):
 
 if __name__ == "__main__":
 
-    n = 1 << 23
+    # n = 1 << 23
+    n = 1 << 20
     now = time.perf_counter
     start = now()
     r = getter_setter_bench(n)
