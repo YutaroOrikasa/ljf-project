@@ -226,23 +226,24 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
 
     {
         std::cout << "-- tarai_ljf --" << std::endl;
-        auto args = ljf_new_object();
-        ljf_push_object_to_array(env, args);
-        ljf_set_object_to_table(args, "x", newInt(env, env, x));
-        ljf_set_object_to_table(args, "y", newInt(env, env, y));
-        ljf_set_object_to_table(args, "z", newInt(env, env, z));
-        mygperf::ProfilerStart("tmp/tarai-ljf.prof");
-        auto start = std::chrono::high_resolution_clock::now();
-        auto tarai_ljf_obj = ljf_get_object_from_environment(env, "tarai_ljf");
-        auto tarai_ljf_env = ljf_get_object_from_table(tarai_ljf_obj, "env");
-        auto tarai_ljf = ljf_get_function_id_from_function_table(tarai_ljf_obj, "call");
-        auto r = ljf_call_function(tarai_ljf, tarai_ljf_env, args);
-        ljf_push_object_to_array(env, r);
-        auto end = std::chrono::high_resolution_clock::now();
-        mygperf::ProfilerStop();
-        auto elapsed = end - start;
-        std::cout << "tarai(" << x << ", " << y << ", " << z << ") = " << r << std::endl;
-        std::cout << "elapsed ms (native) " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
+        std::cout << "tarai_ljf is omitted: will occur stack overflow and crash" << std::endl;
+        // auto args = ljf_new_object();
+        // ljf_push_object_to_array(env, args);
+        // ljf_set_object_to_table(args, "x", newInt(env, env, x));
+        // ljf_set_object_to_table(args, "y", newInt(env, env, y));
+        // ljf_set_object_to_table(args, "z", newInt(env, env, z));
+        // mygperf::ProfilerStart("tmp/tarai-ljf.prof");
+        // auto start = std::chrono::high_resolution_clock::now();
+        // auto tarai_ljf_obj = ljf_get_object_from_environment(env, "tarai_ljf");
+        // auto tarai_ljf_env = ljf_get_object_from_table(tarai_ljf_obj, "env");
+        // auto tarai_ljf = ljf_get_function_id_from_function_table(tarai_ljf_obj, "call");
+        // auto r = ljf_call_function(tarai_ljf, tarai_ljf_env, args);
+        // ljf_push_object_to_array(env, r);
+        // auto end = std::chrono::high_resolution_clock::now();
+        // mygperf::ProfilerStop();
+        // auto elapsed = end - start;
+        // std::cout << "tarai(" << x << ", " << y << ", " << z << ") = " << r << std::endl;
+        // std::cout << "elapsed ms (native) " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
     }
 
     return env;
