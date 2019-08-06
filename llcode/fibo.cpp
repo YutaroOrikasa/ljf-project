@@ -613,7 +613,8 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
             mygperf::ProfilerStart("tmp/fibo-ljf.prof");
             auto start = std::chrono::system_clock::now();
             auto fn = ljf_get_function_id_from_function_table(module_func_table, "fibo_loop_ljf");
-            r = ljf_call_function(fn, env, ljf_new_object());
+            ljf::ObjectHolder arg = ljf_new_object();
+            r = ljf_call_function(fn, env, arg.get());
             auto end = std::chrono::system_clock::now();
             mygperf::ProfilerStop();
             auto elapsed = end - start;
@@ -638,6 +639,7 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
     catch (const std::exception &e)
     {
         std::cerr << e.what() << "\n";
+        throw e;
         return ljf_undefined;
     }
     catch (...)

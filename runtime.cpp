@@ -248,7 +248,8 @@ public:
 
     ~Object()
     {
-        // std::cout << "~Object() " << this << " dump\n";
+        // std::cout << "~Object() " << this << "\n";
+        // std::cout << " dump\n";
         // dump();
 
         for (auto &&obj : array_table_)
@@ -267,6 +268,7 @@ public:
 
     void dump()
     {
+        std::cout << this << ":\n";
         std::cout << "{\n";
         std::cout << "    {\n";
         for (auto &&[key, value] : hash_table_)
