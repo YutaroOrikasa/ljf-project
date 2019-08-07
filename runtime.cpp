@@ -94,6 +94,17 @@ public:
     Object &operator=(const Object &) = delete;
     Object &operator=(Object &&) = delete;
 
+    void swap(Object &other)
+    {
+        std::scoped_lock lk{*this, other};
+        type_object_.swap(other.type_object_);
+        hash_table_.swap(other.hash_table_);
+        hidden_table_.swap(other.hidden_table_);
+        array_table_.swap(other.array_table_);
+        array_.swap(other.array_);
+        function_id_table_.swap(other.function_id_table_);
+    }
+
     Object *get(const std::string &key)
     {
         std::lock_guard lk{mutex_};
@@ -186,6 +197,11 @@ public:
     void lock()
     {
         mutex_.lock();
+    }
+
+    bool try_lock()
+    {
+        return mutex_.try_lock();
     }
 
     void unlock()
@@ -647,7 +663,7 @@ namespace ljf::internal
 {
 
 ObjectHolder
-create_environment(bool prepare_0th_frame /*=true*/)
+create_environment(Object *arg)
 {
 
     ObjectHolder env = ljf_new_object();
@@ -655,12 +671,32 @@ create_environment(bool prepare_0th_frame /*=true*/)
     auto env_maps = ljf_new_object();
     ljf_set_object_to_hidden_table(env.get(), "ljf.env.maps", env_maps);
 
-    if (prepare_0th_frame)
+    if (arg)
     {
+        auto local_env = ljf_new_object();
+        local_env->swap(*arg);
+        // arg is now empty
+
         // set maps[0]
-        ljf_push_object_to_array(env_maps, ljf_new_object());
+        ljf_push_object_to_array(env_maps, local_env);
     }
     return env;
+}
+
+
+ObjectHolder
+create_environment(bool prepare_0th_frame /*=true*/)
+{
+
+    if (prepare_0th_frame)
+    {
+        ObjectHolder arg = ljf_new_object();
+        return create_environment(arg.get());
+    }
+    else
+    {
+        return create_environment(nullptr);
+    }
 }
 } // namespace ljf::internal
 
@@ -675,14 +711,9 @@ namespace
 ObjectHolder
 create_callee_environment(Environment *parent, Object *arg)
 {
-    auto callee_env = internal::create_environment(bool(arg));
+    // Prepare callee local env and set arguments into the local env.
+    auto callee_env = internal::create_environment(arg);
     auto callee_env_maps = ljf_get_object_from_hidden_table(callee_env.get(), "ljf.env.maps");
-
-    if (arg)
-    {
-        // set maps[1]
-        ljf_push_object_to_array(callee_env_maps, arg);
-    }
 
     if (!parent)
     {
@@ -696,7 +727,7 @@ create_callee_environment(Environment *parent, Object *arg)
         return callee_env;
     }
 
-    // set maps[2:]
+    // set maps[1:]
     // parent_env_maps->dump();
     for (size_t i = 0; i < parent_env_maps->array_size(); i++)
     {
