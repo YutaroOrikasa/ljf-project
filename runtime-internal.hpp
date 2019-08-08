@@ -10,7 +10,6 @@ namespace llvm
 
 namespace ljf
 {
-    LJFFunctionId register_llvm_function(llvm::Function* f);
 
     class ObjectHolder {
         Object *obj_ = nullptr;
@@ -72,6 +71,8 @@ namespace ljf::internal
 
 extern "C"
 {
+    LJFFunctionId ljf_internal_register_llvm_function(llvm::Function* f);
+
     LJFObject *ljf_internal_get_object_by_index(LJFObject *obj, uint64_t index);
     void ljf_internal_set_object_by_index(LJFObject *obj, uint64_t index, LJFObject *value);
     void ljf_internal_reserve_object_array_table_size(LJFObject *obj, uint64_t size);

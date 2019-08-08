@@ -640,12 +640,12 @@ struct ThreadLocalRootEraser
 };
 thread_local ThreadLocalRootEraser eraser;
 
-} // namespace
 
 FunctionId register_llvm_function(llvm::Function *f)
 {
     return function_table.add_llvm(f);
 }
+} // namespace
 
 void check_not_null(const Object *obj)
 {
@@ -937,9 +937,27 @@ void ljf_set_object_to_environment(Environment *env, const char *key, Object *va
 FunctionId ljf_register_native_function(Object *(*fn)(Environment *, TemporaryStorage *))
 {
     return function_table.add_native(fn);
+
+}
+
+LJFObject *ljf_wrap_c_str(const char *str)
+{
+    static_assert(sizeof(str) <= sizeof(uint64_t));
+    ObjectHolder wrapper = ljf_new_object_with_native_data(reinterpret_cast<uint64_t>(str));
+
+    // TODO: set attribute = constant
+    ljf_set_object_to_table(wrapper.get(), "length", ljf_new_object_with_native_data(strlen(str)));
+
+    thread_local_root->hold_returned_object(wrapper.get());
+    return wrapper.get();
 }
 
 // ----- internal -----
+
+LJFFunctionId ljf_internal_register_llvm_function(llvm::Function* f)
+{
+    return ljf::register_llvm_function(f);
+}
 
 LJFObject *ljf_internal_get_object_by_index(LJFObject *obj, uint64_t index)
 {

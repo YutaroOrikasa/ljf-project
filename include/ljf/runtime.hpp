@@ -52,4 +52,6 @@ extern "C" {
 
     size_t ljf_array_size(LJFObject* obj);
     LJFObject* ljf_get_object_from_array(LJFObject* obj, size_t index);
+
+    LJFObject *ljf_wrap_c_str(const char *str);
 }
