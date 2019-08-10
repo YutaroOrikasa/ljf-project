@@ -16,6 +16,7 @@
 #include <iostream>
 
 #include "ljf/ljf.hpp"
+#include <ljf/runtime.hpp>
 #include "runtime-internal.hpp"
 
 using namespace std::literals::string_literals;
@@ -34,14 +35,8 @@ struct SmallString : llvm::SmallString<32>
 };
 } // namespace
 
-namespace
-{
-constexpr auto DLOPEN_LJF_RUNTIME_FLAGS = RTLD_LAZY | RTLD_GLOBAL;
-} // namespace
-
 namespace ljf
 {
-
 namespace
 {
 llvm::LLVMContext llvm_context;
@@ -54,7 +49,6 @@ struct Context
 };
 // set by ljf::initialize()
 std::unique_ptr<Context> context = nullptr;
-LJFFunctionId (*register_llvm_function)(llvm::Function *f);
 
 void check_context_initialized()
 {
@@ -76,37 +70,6 @@ auto &verbs()
         return llvm::nulls();
     }
 }
-void load_ljf_runtime(const std::string &runtime_filename)
-{
-    // try finding runtime symbol in this program
-    auto this_program_handle = dlopen(NULL, RTLD_LAZY);
-    if (!this_program_handle)
-    {
-        throw std::runtime_error(std::string("dlopen(NULL, RTLD_LAZY) failed: ") + dlerror());
-    }
-    auto register_llvm_function_addr = dlsym(this_program_handle, "ljf_internal_register_llvm_function");
-    if (register_llvm_function_addr)
-    {
-        throw std::logic_error("ljf::initialize(): ljf runtime already loaded."
-                               " ljf runtime must not be linked to your program. "
-                               " ljf runtime must be loaded by dlopen() in ljf::initialize().");
-        register_llvm_function = reinterpret_cast<decltype(register_llvm_function)>(register_llvm_function_addr);
-    }
-    else
-    {
-        auto rt_handle = dlopen(runtime_filename.c_str(), DLOPEN_LJF_RUNTIME_FLAGS);
-        if (!rt_handle)
-        {
-            throw std::invalid_argument("dlopen ljf runtime \"" + runtime_filename + "\" failed (dlopen): " + dlerror());
-        }
-        auto register_llvm_function_addr = dlsym(rt_handle, "ljf_internal_register_llvm_function");
-        if (!register_llvm_function_addr)
-        {
-            throw std::runtime_error("internal runtime function not found (dlsym): "s + dlerror());
-        }
-        register_llvm_function = reinterpret_cast<decltype(register_llvm_function)>(register_llvm_function_addr);
-    }
-}
 } // namespace
 
 void initialize(const CompilerMap &compiler_map, const std::string &ljf_tmpdir, const std::string &runtime_filename)
@@ -117,10 +80,6 @@ void initialize(const CompilerMap &compiler_map, const std::string &ljf_tmpdir, 
     }
 
     context = std::make_unique<Context>(Context{compiler_map, ljf_tmpdir, runtime_filename});
-
-    load_ljf_runtime(runtime_filename);
-
-    assert(register_llvm_function);
 
     // remove ljf_tmpdir
     if (auto err_code = llvm::sys::fs::remove_directories(context->ljf_tmpdir))
@@ -188,7 +147,7 @@ int start_entry_point_of_source(const std::string &language, const std::string &
 
         verbs() << "registering " << name << ": ";
 
-        auto id = register_llvm_function(&func);
+        auto id = ljf_internal_register_llvm_function(&func);
         func_to_register[id] = &func;
         ljf_set_function_id_to_function_table(module_func_table.get(), func.getName().data(), id);
 
@@ -345,13 +304,23 @@ extern "C"
 {
     void ljf_internal_initialize(const CompilerMap &compiler_map, const std::string &ljf_tmpdir, const std::string &runtime_filename)
     {
+        ljf::initialize(compiler_map, ljf_tmpdir,runtime_filename);
     }
 
     int ljf_internal_start_entry_point(ljf_main_t ljf_main,
                                        const std::string &language, const std::string &source_path,
                                        int argc, const char **argv)
     {
-        return 1;
+        if (ljf_main)
+        {
+            throw std::runtime_error("Not implemented");
+        }
+        else
+        {
+            return ljf::start_entry_point_of_source(language,source_path, argc, argv);
+        }
+        
+        
     }
 } // extern "C"
 

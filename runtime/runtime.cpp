@@ -934,11 +934,11 @@ void ljf_set_object_to_environment(Environment *env, const char *key, Object *va
     ljf_set_object_to_table(map0, key, value);
 }
 
-// FunctionId ljf_register_native_function(Object *(*fn)(Environment *, TemporaryStorage *))
-// {
-//     return function_table.add_native(fn);
+FunctionId ljf_register_native_function(Object *(*fn)(Environment *, TemporaryStorage *))
+{
+    return function_table.add_native(fn);
 
-// }
+}
 
 LJFObject *ljf_wrap_c_str(const char *str)
 {
