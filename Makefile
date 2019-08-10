@@ -37,12 +37,12 @@ INCLUDE_FLAGS := $(INCLUDE_PATHS:%=-I%)
 override CFLAGS += -Wall $(INCLUDE_FLAGS) $(_DEP_FLAGS)
 override CXXFLAGS += -Wall -std=c++17 $(INCLUDE_FLAGS) $(_DEP_FLAGS)
 
-all:$(BUILD_DIR)/$(EXECUTABLE_FILE)
+all:$(BUILD_DIR)/$(EXECUTABLE_FILE) $(BUILD_DIR)/runtime.so
 
 # link
-$(BUILD_DIR)/$(EXECUTABLE_FILE): $(OBJECT_FILES) $(LL_FILES) $(BUILD_DIR)/runtime/runtime.so
+$(BUILD_DIR)/$(EXECUTABLE_FILE): $(OBJECT_FILES) $(LL_FILES)
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(LDFLAGS) $(OBJECT_FILES) $(BUILD_DIR)/runtime/runtime.so -o $@
+	$(CXX) $(LDFLAGS) $(OBJECT_FILES) -o $@
 
 # runtime.so
 $(BUILD_DIR)/runtime/runtime.so: $(RUNTIME_SOURCE_FILES:%=$(BUILD_DIR)/%.o)
