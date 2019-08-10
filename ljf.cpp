@@ -122,15 +122,18 @@ void initialize(const CompilerMap &compiler_map, const std::string &ljf_tmpdir, 
 
     assert(register_llvm_function);
 
-    // // remove ljf_tmpdir
-    // if (auto err_code = llvm::sys::fs::remove_directories(context->ljf_tmpdir))
-    // {
-    //     throw std::system_error(err_code, "remove ljf tmpdir \"" + context->ljf_tmpdir + "\" failed");
-    // }
+    // remove ljf_tmpdir
+    if (auto err_code = llvm::sys::fs::remove_directories(context->ljf_tmpdir))
+    {
+        throw std::system_error(err_code, "remove ljf tmpdir \"" + context->ljf_tmpdir + "\" failed");
+    }
 
     // create ljf_tmpdir
+    // for security,
+    //      - fail if ljf_tmpdir exists (ljf_tmpdir should be removed above)
+    //      - permission is 700
     if (auto err_code = llvm::sys::fs::create_directories(context->ljf_tmpdir,
-                                                          /* IgnoreExisting */ true,
+                                                          /* IgnoreExisting */ false,
                                                           llvm::sys::fs::perms::owner_all))
     {
         throw std::system_error(err_code, "create ljf tmpdir \"" + context->ljf_tmpdir + "\" failed");
