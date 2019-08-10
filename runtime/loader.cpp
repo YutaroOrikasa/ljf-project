@@ -351,14 +351,12 @@ extern "C"
                                        const std::string &language, const std::string &source_path,
                                        int argc, const char **argv)
     {
+        return 1;
     }
 } // extern "C"
 
-// check function prototype
-void ljf_check_dummy_func()
+namespace ljf::internal::check
 {
     ljf_internal_initialize_t f1 = ljf_internal_initialize;
-    (void) f1;
     ljf_internal_start_entry_point_t f2 = ljf_internal_start_entry_point;
-    (void) f2;
-}
+} // namespace ljf::internal::check

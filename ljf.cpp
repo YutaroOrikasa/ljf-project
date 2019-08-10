@@ -18,6 +18,7 @@ constexpr auto DLOPEN_LJF_RUNTIME_FLAGS = RTLD_LAZY | RTLD_GLOBAL;
 namespace ljf
 {
 static ljf_internal_initialize_t ljf_internal_initialize;
+static ljf_internal_start_entry_point_t ljf_internal_start_entry_point;
 
 static void load_ljf_runtime(const std::string &runtime_filename)
 {
@@ -33,7 +34,6 @@ static void load_ljf_runtime(const std::string &runtime_filename)
         throw std::logic_error("ljf::initialize(): ljf runtime already loaded."
                                " ljf runtime must not be linked to your program. "
                                " ljf runtime must be loaded by dlopen() in ljf::initialize().");
-        ljf_internal_initialize = reinterpret_cast<ljf_internal_initialize_t>(ljf_internal_initialize_addr);
     }
     else
     {
@@ -48,6 +48,13 @@ static void load_ljf_runtime(const std::string &runtime_filename)
             throw std::runtime_error("internal runtime function not found (dlsym): "s + dlerror());
         }
         ljf_internal_initialize = reinterpret_cast<ljf_internal_initialize_t>(ljf_internal_initialize_addr);
+
+        auto ljf_internal_start_entry_point_addr = dlsym(rt_handle, "ljf_internal_start_entry_point");
+        if (!ljf_internal_start_entry_point_addr)
+        {
+            throw std::runtime_error("internal runtime function not found (dlsym): "s + dlerror());
+        }
+        ljf_internal_start_entry_point = reinterpret_cast<ljf_internal_start_entry_point_t>(ljf_internal_start_entry_point_addr);
     }
 }
 
@@ -58,5 +65,11 @@ void initialize(const CompilerMap &compiler_map, const std::string &ljf_tmpdir, 
     assert(ljf_internal_initialize);
 
     ljf_internal_initialize(compiler_map, ljf_tmpdir, runtime_filename);
+}
+
+int start_entry_point_of_source(const std::string &language, const std::string &source_path,
+                                int argc, const char **argv)
+{
+    return ljf_internal_start_entry_point(nullptr, language, source_path, argc, argv);
 }
 } // namespace ljf
