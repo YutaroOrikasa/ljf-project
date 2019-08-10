@@ -21,7 +21,8 @@ override LDFLAGS += $(LIBLLVM_LDFLAGS)
 
 # In shell function, escaping is needed sa same as shell script.
 SOURCE_FILES := $(shell find $(SOURCE_DIRS) \( -name \*.c -or -name \*.cpp \) -and -not -path ./llcode/\* \
-					-and -not -name runtime.cpp)
+					-and -not -path ./runtime/\*)
+RUNTIME_SOURCE_FILES := $(shell find $(SOURCE_DIRS)/runtime -name \*.c -or -name \*.cpp)
 LL_SOURCE_FILES := $(shell find $(SOURCE_DIRS) \( -name \*.c -or -name \*.cpp \) -and -path ./llcode/\*)
 
 # string replacement
@@ -44,7 +45,7 @@ $(BUILD_DIR)/$(EXECUTABLE_FILE): $(OBJECT_FILES) $(LL_FILES) $(BUILD_DIR)/runtim
 	$(CXX) $(LDFLAGS) $(OBJECT_FILES) $(BUILD_DIR)/runtime/runtime.so -o $@
 
 # runtime.so
-$(BUILD_DIR)/runtime/runtime.so: $(BUILD_DIR)/runtime/runtime.cpp.o
+$(BUILD_DIR)/runtime/runtime.so: $(RUNTIME_SOURCE_FILES:%=$(BUILD_DIR)/%.o)
 	mkdir -p $(@D)
 	$(CXX) $(LDFLAGS) -shared $^ -o $@
 

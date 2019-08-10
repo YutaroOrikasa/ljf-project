@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ljf/ljf.hpp>
 #include <ljf/runtime.hpp>
 
 namespace llvm
@@ -78,3 +79,14 @@ extern "C"
     void ljf_internal_reserve_object_array_table_size(LJFObject *obj, uint64_t size);
     void ljf_internal_resize_object_array_table_size(LJFObject *obj, uint64_t size);
 }
+
+namespace ljf
+{
+// called with dlopen and dlsym
+typedef void (*ljf_internal_initialize_t)(const CompilerMap &compiler_map, const std::string &ljf_tmpdir, const std::string &runtime_filename);
+typedef int (*ljf_internal_start_entry_point_t)(ljf_main_t ljf_main,
+                                       const std::string &language, const std::string &source_path,
+                                       int argc, const char **argv);
+} // namespace ljf
+
+
