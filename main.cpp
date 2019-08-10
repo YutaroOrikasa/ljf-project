@@ -24,7 +24,6 @@
 
 #include <ljf/runtime.hpp>
 #include <ljf/ljf.hpp>
-#include "./runtime-internal.hpp"
 
 using namespace ljf;
 

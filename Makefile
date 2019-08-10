@@ -39,12 +39,12 @@ override CXXFLAGS += -Wall -std=c++17 $(INCLUDE_FLAGS) $(_DEP_FLAGS)
 all:$(BUILD_DIR)/$(EXECUTABLE_FILE)
 
 # link
-$(BUILD_DIR)/$(EXECUTABLE_FILE): $(OBJECT_FILES) $(LL_FILES) $(BUILD_DIR)/runtime.so
+$(BUILD_DIR)/$(EXECUTABLE_FILE): $(OBJECT_FILES) $(LL_FILES) $(BUILD_DIR)/runtime/runtime.so
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(LDFLAGS) $(OBJECT_FILES) $(BUILD_DIR)/runtime.so -o $@
+	$(CXX) $(LDFLAGS) $(OBJECT_FILES) $(BUILD_DIR)/runtime/runtime.so -o $@
 
 # runtime.so
-$(BUILD_DIR)/runtime.so: $(BUILD_DIR)/runtime.cpp.o
+$(BUILD_DIR)/runtime/runtime.so: $(BUILD_DIR)/runtime/runtime.cpp.o
 	mkdir -p $(@D)
 	$(CXX) $(LDFLAGS) -shared $^ -o $@
 

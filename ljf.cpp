@@ -16,7 +16,7 @@
 #include <iostream>
 
 #include "ljf/ljf.hpp"
-#include "runtime-internal.hpp"
+#include "runtime/runtime-internal.hpp"
 
 using namespace std::literals::string_literals;
 

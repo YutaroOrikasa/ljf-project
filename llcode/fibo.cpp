@@ -9,7 +9,7 @@
 #include <gperftools/profiler.h>
 
 #include <ljf/runtime.hpp>
-#include "../runtime-internal.hpp"
+#include "../runtime/runtime-internal.hpp"
 
 #include "common.hpp"
 

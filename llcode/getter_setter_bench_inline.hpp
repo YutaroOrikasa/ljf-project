@@ -12,7 +12,7 @@
 #include <llvm/IR/Function.h>
 
 #include "ljf/runtime.hpp"
-#include "../runtime-internal.hpp"
+#include "../runtime/runtime-internal.hpp"
 
 static size_t allocated_memory_size;
 namespace ljf

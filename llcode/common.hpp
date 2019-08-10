@@ -5,7 +5,7 @@
 
 #include <ljf/runtime.hpp>
 
-#include "../runtime-internal.hpp"
+#include "../runtime/runtime-internal.hpp"
 
 namespace mygperf
 {
