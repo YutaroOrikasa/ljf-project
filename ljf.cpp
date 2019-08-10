@@ -106,7 +106,7 @@ void load_ljf_runtime(const std::string &runtime_filename)
         }
         register_llvm_function = reinterpret_cast<decltype(register_llvm_function)>(register_llvm_function_addr);
     }
-} // namespace
+}
 } // namespace
 
 void initialize(const CompilerMap &compiler_map, const std::string &ljf_tmpdir, const std::string &runtime_filename)
@@ -121,6 +121,12 @@ void initialize(const CompilerMap &compiler_map, const std::string &ljf_tmpdir, 
     load_ljf_runtime(runtime_filename);
 
     assert(register_llvm_function);
+
+    // // remove ljf_tmpdir
+    // if (auto err_code = llvm::sys::fs::remove_directories(context->ljf_tmpdir))
+    // {
+    //     throw std::system_error(err_code, "remove ljf tmpdir \"" + context->ljf_tmpdir + "\" failed");
+    // }
 
     // create ljf_tmpdir
     if (auto err_code = llvm::sys::fs::create_directories(context->ljf_tmpdir,
@@ -229,14 +235,19 @@ int start_entry_point_of_source(const std::string &language, const std::string &
         out << *module;
     }
 
-    SmallString output_bc_path;
+    std::string output_bc_dir = context->ljf_tmpdir + "/" + module->getModuleIdentifier();
+    if (auto err_code = llvm::sys::fs::create_directories(output_bc_dir))
     {
+        throw std::system_error(err_code);
+    }
 
-        if (auto err_code = llvm::sys::fs::createTemporaryFile("ljf-tmp", "bc", output_bc_path))
-        {
-            throw std::system_error(err_code);
-        }
+    SmallString output_bc_path;
+    if (auto err_code = llvm::sys::fs::createUniqueFile(output_bc_dir + "/ljf-%%-%%-%%-%%.bc", output_bc_path))
+    {
+        throw std::system_error(err_code);
+    }
 
+    {
         std::error_code EC;
         llvm::raw_fd_ostream out{output_bc_path, EC};
         if (EC)
