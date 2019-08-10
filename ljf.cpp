@@ -87,9 +87,9 @@ void load_ljf_runtime(const std::string &runtime_filename)
     auto register_llvm_function_addr = dlsym(this_program_handle, "ljf_internal_register_llvm_function");
     if (register_llvm_function_addr)
     {
-
-        std::cerr << "Warning: ljf::initialize(): ljf runtime already loaded, ignore runtime_filename=\"" << runtime_filename << "\""
-                  << "\n";
+        throw std::logic_error("ljf::initialize(): ljf runtime already loaded."
+        " ljf runtime must not be linked to your program. "
+        " ljf runtime must be loaded by dlopen() in ljf::initialize().");
         register_llvm_function = reinterpret_cast<decltype(register_llvm_function)>(register_llvm_function_addr);
     }
     else
