@@ -7,6 +7,7 @@
 #include <mutex>
 #include <algorithm>
 #include <stdexcept>
+#include <dlfcn.h>
 
 #include <llvm/IR/Function.h>
 
@@ -40,6 +41,17 @@ struct hash<ljf::TypeObject>
 };
 
 } // namespace std
+
+static struct RuntimeLoadedOnceCheck
+{
+    RuntimeLoadedOnceCheck()
+    {
+        auto this_program_handle = dlopen(NULL, RTLD_LAZY);
+        assert(this_program_handle);
+        auto fn_addr = dlsym(this_program_handle, "ljf_call_function");
+        assert(fn_addr == ljf_call_function);
+    }
+} runtime_loaded_once_check;
 
 static size_t allocated_memory_size;
 struct Done

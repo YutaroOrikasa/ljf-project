@@ -49,6 +49,7 @@ $(BUILD_DIR)/runtime.so: $(RUNTIME_SOURCE_FILES:%=$(BUILD_DIR)/%.o)
 	mkdir -p $(@D)
 	$(CXX) $(LDFLAGS) -shared $^ -o $@
 
+
 # C file
 $(BUILD_DIR)/%.c.o: %.c
 	mkdir -p $(@D)
@@ -71,10 +72,10 @@ $(BUILD_DIR)/%.cpp.ll: %.cpp
 
 .PHONY: run all-bench pprof-web clean print-source-files
 
-run: $(BUILD_DIR)/$(EXECUTABLE_FILE)
+run: all
 	$(BUILD_DIR)/$(EXECUTABLE_FILE) "build/llcode/$(BENCH_NAME).cpp.ll" "$(CXXFLAGS) $(LDFLAGS)"
 
-all-bench: $(BUILD_DIR)/$(EXECUTABLE_FILE)
+all-bench: all
 	BUILD_DIR="$(BUILD_DIR)" LL_FILES="$(LL_FILES)" FLAGS="$(CXXFLAGS) $(LDFLAGS)" ./all-bench.sh 
 
 pprof-web:
