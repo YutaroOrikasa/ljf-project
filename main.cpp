@@ -27,19 +27,6 @@
 
 using namespace ljf;
 
-bool verbose = false;
-auto &verbs()
-{
-    if (verbose)
-    {
-        return llvm::errs();
-    }
-    else
-    {
-        return llvm::nulls();
-    }
-}
-
 using namespace std::literals::string_literals;
 
 class LLVMAsmCompiler : public ljf::Compiler
@@ -65,14 +52,6 @@ int main(int argc, const char **argv)
 {
     std::vector<std::string> arg(argv, argv + argc);
     assert(arg.size() >= 2);
-    if (arg.size() == 2)
-    {
-        arg.push_back("");
-    }
-
-    auto clang_opt = arg[2];
-
-    std::cerr << "clang_opt: " << clang_opt << "\n";
 
     auto ljf_runtime_path = "build/runtime.so"s;
     auto input_ll_file = arg[1];
@@ -83,43 +62,5 @@ int main(int argc, const char **argv)
 
     ljf::initialize(compiler_map, "./tmp", ljf_runtime_path);
 
-    // auto input_ll_file_path_obj = std::filesystem::path(input_ll_file);
-
-    // auto output_bc_file = input_ll_file_path_obj.stem().string() + ".bc";
-
     return ljf::start_entry_point_of_source("llvm asm", input_ll_file, argc, argv);
-
-    // return ljf::start_entry_point_of_native_dynamic_library(output_so_path.str(), argc, argv);
-
-    // llvm::errs() << "HOGE\n";
-
-    // auto module_main_fptr = reinterpret_cast<LJFObject *(*)(LJFObject *, LJFObject *)>(0);
-    // auto env_holder = ljf::internal::create_environment();
-    // auto env = env_holder.get();
-    // try
-    // {
-    //     // ProfilerStart("tmp/main.prof");
-    //     LJFObject *ret = module_main_fptr(env, module_func_table.get());
-    //     // ProfilerStop();
-    //     if (!ret)
-    //     {
-    //         std::cerr << "result: "
-    //                   << "undefined" << std::endl;
-    //         return 1;
-    //     }
-    //     auto val = ljf_get_native_data(ret);
-    //     std::cerr << "result: " << val << std::endl;
-    // }
-    // catch (const std::exception &e)
-    // {
-    //     llvm::errs() << "module_main() exception: " << e.what() << "\n";
-    //     exit(1);
-    // }
-    // catch (...)
-    // {
-    //     llvm::errs() << "module_main() exception: unknown"
-    //                  << "\n";
-    //     exit(1);
-    // }
-    return 0;
 }
