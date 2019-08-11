@@ -31,8 +31,6 @@ int start_entry_point_of_function_ptr(ljf_main_t ljf_main, int argc, const char 
 
 int start_entry_point_of_native_dynamic_library(std::string dynamic_library_path, int argc, const char **argv);
 
-int start_entry_point_of_bitcode(const std::string &bitcode_path, int argc, const char **argv);
-
 int start_entry_point_of_source(const std::string &language, const std::string &source_path,
                                 int argc, const char **argv);
 } // namespace ljf

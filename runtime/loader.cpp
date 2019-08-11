@@ -71,9 +71,6 @@ auto &verbs()
     }
 }
 } // namespace
-
-int start_entry_point_of_bitcode(const std::string &bitcode_path, int argc, const char **argv);
-
 } // namespace ljf
 
 namespace ljf::internal
