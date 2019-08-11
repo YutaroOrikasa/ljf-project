@@ -68,6 +68,8 @@ namespace ljf::internal
 {
 
     ObjectHolder create_environment(bool prepare_0th_frame=true);
+
+    ObjectHolder load_source_code(const std::string &language, const std::string &source_path, Object *env);
 }
 
 extern "C"

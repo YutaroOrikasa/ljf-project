@@ -964,6 +964,21 @@ LJFObject *ljf_wrap_c_str(const char *str)
     return wrapper.get();
 }
 
+LJFObject *ljf_load_source_code(const char *language, const char *source_path, LJFObject *env, bool create_module_local_env)
+{
+    ObjectHolder env_holder = env;
+    if (create_module_local_env)
+    {
+        ObjectHolder arg = ljf_new_object();
+        env_holder = create_callee_environment(env, arg.get());
+    }
+    
+    
+    ObjectHolder ret = ljf::internal::load_source_code(language, source_path, env_holder.get());
+    thread_local_root->hold_returned_object(ret.get());
+    return ret.get();
+}
+
 // ----- internal -----
 
 LJFFunctionId ljf_internal_register_llvm_function(llvm::Function* f)
@@ -990,3 +1005,35 @@ void ljf_internal_resize_object_array_table_size(LJFObject *obj, uint64_t size)
 {
     obj->array_table_resize(size);
 }
+
+extern "C" int ljf_internal_start_entry_point(ljf_main_t ljf_main,
+                                              const std::string &language, const std::string &source_path,
+                                              int argc, const char **argv)
+{
+    if (ljf_main)
+    {
+        throw std::runtime_error("Not implemented");
+    }
+    else
+    {
+        ObjectHolder args_holder = ljf_new_object();
+        auto args = args_holder.get();
+        for (size_t i = 0; i < argc; i++)
+        {
+            ObjectHolder wrap_holder = ljf_wrap_c_str(argv[i]);
+            auto wrap = wrap_holder.get();
+            ljf_push_object_to_array(args, wrap);
+        }
+        ObjectHolder arg = ljf_new_object();
+        ljf_set_object_to_table(arg.get(), "args", args);
+        ObjectHolder env_holder = create_callee_environment(nullptr, arg.get());
+
+        ObjectHolder ret = ljf_load_source_code(language.c_str(), source_path.c_str(), env_holder.get(), false);
+        return ljf_get_native_data(ret.get());
+    }
+}
+
+namespace ljf::internal::check_
+{
+ljf_internal_start_entry_point_t ljf_internal_start_entry_point_ = ljf_internal_start_entry_point;
+} // namespace ljf::internal::check_

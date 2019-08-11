@@ -99,9 +99,46 @@ void initialize(const CompilerMap &compiler_map, const std::string &ljf_tmpdir, 
     }
 }
 
-int start_entry_point_of_source(const std::string &language, const std::string &source_path,
-                                int argc, const char **argv)
+
+typedef int (*ljf_main_t)(int argc, const char **argv);
+int start_entry_point_of_function_ptr(ljf_main_t ljf_main, int argc, const char **argv);
+
+int start_entry_point_of_native_dynamic_library(std::string dynamic_library_path, int argc, const char **argv)
 {
+    // load
+    auto handle = dlopen(dynamic_library_path.c_str(), RTLD_LAZY);
+    if (!handle)
+    {
+        throw std::invalid_argument(std::string("loading ") + dynamic_library_path + " failed (dlopen): " + dlerror());
+    }
+    auto ljf_module_init_addr = dlsym(handle, "ljf_module_init");
+    if (!ljf_module_init_addr)
+    {
+        throw std::invalid_argument(std::string("loading ") + dynamic_library_path + " failed (dlsym): " + dlerror());
+    }
+
+    reinterpret_cast<void (*)()>(ljf_module_init_addr)();
+
+    auto addr = dlsym(handle, "ljf_main");
+    if (!addr)
+    {
+        throw std::invalid_argument(std::string("loading ") + dynamic_library_path + " failed (dlsym): " + dlerror());
+    }
+
+    return reinterpret_cast<ljf_main_t>(addr)(argc, argv);
+}
+
+int start_entry_point_of_bitcode(const std::string &bitcode_path, int argc, const char **argv);
+
+} // namespace ljf
+
+namespace ljf::internal
+{
+
+/// return: environment of module
+ObjectHolder load_source_code(const std::string &language, const std::string &source_path, Object *env)
+{
+
     check_context_initialized();
     if (!context->compiler_map.count(language))
     {
@@ -190,7 +227,7 @@ int start_entry_point_of_source(const std::string &language, const std::string &
         llvm::raw_fd_ostream out{context->ljf_tmpdir + "/_dump.ll", EC};
         if (EC)
         {
-            llvm::errs() << "llvm::ToolOutputFile ctor: " << EC.message() << '\n';
+            llvm::errs() << "llvm::raw_fd_ostream ctor: " << EC.message() << '\n';
             exit(1);
         }
 
@@ -253,79 +290,25 @@ int start_entry_point_of_source(const std::string &language, const std::string &
     ljf_module_init();
 
     auto module_main = reinterpret_cast<LJFObject *(*)(LJFObject *, LJFObject *)>(module_main_addr);
-    ObjectHolder env_holder = ljf::internal::create_environment();
-    ObjectHolder args_holder = ljf_new_object();
-    auto args = args_holder.get();
-    for (size_t i = 0; i < argc; i++)
-    {
-        ObjectHolder wrap_holder = ljf_wrap_c_str(argv[i]);
-        auto wrap = wrap_holder.get();
-        ljf_push_object_to_array(args, wrap);
-    }
-    ljf_set_object_to_environment(env_holder.get(), "args", args);
 
-    ObjectHolder ret = module_main(env_holder.get(), module_func_table.get());
-    return 0;
+    ObjectHolder ret = module_main(env, module_func_table.get());
+    return ret;
 }
 
-typedef int (*ljf_main_t)(int argc, const char **argv);
-int start_entry_point_of_function_ptr(ljf_main_t ljf_main, int argc, const char **argv);
-
-int start_entry_point_of_native_dynamic_library(std::string dynamic_library_path, int argc, const char **argv)
-{
-    // load
-    auto handle = dlopen(dynamic_library_path.c_str(), RTLD_LAZY);
-    if (!handle)
-    {
-        throw std::invalid_argument(std::string("loading ") + dynamic_library_path + " failed (dlopen): " + dlerror());
-    }
-    auto ljf_module_init_addr = dlsym(handle, "ljf_module_init");
-    if (!ljf_module_init_addr)
-    {
-        throw std::invalid_argument(std::string("loading ") + dynamic_library_path + " failed (dlsym): " + dlerror());
-    }
-
-    reinterpret_cast<void (*)()>(ljf_module_init_addr)();
-
-    auto addr = dlsym(handle, "ljf_main");
-    if (!addr)
-    {
-        throw std::invalid_argument(std::string("loading ") + dynamic_library_path + " failed (dlsym): " + dlerror());
-    }
-
-    return reinterpret_cast<ljf_main_t>(addr)(argc, argv);
-}
-
-int start_entry_point_of_bitcode(const std::string &bitcode_path, int argc, const char **argv);
-} // namespace ljf
+} // namespace ljf::internal
 
 using namespace ljf;
+
+// ljf_internal
 extern "C"
 {
     void ljf_internal_initialize(const CompilerMap &compiler_map, const std::string &ljf_tmpdir, const std::string &runtime_filename)
     {
-        ljf::initialize(compiler_map, ljf_tmpdir,runtime_filename);
-    }
-
-    int ljf_internal_start_entry_point(ljf_main_t ljf_main,
-                                       const std::string &language, const std::string &source_path,
-                                       int argc, const char **argv)
-    {
-        if (ljf_main)
-        {
-            throw std::runtime_error("Not implemented");
-        }
-        else
-        {
-            return ljf::start_entry_point_of_source(language,source_path, argc, argv);
-        }
-        
-        
+        ljf::initialize(compiler_map, ljf_tmpdir, runtime_filename);
     }
 } // extern "C"
 
-namespace ljf::internal::check
+namespace ljf::internal::check_
 {
-    ljf_internal_initialize_t f1 = ljf_internal_initialize;
-    ljf_internal_start_entry_point_t f2 = ljf_internal_start_entry_point;
-} // namespace ljf::internal::check
+ljf_internal_initialize_t ljf_internal_initialize_ = ljf_internal_initialize;
+} // namespace ljf::internal::check_
