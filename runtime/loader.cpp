@@ -99,35 +99,6 @@ void initialize(const CompilerMap &compiler_map, const std::string &ljf_tmpdir, 
     }
 }
 
-
-typedef int (*ljf_main_t)(int argc, const char **argv);
-int start_entry_point_of_function_ptr(ljf_main_t ljf_main, int argc, const char **argv);
-
-int start_entry_point_of_native_dynamic_library(std::string dynamic_library_path, int argc, const char **argv)
-{
-    // load
-    auto handle = dlopen(dynamic_library_path.c_str(), RTLD_LAZY);
-    if (!handle)
-    {
-        throw std::invalid_argument(std::string("loading ") + dynamic_library_path + " failed (dlopen): " + dlerror());
-    }
-    auto ljf_module_init_addr = dlsym(handle, "ljf_module_init");
-    if (!ljf_module_init_addr)
-    {
-        throw std::invalid_argument(std::string("loading ") + dynamic_library_path + " failed (dlsym): " + dlerror());
-    }
-
-    reinterpret_cast<void (*)()>(ljf_module_init_addr)();
-
-    auto addr = dlsym(handle, "ljf_main");
-    if (!addr)
-    {
-        throw std::invalid_argument(std::string("loading ") + dynamic_library_path + " failed (dlsym): " + dlerror());
-    }
-
-    return reinterpret_cast<ljf_main_t>(addr)(argc, argv);
-}
-
 int start_entry_point_of_bitcode(const std::string &bitcode_path, int argc, const char **argv);
 
 } // namespace ljf
