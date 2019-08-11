@@ -76,7 +76,7 @@ auto &verbs()
 namespace ljf::internal
 {
 
-/// return: environment of module
+/// return: returned object of module_main()
 ObjectHolder load_source_code(const std::string &language, const std::string &source_path, Object *env)
 {
 

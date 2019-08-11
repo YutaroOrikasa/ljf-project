@@ -964,7 +964,9 @@ LJFObject *ljf_wrap_c_str(const char *str)
     return wrapper.get();
 }
 
-LJFObject *ljf_load_source_code(const char *language, const char *source_path, LJFObject *env, bool create_module_local_env)
+/// return: returned object of module_main()
+/// out: env: environment of module
+static LJFObject *load_source_code(const char *language, const char *source_path, LJFObject *&env, bool create_module_local_env)
 {
     ObjectHolder env_holder = env;
     if (create_module_local_env)
@@ -976,7 +978,15 @@ LJFObject *ljf_load_source_code(const char *language, const char *source_path, L
     
     ObjectHolder ret = ljf::internal::load_source_code(language, source_path, env_holder.get());
     thread_local_root->hold_returned_object(ret.get());
+    env = env_holder.get();
     return ret.get();
+}
+
+LJFObject *ljf_load_source_code(const char *language, const char *source_path, LJFObject *env, bool create_module_local_env)
+{
+    load_source_code(language, source_path, /* reference of */ env, create_module_local_env);
+    // now env is updated.
+    return env;
 }
 
 // ----- internal -----
@@ -1028,7 +1038,8 @@ extern "C" int ljf_internal_start_entry_point(ljf_main_t ljf_main,
         ljf_set_object_to_table(arg.get(), "args", args);
         ObjectHolder env_holder = create_callee_environment(nullptr, arg.get());
 
-        ObjectHolder ret = ljf_load_source_code(language.c_str(), source_path.c_str(), env_holder.get(), false);
+        Object *env = env_holder.get();
+        ObjectHolder ret = load_source_code(language.c_str(), source_path.c_str(), env, false);
         if (ret == ljf_undefined)
         {
             return 0;
