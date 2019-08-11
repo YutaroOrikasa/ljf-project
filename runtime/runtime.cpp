@@ -1029,6 +1029,10 @@ extern "C" int ljf_internal_start_entry_point(ljf_main_t ljf_main,
         ObjectHolder env_holder = create_callee_environment(nullptr, arg.get());
 
         ObjectHolder ret = ljf_load_source_code(language.c_str(), source_path.c_str(), env_holder.get(), false);
+        if (ret == ljf_undefined)
+        {
+            return 0;
+        }
         return ljf_get_native_data(ret.get());
     }
 }

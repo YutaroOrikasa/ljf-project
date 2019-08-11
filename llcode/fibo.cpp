@@ -633,7 +633,7 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
         //     }
         // }
 
-        return r;
+        return ljf_undefined;
         // module_main(Object::create(nullptr));
     }
     catch (const std::exception &e)
