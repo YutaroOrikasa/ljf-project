@@ -1012,7 +1012,7 @@ extern "C" int ljf_internal_start_entry_point(ljf_main_t ljf_main,
 {
     if (ljf_main)
     {
-        throw std::runtime_error("Not implemented");
+        return ljf_main(argc, argv);
     }
     else
     {
