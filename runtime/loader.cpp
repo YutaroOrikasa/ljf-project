@@ -72,33 +72,6 @@ auto &verbs()
 }
 } // namespace
 
-void initialize(const CompilerMap &compiler_map, const std::string &ljf_tmpdir, const std::string &runtime_filename)
-{
-    if (context)
-    {
-        throw std::logic_error("ljf::initialize() is called twice or more");
-    }
-
-    context = std::make_unique<Context>(Context{compiler_map, ljf_tmpdir, runtime_filename});
-
-    // remove ljf_tmpdir
-    if (auto err_code = llvm::sys::fs::remove_directories(context->ljf_tmpdir))
-    {
-        throw std::system_error(err_code, "remove ljf tmpdir \"" + context->ljf_tmpdir + "\" failed");
-    }
-
-    // create ljf_tmpdir
-    // for security,
-    //      - fail if ljf_tmpdir exists (ljf_tmpdir should be removed above)
-    //      - permission is 700
-    if (auto err_code = llvm::sys::fs::create_directories(context->ljf_tmpdir,
-                                                          /* IgnoreExisting */ false,
-                                                          llvm::sys::fs::perms::owner_all))
-    {
-        throw std::system_error(err_code, "create ljf tmpdir \"" + context->ljf_tmpdir + "\" failed");
-    }
-}
-
 int start_entry_point_of_bitcode(const std::string &bitcode_path, int argc, const char **argv);
 
 } // namespace ljf
@@ -275,7 +248,29 @@ extern "C"
 {
     void ljf_internal_initialize(const CompilerMap &compiler_map, const std::string &ljf_tmpdir, const std::string &runtime_filename)
     {
-        ljf::initialize(compiler_map, ljf_tmpdir, runtime_filename);
+        if (context)
+        {
+            throw std::logic_error("ljf::initialize() is called twice or more");
+        }
+
+        context = std::make_unique<Context>(Context{compiler_map, ljf_tmpdir, runtime_filename});
+
+        // remove ljf_tmpdir
+        if (auto err_code = llvm::sys::fs::remove_directories(context->ljf_tmpdir))
+        {
+            throw std::system_error(err_code, "remove ljf tmpdir \"" + context->ljf_tmpdir + "\" failed");
+        }
+
+        // create ljf_tmpdir
+        // for security,
+        //      - fail if ljf_tmpdir exists (ljf_tmpdir should be removed above)
+        //      - permission is 700
+        if (auto err_code = llvm::sys::fs::create_directories(context->ljf_tmpdir,
+                                                              /* IgnoreExisting */ false,
+                                                              llvm::sys::fs::perms::owner_all))
+        {
+            throw std::system_error(err_code, "create ljf tmpdir \"" + context->ljf_tmpdir + "\" failed");
+        }
     }
 } // extern "C"
 
