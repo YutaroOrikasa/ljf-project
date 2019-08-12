@@ -15,8 +15,9 @@ BENCH_NAME ?=
 CFLAGS ?=
 CXXFLAGS ?=
 LDFLAGS ?=
+CONFIG_FILE ?= ljf-config-template.h
 override CFLAGS += $(LIBLLVM_CXXFLAGS)
-override CXXFLAGS += $(LIBLLVM_CXXFLAGS)
+override CXXFLAGS += $(LIBLLVM_CXXFLAGS) -include $(CONFIG_FILE)
 override LDFLAGS += $(LIBLLVM_LDFLAGS)
 
 # In shell function, escaping is needed sa same as shell script.
