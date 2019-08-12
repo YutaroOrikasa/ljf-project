@@ -60,7 +60,7 @@ int main(int argc, const char **argv)
         {"llvm asm", std::make_shared<LLVMAsmCompiler>()},
     };
 
-    ljf::initialize(compiler_map, "./tmp", ljf_runtime_path);
+    ljf::initialize(compiler_map, "./tmp/ljf", ljf_runtime_path);
 
     return ljf::start_entry_point_of_source("llvm asm", input_ll_file, argc, argv);
 }
