@@ -85,7 +85,7 @@ pprof-web:
 	pprof --web build/main tmp/fibo-ljf.prof
 
 clean:
-	rm -rf build tmp _dump.ll 
+	rm -rf build _dump.ll 
 
 print-source-files:
 	@echo $(SOURCE_FILES)
