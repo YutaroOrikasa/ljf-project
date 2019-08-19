@@ -4,7 +4,7 @@
 
 # Rewrite here for your project
 SOURCE_DIRS ?= .
-INCLUDE_PATHS ?= ./include
+INCLUDE_PATHS ?= ./include ./googletest/googletest/include
 EXECUTABLE_FILE ?= main
 BUILD_DIR ?= build
 LIBLLVM_CXXFLAGS = -I/usr/local/opt/llvm/include
@@ -38,7 +38,7 @@ INCLUDE_FLAGS := $(INCLUDE_PATHS:%=-I%)
 override CFLAGS += -Wall $(INCLUDE_FLAGS) $(_DEP_FLAGS)
 override CXXFLAGS += -Wall -std=c++17 $(INCLUDE_FLAGS) $(_DEP_FLAGS)
 
-all:$(BUILD_DIR)/$(EXECUTABLE_FILE) $(BUILD_DIR)/runtime.so
+all:$(BUILD_DIR)/libgtest.a $(BUILD_DIR)/$(EXECUTABLE_FILE) $(BUILD_DIR)/runtime.so
 
 # link
 $(BUILD_DIR)/$(EXECUTABLE_FILE): $(OBJECT_FILES) $(LL_FILES)
@@ -48,8 +48,11 @@ $(BUILD_DIR)/$(EXECUTABLE_FILE): $(OBJECT_FILES) $(LL_FILES)
 # runtime.so
 $(BUILD_DIR)/runtime.so: $(RUNTIME_SOURCE_FILES:%=$(BUILD_DIR)/%.o)
 	mkdir -p $(@D)
-	$(CXX) $(LDFLAGS) -shared $^ -o $@
+	$(CXX) $(LDFLAGS) $(BUILD_DIR)/libgtest.a -shared $^ -o $@
 
+$(BUILD_DIR)/unittest-runtime: $(BUILD_DIR)/runtime.so
+	mkdir -p $(BUILD_DIR)
+	$(CXX) $(LDFLAGS) $^ -o $@
 
 # C file
 $(BUILD_DIR)/%.c.o: %.c
@@ -71,6 +74,19 @@ $(BUILD_DIR)/%.cpp.ll: %.cpp
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -emit-llvm -S $< -o $@ -c
 
+# gtest
+GTEST_DIR := googletest/googletest
+
+$(BUILD_DIR)/libgtest.a: googletest/.git
+	$(CXX) $(CXXFLAGS) -isystem ${GTEST_DIR}/include -I${GTEST_DIR} \
+    	-pthread -c ${GTEST_DIR}/src/gtest-all.cc -o $(BUILD_DIR)/gtest-all.o
+	ar -rv $(BUILD_DIR)/libgtest.a $(BUILD_DIR)/gtest-all.o
+
+googletest/.git:
+	git submodule update --init
+
+# end gtest
+
 .PHONY: run all-bench pprof-web clean print-source-files
 
 run: all
@@ -83,6 +99,9 @@ pprof-web:
 	# pprof --web build/main tmp/main.prof
 	pprof --web build/main tmp/fibo-bigint.prof
 	pprof --web build/main tmp/fibo-ljf.prof
+
+run-unittest-runtime: $(BUILD_DIR)/unittest-runtime
+	$(BUILD_DIR)/unittest-runtime
 
 clean:
 	rm -rf build _dump.ll 
