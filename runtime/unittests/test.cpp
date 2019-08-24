@@ -18,5 +18,7 @@ TEST(ObjectHolder, NotEqual)
     ObjectHolder obj1 = ljf_new_object();
     ObjectHolder obj2 = ljf_new_object();
 
+    ASSERT_EQ(obj1, obj1);
     ASSERT_NE(obj1, obj2);
+
 }

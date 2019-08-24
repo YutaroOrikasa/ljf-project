@@ -37,7 +37,7 @@ namespace ljf
             return obj_;
         }
 
-        operator bool() const noexcept
+        explicit operator bool() const noexcept
         {
             return bool(obj_);
         }
@@ -52,12 +52,12 @@ namespace ljf
             return *obj_;
         }
 
-        bool operator==(const ObjectHolder &rhs)
+        bool operator==(const ObjectHolder &rhs) const
         {
             return get() == rhs.get();
         }
 
-        bool operator!=(const ObjectHolder &rhs)
+        bool operator!=(const ObjectHolder &rhs) const
         {
             return get() != rhs.get();
         }
