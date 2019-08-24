@@ -12,3 +12,11 @@ TEST(test_ljf, test_ljf_set_object_to_table)
 
     ASSERT_EQ(elem.get(), ljf_get_object_from_table(obj.get(), "elem"));
 }
+
+TEST(ObjectHolder, NotEqual)
+{
+    ObjectHolder obj1 = ljf_new_object();
+    ObjectHolder obj2 = ljf_new_object();
+
+    ASSERT_NE(obj1, obj2);
+}
