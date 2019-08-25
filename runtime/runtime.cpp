@@ -2,10 +2,12 @@
 #include <string>
 #include <iostream>
 #include <forward_list>
+#include <unordered_set>
 #include <list>
 #include <thread>
 #include <mutex>
 #include <algorithm>
+#include <functional>
 #include <stdexcept>
 #include <dlfcn.h>
 
@@ -27,7 +29,7 @@ using ObjectPtr = Object *;
 
 using FunctionId = LJFFunctionId;
 
-struct TypeObject;
+class TypeObject;
 
 } // namespace ljf
 
@@ -36,12 +38,8 @@ namespace std
 template <>
 struct hash<ljf::TypeObject>
 {
-    size_t operator()(const ljf::TypeObject &typ) const noexcept
-    {
-        return 0;
-    }
+    size_t operator()(const ljf::TypeObject &type) const;
 };
-
 } // namespace std
 
 static struct RuntimeLoadedOnceCheck
@@ -78,7 +76,7 @@ static Done done;
 namespace ljf
 {
 
-std::shared_ptr<TypeObject> calculate_type(const Object &obj);
+std::shared_ptr<TypeObject> calculate_type(Object &obj);
 
 enum TableVisiblity
 {
@@ -423,7 +421,7 @@ ObjectHolder::~ObjectHolder()
     decrement_ref_count(obj_);
 }
 
-class BrokenIteratorError : runtime_error
+class BrokenIteratorError : public runtime_error
 {
 public:
     using runtime_error::runtime_error;
@@ -508,6 +506,15 @@ public:
         return TableIterator(obj_, ++map_iter, map_iter_end_);
     }
 
+    std::string key() const
+    {
+        return get().key;
+    }
+
+    ObjectHolder value() const
+    {
+        return get().value;
+    }
     bool is_end() const
     {
         return map_iter_ == map_iter_end_;
@@ -533,13 +540,13 @@ class Object::ArrayIterator
 private:
     size_t version_;
     ObjectHolder obj_;
-    std::vector<Object*>::iterator array_iter_;
-    std::vector<Object*>::iterator array_iter_end_;
+    std::vector<Object *>::iterator array_iter_;
+    std::vector<Object *>::iterator array_iter_end_;
 
     /// Caller must hold lock of obj.
     explicit ArrayIterator(ObjectHolder obj,
-                           const std::vector<Object*>::iterator &map_iter,
-                           const std::vector<Object*>::iterator &array_iter_end) : obj_(obj)
+                           const std::vector<Object *>::iterator &map_iter,
+                           const std::vector<Object *>::iterator &array_iter_end) : obj_(obj)
     {
         version_ = obj->version_;
         array_iter_ = map_iter;
@@ -564,7 +571,6 @@ private:
     }
 
 public:
-
     explicit ArrayIterator(ObjectHolder obj) : obj_(obj)
     {
         std::lock_guard lk{*obj_};
@@ -632,17 +638,123 @@ TEST(ObjectIterator, BrokenIter)
 
 using TemporaryStorage = Object;
 
-struct TypeObject
+class TypeObject
 {
-    /* data */
+private:
+    std::unordered_map<std::string, std::shared_ptr<TypeObject>> hash_table_types_;
+    std::unordered_map<std::string, std::shared_ptr<TypeObject>> hidden_table_types_;
+    std::vector<std::shared_ptr<TypeObject>> array_types_;
+
+    friend std::shared_ptr<TypeObject> calculate_type(Object &obj);
+
+public:
     bool operator==(const TypeObject &other) const
     {
-        return true;
+        return (hash_table_types_ == other.hash_table_types_) &&
+               (hidden_table_types_ == other.hidden_table_types_) &&
+               (array_types_ == other.array_types_);
     };
+
+    size_t hash() const
+    {
+        size_t hash = 0;
+
+        for (auto &&[k, v] : hash_table_types_)
+        {
+            hash ^= std::hash<std::string>()(k);
+            hash ^= v->hash();
+        }
+
+        for (auto &&[k, v] : hidden_table_types_)
+        {
+            hash ^= std::hash<std::string>()(k);
+            hash ^= v->hash();
+        }
+
+        for (auto &&v : array_types_)
+        {
+            hash ^= v->hash();
+        }
+
+        return hash;
+    }
 };
-std::shared_ptr<TypeObject> calculate_type(const Object &obj)
+
+struct TypeHash
 {
-    return std::make_shared<TypeObject>();
+    size_t operator()(const std::shared_ptr<TypeObject> &type) const
+    {
+        return type->hash();
+    }
+};
+
+struct TypeEqualTo
+{
+    size_t operator()(const std::shared_ptr<TypeObject> &type1, const std::shared_ptr<TypeObject> &type2) const
+    {
+        return *type1 == *type2;
+    }
+};
+
+struct TypeSet
+{
+    std::mutex mutex;
+    std::unordered_set<std::shared_ptr<TypeObject>, TypeHash, TypeEqualTo> set;
+};
+
+static TypeSet global_type_set;
+std::shared_ptr<TypeObject> calculate_type(Object &obj)
+{
+    try
+    {
+        auto type_object = std::make_shared<TypeObject>();
+
+        for (auto iter = obj.iter_hash_table(); !iter.is_end(); iter = iter.next())
+        {
+            type_object->hash_table_types_[iter.key()] = iter.value()->calculate_type();
+        }
+
+        for (auto iter = obj.iter_hidden_table(); !iter.is_end(); iter = iter.next())
+        {
+            type_object->hidden_table_types_[iter.key()] = iter.value()->calculate_type();
+        }
+
+        for (auto iter = obj.iter_array(); !iter.is_end(); iter = iter.next())
+        {
+            type_object->array_types_.push_back(iter.get()->calculate_type());
+        }
+
+        std::lock_guard lk{global_type_set.mutex};
+        auto &type_set = global_type_set.set;
+        auto [type_iter, is_inserted] = type_set.insert(type_object);
+        return *type_iter;
+    }
+    catch (const BrokenIteratorError &e)
+    {
+        std::cerr << "calculate_type: BrokenIteratorError: " << e.what() << '\n';
+        return nullptr;
+    }
+}
+
+TEST(calculate_type, Test)
+{
+    auto create_obj = []() {
+        ObjectHolder obj = ljf_new_object();
+        ObjectHolder a1 = ljf_new_object();
+        ObjectHolder a2 = ljf_new_object();
+        ObjectHolder b = ljf_new_object();
+        ljf_set_object_to_table(obj.get(), "a1", a1.get());
+        ljf_set_object_to_table(obj.get(), "a2", a2.get());
+        ljf_set_object_to_table(a1.get(), "b", b.get());
+        return obj;
+    };
+
+    auto obj1 = create_obj();
+    auto obj2 = create_obj();
+
+    EXPECT_NE(obj1, obj2);
+    EXPECT_EQ(obj1->calculate_type(), obj2->calculate_type());
+    EXPECT_EQ(*obj1->calculate_type(), *obj2->calculate_type());
 }
 
 using FunctionPtr = Object *(*)(Environment *, TemporaryStorage *);
@@ -890,6 +1002,12 @@ void check_not_null(const Object *obj)
 }
 
 } // namespace ljf
+
+
+size_t std::hash<ljf::TypeObject>::operator()(const ljf::TypeObject &type) const
+{
+    return type.hash();
+}
 
 using namespace ljf;
 
