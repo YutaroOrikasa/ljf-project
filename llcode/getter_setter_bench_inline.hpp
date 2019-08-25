@@ -34,7 +34,8 @@ enum TableVisiblity
 class Object
 {
 public:
-    std::mutex mutex_;
+    std::recursive_mutex mutex_;
+    size_t version_ = 0;
     std::shared_ptr<TypeObject> type_object_;
     std::unordered_map<std::string, size_t> hash_table_;
     std::unordered_map<std::string, size_t> hidden_table_;
