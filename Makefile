@@ -46,7 +46,7 @@ $(BUILD_DIR)/$(EXECUTABLE_FILE): $(OBJECT_FILES) $(LL_FILES)
 	$(CXX) $(LDFLAGS) $(OBJECT_FILES) -o $@
 
 # runtime.so
-$(BUILD_DIR)/runtime.so: $(RUNTIME_SOURCE_FILES:%=$(BUILD_DIR)/%.o)
+$(BUILD_DIR)/runtime.so: $(RUNTIME_SOURCE_FILES:%=$(BUILD_DIR)/%.o) $(BUILD_DIR)/libgtest.a
 	mkdir -p $(@D)
 	$(CXX) $(LDFLAGS) $(BUILD_DIR)/libgtest.a -shared $^ -o $@
 
