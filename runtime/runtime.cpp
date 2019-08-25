@@ -9,6 +9,8 @@
 #include <stdexcept>
 #include <dlfcn.h>
 
+#include "gtest/gtest.h"
+
 #include <llvm/IR/Function.h>
 
 #include "ljf/runtime.hpp"
@@ -87,7 +89,8 @@ enum TableVisiblity
 class Object
 {
 private:
-    std::mutex mutex_;
+    std::recursive_mutex mutex_;
+    size_t version_ = 0;
     std::shared_ptr<TypeObject> type_object_;
     std::unordered_map<std::string, size_t> hash_table_;
     std::unordered_map<std::string, size_t> hidden_table_;
@@ -109,12 +112,16 @@ public:
     void swap(Object &other)
     {
         std::scoped_lock lk{*this, other};
+
         type_object_.swap(other.type_object_);
         hash_table_.swap(other.hash_table_);
         hidden_table_.swap(other.hidden_table_);
         array_table_.swap(other.array_table_);
         array_.swap(other.array_);
         function_id_table_.swap(other.function_id_table_);
+
+        ++version_;
+        ++other.version_;
     }
 
     Object *get(const std::string &key)
@@ -156,6 +163,7 @@ public:
         // assert(value);
 
         array_table_set_index(index, value);
+        ++version_;
     }
     Object *get_object_from_table(TableVisiblity visiblity, const char *key)
     {
@@ -251,6 +259,7 @@ public:
         {
             std::lock_guard lk{mutex_};
             array_.push_back(value);
+            ++version_;
         }
         // assert(value); // DEBUG
         increment_ref_count(value);
@@ -290,6 +299,13 @@ public:
             decrement_ref_count(obj);
         }
     }
+
+    class TableIterator;
+    TableIterator iter_hash_table();
+    TableIterator iter_hidden_table();
+
+    class ArrayIterator;
+    ArrayIterator iter_array();
 
     friend void increment_ref_count(Object *obj);
     friend void decrement_ref_count(Object *obj);
@@ -405,6 +421,213 @@ ObjectHolder::~ObjectHolder()
 {
     // std::cerr << "ObjectHolder::~ObjectHolder() this: " << this << ", obj_: " << obj_ << std::endl;
     decrement_ref_count(obj_);
+}
+
+class BrokenIteratorError : runtime_error
+{
+public:
+    using runtime_error::runtime_error;
+};
+
+class Object::TableIterator
+{
+private:
+    size_t version_;
+    ObjectHolder obj_;
+    std::unordered_map<std::string, size_t>::iterator map_iter_;
+    std::unordered_map<std::string, size_t>::iterator map_iter_end_;
+
+    /// Caller must hold lock of obj.
+    explicit TableIterator(ObjectHolder obj,
+                           const std::unordered_map<std::string, size_t>::iterator &map_iter,
+                           const std::unordered_map<std::string, size_t>::iterator &map_iter_end) : obj_(obj)
+    {
+        version_ = obj->version_;
+        map_iter_ = map_iter;
+        map_iter_end_ = map_iter_end;
+    }
+
+    /// - check object version
+    /// - check iterator not ended
+    /// If checking is not ok, it will throw exception.
+    /// Caller must hold lock of obj_.
+    void check() const
+    {
+        if (version_ != obj_->version_)
+        {
+            throw BrokenIteratorError("Object changed while iteration");
+        }
+
+        if (is_end())
+        {
+            throw std::out_of_range("iterator ended");
+        }
+    }
+
+public:
+    struct KeyValue
+    {
+        std::string key;
+        ObjectHolder value;
+    };
+
+    explicit TableIterator(ObjectHolder obj, TableVisiblity visiblity) : obj_(obj)
+    {
+        std::lock_guard lk{*obj_};
+        version_ = obj->version_;
+        auto &table = *[&]() {
+            if (visiblity == TableVisiblity::visible)
+            {
+                return &obj_->hash_table_;
+            }
+            else
+            {
+                return &obj_->hidden_table_;
+            }
+        }();
+
+        map_iter_ = table.begin();
+        map_iter_end_ = table.end();
+    }
+
+    KeyValue get() const
+    {
+        std::lock_guard lk{*obj_};
+        check();
+
+        auto &key = map_iter_->first;
+        Object *value = obj_->array_table_.at(map_iter_->second);
+        return KeyValue{key, value};
+    }
+
+    TableIterator next() const
+    {
+        std::lock_guard lk{*obj_};
+        check();
+        auto map_iter = map_iter_;
+        return TableIterator(obj_, ++map_iter, map_iter_end_);
+    }
+
+    bool is_end() const
+    {
+        return map_iter_ == map_iter_end_;
+    }
+
+    explicit operator bool() const
+    {
+        return !is_end();
+    }
+};
+Object::TableIterator Object::iter_hash_table()
+{
+    return Object::TableIterator(this, TableVisiblity::visible);
+}
+
+Object::TableIterator Object::iter_hidden_table()
+{
+    return Object::TableIterator(this, TableVisiblity::hidden);
+}
+
+class Object::ArrayIterator
+{
+private:
+    size_t version_;
+    ObjectHolder obj_;
+    std::vector<Object*>::iterator array_iter_;
+    std::vector<Object*>::iterator array_iter_end_;
+
+    /// Caller must hold lock of obj.
+    explicit ArrayIterator(ObjectHolder obj,
+                           const std::vector<Object*>::iterator &map_iter,
+                           const std::vector<Object*>::iterator &array_iter_end) : obj_(obj)
+    {
+        version_ = obj->version_;
+        array_iter_ = map_iter;
+        array_iter_end_ = array_iter_end;
+    }
+
+    /// - check object version
+    /// - check iterator not ended
+    /// If checking is not ok, it will throw exception.
+    /// Caller must hold lock of obj_.
+    void check() const
+    {
+        if (version_ != obj_->version_)
+        {
+            throw BrokenIteratorError("Object changed while iteration");
+        }
+
+        if (is_end())
+        {
+            throw std::out_of_range("iterator ended");
+        }
+    }
+
+public:
+
+    explicit ArrayIterator(ObjectHolder obj) : obj_(obj)
+    {
+        std::lock_guard lk{*obj_};
+        version_ = obj->version_;
+
+        array_iter_ = obj_->array_.begin();
+        array_iter_end_ = obj_->array_.end();
+    }
+
+    ObjectHolder get() const
+    {
+        std::lock_guard lk{*obj_};
+        check();
+
+        return *array_iter_;
+    }
+
+    ArrayIterator next() const
+    {
+        std::lock_guard lk{*obj_};
+        check();
+        auto map_iter = array_iter_;
+        return ArrayIterator(obj_, ++map_iter, array_iter_end_);
+    }
+
+    bool is_end() const
+    {
+        return array_iter_ == array_iter_end_;
+    }
+
+    explicit operator bool() const
+    {
+        return !is_end();
+    }
+};
+Object::ArrayIterator Object::iter_array()
+{
+    return Object::ArrayIterator(this);
+}
+
+// unittests for Iterator family (they are private data and methods)
+TEST(ObjectIterator, HashTable)
+{
+    ObjectHolder obj = ljf_new_object();
+    ObjectHolder elem = ljf_new_object();
+    ljf_set_object_to_table(obj.get(), "elem", elem.get());
+
+    auto iter = obj->iter_hash_table();
+    EXPECT_EQ(iter.get().key, "elem");
+    EXPECT_EQ(iter.get().value, elem);
+    auto iter_next = iter.next();
+    ASSERT_TRUE(iter_next.is_end());
+}
+
+TEST(ObjectIterator, BrokenIter)
+{
+    ObjectHolder obj = ljf_new_object();
+    ObjectHolder elem = ljf_new_object();
+    ljf_set_object_to_table(obj.get(), "elem", elem.get());
+
+    auto iter = obj->iter_hash_table();
+    EXPECT_EQ(iter.get().key, "elem");
+    EXPECT_EQ(iter.get().value, elem);
 }
 
 using TemporaryStorage = Object;
@@ -652,7 +875,6 @@ struct ThreadLocalRootEraser
 };
 thread_local ThreadLocalRootEraser eraser;
 
-
 FunctionId register_llvm_function(llvm::Function *f)
 {
     return function_table.add_llvm(f);
@@ -694,7 +916,6 @@ create_environment(Object *arg)
     }
     return env;
 }
-
 
 ObjectHolder
 create_environment(bool prepare_0th_frame /*=true*/)
@@ -949,7 +1170,6 @@ void ljf_set_object_to_environment(Environment *env, const char *key, Object *va
 FunctionId ljf_register_native_function(Object *(*fn)(Environment *, TemporaryStorage *))
 {
     return function_table.add_native(fn);
-
 }
 
 LJFObject *ljf_wrap_c_str(const char *str)
@@ -974,8 +1194,7 @@ static LJFObject *load_source_code(const char *language, const char *source_path
         ObjectHolder arg = ljf_new_object();
         env_holder = create_callee_environment(env, arg.get());
     }
-    
-    
+
     ObjectHolder ret = ljf::internal::load_source_code(language, source_path, env_holder.get());
     thread_local_root->hold_returned_object(ret.get());
     env = env_holder.get();
@@ -991,7 +1210,7 @@ LJFObject *ljf_load_source_code(const char *language, const char *source_path, L
 
 // ----- internal -----
 
-LJFFunctionId ljf_internal_register_llvm_function(llvm::Function* f)
+LJFFunctionId ljf_internal_register_llvm_function(llvm::Function *f)
 {
     return ljf::register_llvm_function(f);
 }
