@@ -76,7 +76,16 @@ static Done done;
 namespace ljf
 {
 
+namespace
+{
+struct TypeCalcData
+{
+    std::unordered_set<Object *> objects_in_calculation;
+};
+} // namespace
+
 std::shared_ptr<TypeObject> calculate_type(Object &obj);
+std::shared_ptr<TypeObject> calculate_type(Object &obj, TypeCalcData &);
 
 enum TableVisiblity
 {
@@ -278,6 +287,18 @@ public:
         }
 
         type_object_ = ljf::calculate_type(*this);
+        return type_object_;
+    }
+
+    std::shared_ptr<TypeObject> calculate_type(TypeCalcData &type_calc_data)
+    {
+        std::lock_guard lk{mutex_};
+        if (type_object_)
+        {
+            return type_object_;
+        }
+
+        type_object_ = ljf::calculate_type(*this, type_calc_data);
         return type_object_;
     }
 
@@ -641,22 +662,48 @@ using TemporaryStorage = Object;
 class TypeObject
 {
 private:
+    bool circular_reference_ = false;
+public:
+    // NOTICE: public but not stable api
     std::unordered_map<std::string, std::shared_ptr<TypeObject>> hash_table_types_;
     std::unordered_map<std::string, std::shared_ptr<TypeObject>> hidden_table_types_;
     std::vector<std::shared_ptr<TypeObject>> array_types_;
 
+private:
     friend std::shared_ptr<TypeObject> calculate_type(Object &obj);
+    friend std::shared_ptr<TypeObject> calculate_type(Object &obj, TypeCalcData &);
+
+    explicit TypeObject(bool circular_reference) : circular_reference_(circular_reference) {}
+
+    static std::shared_ptr<TypeObject> create_circular_reference_type_object()
+    {
+        return std::make_shared<TypeObject>(TypeObject(true));
+    }
 
 public:
+    TypeObject() = default;
+
+    bool is_circular_reference() const noexcept
+    {
+        return circular_reference_;
+    }
+
     bool operator==(const TypeObject &other) const
     {
-        return (hash_table_types_ == other.hash_table_types_) &&
+        return (circular_reference_ == other.circular_reference_) &&
+               (hash_table_types_ == other.hash_table_types_) &&
                (hidden_table_types_ == other.hidden_table_types_) &&
                (array_types_ == other.array_types_);
     };
 
     size_t hash() const
     {
+        if (circular_reference_)
+        {
+            // We return non 0 value because we distinguish circular reference TypeObject from empty TypeObject
+            return -1;
+        }
+
         size_t hash = 0;
 
         for (auto &&[k, v] : hash_table_types_)
@@ -705,23 +752,36 @@ struct TypeSet
 static TypeSet global_type_set;
 std::shared_ptr<TypeObject> calculate_type(Object &obj)
 {
+    TypeCalcData data;
+    return calculate_type(obj, data);
+}
+
+std::shared_ptr<TypeObject> calculate_type(Object &obj, TypeCalcData &type_calc_data)
+{
+    if (type_calc_data.objects_in_calculation.count(&obj) != 0)
+    {
+        return TypeObject::create_circular_reference_type_object();
+    }
+
+    type_calc_data.objects_in_calculation.insert(&obj);
+
     try
     {
         auto type_object = std::make_shared<TypeObject>();
 
         for (auto iter = obj.iter_hash_table(); !iter.is_end(); iter = iter.next())
         {
-            type_object->hash_table_types_[iter.key()] = iter.value()->calculate_type();
+            type_object->hash_table_types_[iter.key()] = iter.value()->calculate_type(type_calc_data);
         }
 
         for (auto iter = obj.iter_hidden_table(); !iter.is_end(); iter = iter.next())
         {
-            type_object->hidden_table_types_[iter.key()] = iter.value()->calculate_type();
+            type_object->hidden_table_types_[iter.key()] = iter.value()->calculate_type(type_calc_data);
         }
 
         for (auto iter = obj.iter_array(); !iter.is_end(); iter = iter.next())
         {
-            type_object->array_types_.push_back(iter.get()->calculate_type());
+            type_object->array_types_.push_back(iter.get()->calculate_type(type_calc_data));
         }
 
         std::lock_guard lk{global_type_set.mutex};
@@ -755,6 +815,23 @@ TEST(calculate_type, Test)
     EXPECT_NE(obj1, obj2);
     EXPECT_EQ(obj1->calculate_type(), obj2->calculate_type());
     EXPECT_EQ(*obj1->calculate_type(), *obj2->calculate_type());
+}
+
+TEST(calculate_type, TestCircularReference)
+{
+    ObjectHolder obj = ljf_new_object();
+    ObjectHolder a = ljf_new_object();
+    ObjectHolder b = ljf_new_object();
+
+    ljf_set_object_to_table(obj.get(), "a", a.get());
+    ljf_set_object_to_table(a.get(), "b", b.get());
+    ljf_set_object_to_table(b.get(), "obj", obj.get());
+
+    obj->calculate_type();
+
+    auto b_type = b->calculate_type();
+    EXPECT_FALSE(b_type->is_circular_reference());
+    EXPECT_TRUE(b_type->hash_table_types_.at("obj")->is_circular_reference());
 }
 
 using FunctionPtr = Object *(*)(Environment *, TemporaryStorage *);
@@ -1002,7 +1079,6 @@ void check_not_null(const Object *obj)
 }
 
 } // namespace ljf
-
 
 size_t std::hash<ljf::TypeObject>::operator()(const ljf::TypeObject &type) const
 {
