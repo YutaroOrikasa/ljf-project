@@ -663,8 +663,6 @@ class TypeObject
 {
 private:
     bool circular_reference_ = false;
-public:
-    // NOTICE: public but not stable api
     std::unordered_map<std::string, std::shared_ptr<TypeObject>> hash_table_types_;
     std::unordered_map<std::string, std::shared_ptr<TypeObject>> hidden_table_types_;
     std::vector<std::shared_ptr<TypeObject>> array_types_;
@@ -672,6 +670,7 @@ public:
 private:
     friend std::shared_ptr<TypeObject> calculate_type(Object &obj);
     friend std::shared_ptr<TypeObject> calculate_type(Object &obj, TypeCalcData &);
+    FRIEND_TEST(calculate_type, TestCircularReference);
 
     explicit TypeObject(bool circular_reference) : circular_reference_(circular_reference) {}
 
