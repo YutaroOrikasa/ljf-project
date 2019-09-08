@@ -3,27 +3,47 @@
 # reference: https://spin.atomicobject.com/2016/08/26/makefile-c-projects/
 
 # Rewrite here for your project
-SOURCE_DIRS ?= .
+SOURCE_ROOT_DIR ?= .
+export SOURCE_ROOT_DIR
+
+SOURCE_DIRS ?= $(SOURCE_ROOT_DIR)
+export SOURCE_DIRS
+
 INCLUDE_PATHS ?= ./include ./googletest/googletest/include
+export INCLUDE_PATHS
+
 EXECUTABLE_FILE ?= main
+export EXECUTABLE_FILE
+
 BUILD_DIR ?= build
+export BUILD_DIR
+
 LIBLLVM_CXXFLAGS = -I/usr/local/opt/llvm/include
+export LIBLLVM_CXXFLAGS
+
 LIBLLVM_LDFLAGS =  -L/usr/local/opt/llvm/lib -lLLVM
+export LIBLLVM_LDFLAGS
+
 
 BENCH_NAME ?=
+export BENCH_NAME
+
 
 CFLAGS ?=
 CXXFLAGS ?=
 LDFLAGS ?=
 CONFIG_FILE ?= ljf-config-template.h
+
 override CFLAGS += $(LIBLLVM_CXXFLAGS)
 override CXXFLAGS += $(LIBLLVM_CXXFLAGS) -include $(CONFIG_FILE)
 override LDFLAGS += $(LIBLLVM_LDFLAGS)
+# export doesn't work with overrided the macro
+# that is defined on command line argument or given as environment variable,
+# so we implicitly have to pass these variables to sub make by commandline argument.
 
 # In shell function, escaping is needed sa same as shell script.
 SOURCE_FILES := $(shell find $(SOURCE_DIRS) \( -name \*.c -or -name \*.cpp \) -and -not -path ./llcode/\* \
 					-and -not -path ./runtime/\*)
-RUNTIME_SOURCE_FILES := $(shell find $(SOURCE_DIRS)/runtime -name \*.c -or -name \*.cpp)
 LL_SOURCE_FILES := $(shell find $(SOURCE_DIRS) \( -name \*.c -or -name \*.cpp \) -and -path ./llcode/\*)
 
 # string replacement
@@ -38,6 +58,8 @@ INCLUDE_FLAGS := $(INCLUDE_PATHS:%=-I%)
 override CFLAGS += -Wall $(INCLUDE_FLAGS) $(_DEP_FLAGS)
 override CXXFLAGS += -Wall -std=c++17 $(INCLUDE_FLAGS) $(_DEP_FLAGS)
 
+include common.mk
+
 all:$(BUILD_DIR)/libgtest.a $(BUILD_DIR)/$(EXECUTABLE_FILE) $(BUILD_DIR)/runtime.so
 
 # link
@@ -46,38 +68,21 @@ $(BUILD_DIR)/$(EXECUTABLE_FILE): $(OBJECT_FILES) $(LL_FILES)
 	$(CXX) $(LDFLAGS) $(OBJECT_FILES) -o $@
 
 # runtime.so
-$(BUILD_DIR)/runtime.so: $(RUNTIME_SOURCE_FILES:%=$(BUILD_DIR)/%.o) $(BUILD_DIR)/libgtest.a
-	mkdir -p $(@D)
-	$(CXX) $(LDFLAGS) $(BUILD_DIR)/libgtest.a -shared $^ -o $@
+$(BUILD_DIR)/runtime.so: $(BUILD_DIR)/libgtest.a
+	$(MAKE) -f runtime.mk $(BUILD_DIR)/runtime.so \
+		CFLAGS="$(CFLAGS)" \
+		CXXFLAGS="$(CXXFLAGS)" \
+		LDFLAGS="$(LDFLAGS)"
 
 $(BUILD_DIR)/unittest-runtime: $(BUILD_DIR)/runtime.so
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(LDFLAGS) $^ -o $@
 
-# C file
-$(BUILD_DIR)/%.c.o: %.c
-	mkdir -p $(@D)
-	$(CC) $(CFLAGS) $< -o $@ -c
-
-# C++ file
-$(BUILD_DIR)/%.cpp.o: %.cpp
-	mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -g $< -o $@ -c
-
-# C ll file
-$(BUILD_DIR)/%.c.ll: %.c
-	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -emit-llvm -S $< -o $@ -c
-
-# C++ ll file
-$(BUILD_DIR)/%.cpp.ll: %.cpp
-	mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -emit-llvm -S $< -o $@ -c
-
 # gtest
 GTEST_DIR := googletest/googletest
 
 $(BUILD_DIR)/libgtest.a: googletest/.git
+	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -isystem ${GTEST_DIR}/include -I${GTEST_DIR} \
     	-pthread -c ${GTEST_DIR}/src/gtest-all.cc -o $(BUILD_DIR)/gtest-all.o
 	ar -rv $(BUILD_DIR)/libgtest.a $(BUILD_DIR)/gtest-all.o
