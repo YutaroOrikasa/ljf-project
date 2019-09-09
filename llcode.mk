@@ -2,6 +2,8 @@
 SOURCE_FILES := $(shell find $(SOURCE_ROOT_DIR)/llcode -name \*.c -or -name \*.cpp)
 LL_FILES := $(SOURCE_FILES:%=$(BUILD_DIR)/%.ll)
 
+include common.mk
+
 .PHONY: all
 
 all: $(LL_FILES)

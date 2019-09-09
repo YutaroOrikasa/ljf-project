@@ -38,9 +38,8 @@ override LDFLAGS += $(LIBLLVM_LDFLAGS)
 # that is defined on command line argument or given as environment variable,
 # so we implicitly have to pass these variables to sub make by commandline argument.
 
-
+# used by header dependency check in common.mk
 SOURCE_FILES := main.cpp ljf.cpp
-DEPENDENCY_FILES := $(SOURCE_FILES:%=$(BUILD_DIR)/%.d)
 
 _DEP_FLAGS := -MMD -MP
 INCLUDE_FLAGS := $(INCLUDE_PATHS:%=-I%)
@@ -60,6 +59,8 @@ $(BUILD_DIR)/main: $(BUILD_DIR)/libljf.a $(BUILD_DIR)/main.cpp.o
 	$(CXX) $(LDFLAGS) $^ -o $@
 
 # runtime.so
+# This target have to be PHONY because make can't find header file dependency.
+.PHONY: $(BUILD_DIR)/runtime.so
 $(BUILD_DIR)/runtime.so: $(BUILD_DIR)/libgtest.a
 	$(MAKE) -f runtime.mk $(BUILD_DIR)/runtime.so \
 		CFLAGS="$(CFLAGS)" \
@@ -112,4 +113,3 @@ clean:
 print-source-files:
 	@echo $(SOURCE_FILES)
 
--include $(DEPENDENCY_FILES)
