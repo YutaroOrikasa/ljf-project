@@ -44,13 +44,11 @@ override LDFLAGS += $(LIBLLVM_LDFLAGS)
 # In shell function, escaping is needed sa same as shell script.
 SOURCE_FILES := $(shell find $(SOURCE_DIRS) \( -name \*.c -or -name \*.cpp \) -and -not -path ./llcode/\* \
 					-and -not -path ./runtime/\*)
-LL_SOURCE_FILES := $(shell find $(SOURCE_DIRS) \( -name \*.c -or -name \*.cpp \) -and -path ./llcode/\*)
 
 # string replacement
 # e.g aaa -> $(BUILD_DIR)/aaa.o
 # % maches 'aaa' in example.
 OBJECT_FILES := $(SOURCE_FILES:%=$(BUILD_DIR)/%.o)
-LL_FILES := $(LL_SOURCE_FILES:%=$(BUILD_DIR)/%.ll)
 DEPENDENCY_FILES := $(OBJECT_FILES:%.o=%.d) $(LL_FILES:%.ll=%.d)
 
 _DEP_FLAGS := -MMD -MP
@@ -63,7 +61,7 @@ include common.mk
 all:$(BUILD_DIR)/libgtest.a $(BUILD_DIR)/$(EXECUTABLE_FILE) $(BUILD_DIR)/runtime.so
 
 # link
-$(BUILD_DIR)/$(EXECUTABLE_FILE): $(OBJECT_FILES) $(LL_FILES)
+$(BUILD_DIR)/$(EXECUTABLE_FILE): $(OBJECT_FILES)
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(LDFLAGS) $(OBJECT_FILES) -o $@
 
@@ -92,13 +90,19 @@ googletest/.git:
 
 # end gtest
 
-.PHONY: run all-bench pprof-web clean print-source-files
+.PHONY: benchmark-ll-codes run all-bench pprof-web clean print-source-files
+
+benchmark-ll-codes:
+	$(MAKE) -f llcode.mk all \
+		CFLAGS="$(CFLAGS)" \
+		CXXFLAGS="$(CXXFLAGS)" \
+		LDFLAGS="$(LDFLAGS)"
 
 run: all
 	$(BUILD_DIR)/$(EXECUTABLE_FILE) "build/llcode/$(BENCH_NAME).cpp.ll" "$(CXXFLAGS) $(LDFLAGS)"
 
-all-bench: all
-	BUILD_DIR="$(BUILD_DIR)" LL_FILES="$(LL_FILES)" FLAGS="$(CXXFLAGS) $(LDFLAGS)" ./all-bench.sh 
+all-bench: all benchmark-ll-codes
+	LL_FILES_DIR="$(BUILD_DIR)/llcode" FLAGS="$(CXXFLAGS) $(LDFLAGS)" ./all-bench.sh 
 
 pprof-web:
 	# pprof --web build/main tmp/main.prof
