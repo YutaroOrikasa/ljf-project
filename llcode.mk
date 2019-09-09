@@ -1,6 +1,6 @@
 
-LL_SOURCE_FILES := $(shell find $(SOURCE_ROOT_DIR)/llcode -name \*.c -or -name \*.cpp)
-LL_FILES := $(LL_SOURCE_FILES:%=$(BUILD_DIR)/%.ll)
+SOURCE_FILES := $(shell find $(SOURCE_ROOT_DIR)/llcode -name \*.c -or -name \*.cpp)
+LL_FILES := $(SOURCE_FILES:%=$(BUILD_DIR)/%.ll)
 
 .PHONY: all
 
