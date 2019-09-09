@@ -2,7 +2,9 @@
 
 # reference: https://spin.atomicobject.com/2016/08/26/makefile-c-projects/
 
-# Rewrite here for your project
+-include config.mk
+export CC CXX
+
 SOURCE_ROOT_DIR ?= .
 export SOURCE_ROOT_DIR
 
@@ -15,10 +17,10 @@ export INCLUDE_PATHS
 BUILD_DIR ?= build
 export BUILD_DIR
 
-LIBLLVM_CXXFLAGS = -I/usr/local/opt/llvm/include
+LIBLLVM_CXXFLAGS ?= 
 export LIBLLVM_CXXFLAGS
 
-LIBLLVM_LDFLAGS =  -L/usr/local/opt/llvm/lib -lLLVM
+LIBLLVM_LDFLAGS ?=  
 export LIBLLVM_LDFLAGS
 
 
@@ -33,7 +35,7 @@ CONFIG_FILE ?= ljf-config-template.h
 
 override CFLAGS += $(LIBLLVM_CXXFLAGS)
 override CXXFLAGS += $(LIBLLVM_CXXFLAGS) -include $(CONFIG_FILE)
-override LDFLAGS += $(LIBLLVM_LDFLAGS)
+override LDFLAGS += $(LIBLLVM_LDFLAGS) -lLLVM
 # export doesn't work with overrided the macro
 # that is defined on command line argument or given as environment variable,
 # so we implicitly have to pass these variables to sub make by commandline argument.
