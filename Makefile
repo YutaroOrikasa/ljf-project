@@ -12,9 +12,6 @@ export SOURCE_DIRS
 INCLUDE_PATHS ?= ./include ./googletest/googletest/include
 export INCLUDE_PATHS
 
-EXECUTABLE_FILE ?= main
-export EXECUTABLE_FILE
-
 BUILD_DIR ?= build
 export BUILD_DIR
 
@@ -41,15 +38,9 @@ override LDFLAGS += $(LIBLLVM_LDFLAGS)
 # that is defined on command line argument or given as environment variable,
 # so we implicitly have to pass these variables to sub make by commandline argument.
 
-# In shell function, escaping is needed sa same as shell script.
-SOURCE_FILES := $(shell find $(SOURCE_DIRS) \( -name \*.c -or -name \*.cpp \) -and -not -path ./llcode/\* \
-					-and -not -path ./runtime/\*)
 
-# string replacement
-# e.g aaa -> $(BUILD_DIR)/aaa.o
-# % maches 'aaa' in example.
-OBJECT_FILES := $(SOURCE_FILES:%=$(BUILD_DIR)/%.o)
-DEPENDENCY_FILES := $(OBJECT_FILES:%.o=%.d) $(LL_FILES:%.ll=%.d)
+SOURCE_FILES := main.cpp ljf.cpp
+DEPENDENCY_FILES := $(SOURCE_FILES:%=$(BUILD_DIR)/%.d)
 
 _DEP_FLAGS := -MMD -MP
 INCLUDE_FLAGS := $(INCLUDE_PATHS:%=-I%)
@@ -58,12 +49,15 @@ override CXXFLAGS += -Wall -std=c++17 $(INCLUDE_FLAGS) $(_DEP_FLAGS)
 
 include common.mk
 
-all:$(BUILD_DIR)/libgtest.a $(BUILD_DIR)/$(EXECUTABLE_FILE) $(BUILD_DIR)/runtime.so
+all:$(BUILD_DIR)/libgtest.a $(BUILD_DIR)/libljf.a $(BUILD_DIR)/main $(BUILD_DIR)/runtime.so
 
-# link
-$(BUILD_DIR)/$(EXECUTABLE_FILE): $(OBJECT_FILES)
+$(BUILD_DIR)/libljf.a: $(BUILD_DIR)/ljf.cpp.o
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(LDFLAGS) $(OBJECT_FILES) -o $@
+	ar -rv $@ $^
+
+$(BUILD_DIR)/main: $(BUILD_DIR)/libljf.a $(BUILD_DIR)/main.cpp.o
+	mkdir -p $(BUILD_DIR)
+	$(CXX) $(LDFLAGS) $^ -o $@
 
 # runtime.so
 $(BUILD_DIR)/runtime.so: $(BUILD_DIR)/libgtest.a
