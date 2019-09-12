@@ -20,7 +20,7 @@ enum class token_category
     ANY_OTHER
 };
 
-class Phase1Token
+class Token
 {
 private:
     std::string token_;
@@ -30,7 +30,7 @@ private:
 
     std::string error_message_;
 
-    Phase1Token(const std::string &token, const SourceLocation &loc, token_category ty,
+    Token(const std::string &token, const SourceLocation &loc, token_category ty,
                 const std::string &error_msg)
         : token_(token),
           loc_(loc),
@@ -38,29 +38,29 @@ private:
           error_message_(error_msg) {}
 
 public:
-    Phase1Token(const std::string &token, const SourceLocation &loc, token_category ty)
+    Token(const std::string &token, const SourceLocation &loc, token_category ty)
         : token_(token),
           loc_(loc),
           token_category_(ty) {}
 
-    static Phase1Token create_eof_token(const SourceLocation &loc)
+    static Token create_eof_token(const SourceLocation &loc)
     {
-        return Phase1Token("", loc, token_category::EOF_TOKEN);
+        return Token("", loc, token_category::EOF_TOKEN);
     }
 
-    static Phase1Token create_indent_token(const Phase1Token &orig_token)
+    static Token create_indent_token(const Token &orig_token)
     {
-        return Phase1Token(orig_token.str(), orig_token.source_location(), token_category::INDENT);
+        return Token(orig_token.str(), orig_token.source_location(), token_category::INDENT);
     }
 
-    static Phase1Token create_dedent_token(const Phase1Token &orig_token)
+    static Token create_dedent_token(const Token &orig_token)
     {
-        return Phase1Token(orig_token.str(), orig_token.source_location(), token_category::DEDENT);
+        return Token(orig_token.str(), orig_token.source_location(), token_category::DEDENT);
     }
 
-    static Phase1Token create_invalid_token(const Phase1Token &orig_token, const std::string &error_msg)
+    static Token create_invalid_token(const Token &orig_token, const std::string &error_msg)
     {
-        return Phase1Token(orig_token.str(), orig_token.source_location(), token_category::INVALID, error_msg);
+        return Token(orig_token.str(), orig_token.source_location(), token_category::INVALID, error_msg);
     }
 
     std::string str() const
@@ -108,7 +108,7 @@ public:
         return loc_;
     }
 
-    bool operator==(const Phase1Token &) = delete;
+    bool operator==(const Token &) = delete;
 
     template <typename Str>
     bool operator==(const Str &str) const
@@ -122,7 +122,7 @@ public:
     }
 
     template <typename Str>
-    friend bool operator==(const Str &str, const Phase1Token &token)
+    friend bool operator==(const Str &str, const Token &token)
     {
         return token == str;
     }

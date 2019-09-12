@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <vector>
 #include <optional>
@@ -5,10 +7,10 @@
 #include <type_traits>
 
 #include "tokenizer/phase1.hpp"
+#include "Token.hpp"
 
 namespace ljf::python::detail::tokenizer::phase2
 {
-using Token = Phase1Token;
 
 class IndentNester
 {
@@ -83,7 +85,6 @@ public:
 
 namespace ljf::python
 {
-using Token = Phase1Token;
 
 template <typename IStream>
 class TokenStream
@@ -102,7 +103,7 @@ public:
     template <typename S>
     TokenStream(S &&stream) : stream_(std::forward<S>(stream)) {}
 
-    // /// returns a Phase1Token and advances Phase1TokenStream's current position.
+    // /// returns a Token and advances Phase1TokenStream's current position.
     // /// tokenizing is executed one line at a time.
     // Token read()
     // {
@@ -129,7 +130,7 @@ public:
     // /// returns a Token.
     // /// tokenizing is executed one line at a time.
     // /// This function is same as read() excapt not advancing TokenStream's current position.
-    // Phase1Token peek()
+    // Token peek()
     // {
     //     if (last_token_)
     //     {
@@ -145,7 +146,7 @@ public:
     //     last_token_ = token;
     //     return token;
     // }
-    /// returns a Phase1Token and advances Phase1TokenStream's current position.
+    /// returns a Token and advances Phase1TokenStream's current position.
     /// tokenizing is executed one line at a time.
     Token read()
     {
@@ -154,7 +155,7 @@ public:
         return dequeue();
     }
 
-    /// returns a Phase1Token.
+    /// returns a Token.
     /// tokenizing is executed one line at a time.
     /// This function is same as read() excapt not advancing Phase1TokenStream's current position.
     Token peek()
@@ -181,12 +182,12 @@ public:
     }
 
 private:
-    void enqueue(Phase1Token &&token)
+    void enqueue(Token &&token)
     {
         token_buffer_.push(std::move(token));
     }
 
-    Phase1Token dequeue()
+    Token dequeue()
     {
         assert(!token_buffer_.empty());
         auto token = std::move(token_buffer_.front());

@@ -22,7 +22,7 @@ class Phase1TokenStream
 {
 private:
     IStream stream_;
-    std::queue<Phase1Token> token_buffer_;
+    std::queue<Token> token_buffer_;
     std::regex re{
         R"((^[ \t]*\n))"                                                                      // EMPTY_LINE
         R"(|(^[ \t]*))"                                                                       // WHITESPACE_AT_BIGGINING_OF_LINE
@@ -67,9 +67,9 @@ public:
     template <typename S>
     Phase1TokenStream(S &&stream) : stream_(std::forward<S>(stream)) {}
 
-    /// returns a Phase1Token and advances Phase1TokenStream's current position.
+    /// returns a Token and advances Phase1TokenStream's current position.
     /// tokenizing is executed one line at a time.
-    Phase1Token read()
+    Token read()
     {
         fill_token_buffer();
         if (token_buffer_.empty())
@@ -80,10 +80,10 @@ public:
         return dequeue();
     }
 
-    /// returns a Phase1Token.
+    /// returns a Token.
     /// tokenizing is executed one line at a time.
     /// This function is same as read() excapt not advancing Phase1TokenStream's current position.
-    Phase1Token peek()
+    Token peek()
     {
         fill_token_buffer();
         if (token_buffer_.empty())
@@ -109,12 +109,12 @@ public:
     }
 
 private:
-    void enqueue(Phase1Token &&token)
+    void enqueue(Token &&token)
     {
         token_buffer_.push(std::move(token));
     }
 
-    Phase1Token dequeue()
+    Token dequeue()
     {
         assert(!token_buffer_.empty());
         auto token = std::move(token_buffer_.front());
@@ -122,7 +122,7 @@ private:
         return token;
     }
 
-    void enqueue_all(std::vector<Phase1Token> &&tokens)
+    void enqueue_all(std::vector<Token> &&tokens)
     {
         for (auto &&token : tokens)
         {
@@ -173,7 +173,7 @@ private:
             auto it = std::sregex_iterator(lines.cbegin(), lines.cend(), re);
             auto end = std::sregex_iterator();
             bool has_continuous_line = false;
-            std::vector<Phase1Token> tokens;
+            std::vector<Token> tokens;
             for (; it != end; ++it)
             {
                 auto &match_result = *it;
@@ -194,7 +194,7 @@ private:
                     continue;
                 }
                 token_category cat = match_result_to_token_category(match_result);
-                tokens.push_back(Phase1Token(match_result.str(), get_current_source_location(), cat));
+                tokens.push_back(Token(match_result.str(), get_current_source_location(), cat));
                 std::cout << "sub_match_index=" << get_first_sub_match_index(match_result) << ", match_result.str()=" << match_result.str() << ", cat=" << int(cat) << "\n";
             }
             if (has_continuous_line)
@@ -258,9 +258,9 @@ private:
         return SourceLocation(zero_based_index, source_file_name_, row_, col_);
     }
 
-    Phase1Token create_eof_token()
+    Token create_eof_token()
     {
-        return Phase1Token::create_eof_token(SourceLocation(zero_based_index, source_file_name_, 0, 0));
+        return Token::create_eof_token(SourceLocation(zero_based_index, source_file_name_, 0, 0));
     }
 };
 

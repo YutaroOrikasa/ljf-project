@@ -8,7 +8,7 @@ using namespace ljf::python;
 template <typename Tokenizer>
 auto /*std::vector*/ tokenize_line(Tokenizer &tokenizer, bool &eof)
 {
-    std::vector<Phase1Token> tokens;
+    std::vector<Token> tokens;
     for (;;)
     {
         auto token = tokenizer.read();
