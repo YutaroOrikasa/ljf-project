@@ -36,7 +36,7 @@ private:
     using error_msg_string = std::string;
 
     std::variant<std::monostate,
-                 literal::StringLiteral,
+                 literals::StringLiteral,
                  error_msg_string>
         concrete_data_variant_;
 
@@ -90,7 +90,7 @@ public:
         return Token(entire,
                      loc,
                      token_category::STRING_LITERAL,
-                     literal::StringLiteral(prefix, contents));
+                     literals::StringLiteral(prefix, contents));
     }
 
     const std::string &str() const
@@ -105,10 +105,10 @@ public:
         return std::get<error_msg_string>(concrete_data_variant_);
     }
 
-    const literal::StringLiteral &get_string_literal() const
+    const literals::StringLiteral &get_string_literal() const
     {
         assert(is_string_literal());
-        return std::get<literal::StringLiteral>(concrete_data_variant_);
+        return std::get<literals::StringLiteral>(concrete_data_variant_);
     }
 
     bool is_eof() const noexcept

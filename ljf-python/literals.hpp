@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace ljf::python::literal
+namespace ljf::python::literals
 {
 class StringLiteral
 {
