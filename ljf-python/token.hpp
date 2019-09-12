@@ -6,7 +6,7 @@
 #include <cassert>
 
 #include "SourceLocation.hpp"
-#include "literal.hpp"
+#include "literals.hpp"
 
 namespace ljf::python
 {
