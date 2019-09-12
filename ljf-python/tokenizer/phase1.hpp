@@ -24,23 +24,25 @@ private:
     IStream stream_;
     std::queue<Token> token_buffer_;
     std::regex re{
-        R"((^[ \t]*\n))"                // EMPTY_LINE
-        R"(|(^[ \t]*))"                 // WHITESPACE_AT_BIGGINING_OF_LINE
-        R"(|(def|class))"               // PYTHON_KEYWORD
-        ""                              //
-        R"(|((b|B)?(?:)"                // STRING_LITERAL, BYTES_LITERAL_PREFIX, (start (?:))
-        R"_("""((?:.|\n)*?)""")_"       // TRIPLE_DOUBLE_QUOTED_CONTENTS
-        R"_(|'''((?:.|\n)*?)''')_"      // TRIPLE_SINGLE_QUOTED_CONTENTS
-        R"_(|((?:"""|''').*\n))_"       // CONTINUOUS_TRIPLE_QUOTE
-        R"_(|"([^"\n]*)"|'([^'\n]*)')_" // DOUBLE_QUOTED_CONTENTS, SINGLE_QUOTED_CONTENTS
-        "))"                            // (end (?:)), (end STRING_LITERAL)
-        ""                              //
-        R"(|([(\[{]))"                  // OPENING_BRACKET
-        R"(|([)\]}]))"                  // CLOSING_BRACKET
-        R"(|(\\\n))"                    // EXPLICIT_LINE_CONTINUATION
-        R"(|(#.*\n))"                   // COMMENT
-        R"(|(\n))"                      // NEWLINE
-        R"(|([^[:space:]\n\\]+))"       // ANY_OTHER
+        R"((^[ \t]*\n))"                                               // EMPTY_LINE
+        R"(|(^[ \t]*))"                                                // WHITESPACE_AT_BIGGINING_OF_LINE
+        R"(|(def|class))"                                              // PYTHON_KEYWORD
+        ""                                                             //
+        R"(|((b|B)?(?:)"                                               // STRING_LITERAL, BYTES_LITERAL_PREFIX, (start (?:))
+        R"_("""((?:.|\n)*?)""")_"                                      // TRIPLE_DOUBLE_QUOTED_CONTENTS
+        R"_(|'''((?:.|\n)*?)''')_"                                     // TRIPLE_SINGLE_QUOTED_CONTENTS
+        R"_(|((?:"""|''').*\n))_"                                      // CONTINUOUS_TRIPLE_QUOTE
+        R"_(|"([^"\n]*)"|'([^'\n]*)')_"                                // DOUBLE_QUOTED_CONTENTS, SINGLE_QUOTED_CONTENTS
+        "))"                                                           // (end (?:)), (end STRING_LITERAL)
+        ""                                                             //
+        R"(|([(\[{]))"                                                 // OPENING_BRACKET
+        R"(|([)\]}]))"                                                 // CLOSING_BRACKET
+        R"(|(\\\n))"                                                   // EXPLICIT_LINE_CONTINUATION
+        R"(|(#.*\n))"                                                  // COMMENT
+        R"(|(\n))"                                                     // NEWLINE
+        R"(|([+\-*/%&|~^@]=|(?:\*\*|//|<<|>>)=)"                       // DELIMITER
+        R"_(|<=|>=|==|!=|\*\*|//|<<|>>|->|\.\.\.|[+\-*/%&|~^@,:.;]))_" // DELIMITER (cont.)
+        R"(|([^[:space:]+\-*/%&|~^@<>=!,:.;(){}[\]$?`\n\\]+))"         // IDENTIFIER
     };
     struct sub_match_index
     {
@@ -58,22 +60,14 @@ private:
             CONTINUOUS_TRIPLE_QUOTE,
             DOUBLE_QUOTED_CONTENTS,
             SINGLE_QUOTED_CONTENTS,
-            // //
+            //
             OPENING_BRACKET,
             CLOSING_BRACKET,
             EXPLICIT_LINE_CONTINUATION,
             COMMENT,
             NEWLINE,
-            ANY_OTHER,
-            //
-            // STRING_LITERAL,
-            // BYTES_LITERAL_PREFIX,
-            // TRIPLE_DOUBLE_QUOTED_CONTENTS,
-            // TRIPLE_SINGLE_QUOTED_CONTENTS,
-            // CONTINUOUS_TRIPLE_QUOTE,
-            // DOUBLE_QUOTED_CONTENTS,
-            // SINGLE_QUOTED_CONTENTS,
-            //
+            DELIMITER,
+            IDENTIFIER,
         };
     };
 
@@ -323,6 +317,7 @@ private:
 
     static size_t get_first_sub_match_index(const std::smatch &match_result)
     {
+        assert(match_result[0].matched);
         // not i = 0, match_result[0] is not a sub match.
         for (size_t i = 1; i < match_result.size(); ++i)
         {
@@ -331,6 +326,8 @@ private:
                 return i;
             }
         }
+        std::cerr << "never come here, invalid match_result given\n";
+        std::cerr << "match_result.str(): " << match_result.str() << "\n";
         assert(false && "never come here, invalid match_result given");
     }
 
