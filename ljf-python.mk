@@ -3,7 +3,7 @@ BUILD_DIR ?= build
 
 -include config.mk
 
-SOURCE_FILES = ljf-python/rtpl.cpp ljf-python/rtpl-phase1.cpp
+SOURCE_FILES = ljf-python/rtpl.cpp ljf-python/rtpl-phase1.cpp ljf-python/rppl.cpp
 
 EXECUTABLE_FILES = $(SOURCE_FILES:%.cpp=$(BUILD_DIR)/%)
 
