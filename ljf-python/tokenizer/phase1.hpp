@@ -24,16 +24,23 @@ private:
     IStream stream_;
     std::queue<Token> token_buffer_;
     std::regex re{
-        R"((^[ \t]*\n))"                                                                      // EMPTY_LINE
-        R"(|(^[ \t]*))"                                                                       // WHITESPACE_AT_BIGGINING_OF_LINE
-        R"(|(def|class))"                                                                     // PYTHON_KEYWORD
-        R"(|(b|B)?("""(?:.|\n)*?"""|'''(?:.|\n)*?'''|((?:"""|''').*\n)|"[^"\n]*"|'[^'\n]*'))" // BYTES_LITERAL_PREFIX, QUOTED, CONTINUOUS_TRIPLE_QUOTE
-        R"(|([(\[{]))"                                                                        // OPENING_BRACKET
-        R"(|([)\]}]))"                                                                        // CLOSING_BRACKET
-        R"(|(\\\n))"                                                                          // EXPLICIT_LINE_CONTINUATION
-        R"(|(#.*\n))"                                                                         // COMMENT
-        R"(|(\n))"                                                                            // NEWLINE
-        R"(|([^[:space:]\n\\]+))"                                                             // ANY_OTHER
+        R"((^[ \t]*\n))"                // EMPTY_LINE
+        R"(|(^[ \t]*))"                 // WHITESPACE_AT_BIGGINING_OF_LINE
+        R"(|(def|class))"               // PYTHON_KEYWORD
+        ""                              //
+        R"(|((b|B)?(?:)"                // STRING_LITERAL, BYTES_LITERAL_PREFIX, (start (?:))
+        R"_("""((?:.|\n)*?)""")_"       // TRIPLE_DOUBLE_QUOTED_CONTENTS
+        R"_(|'''((?:.|\n)*?)''')_"      // TRIPLE_SINGLE_QUOTED_CONTENTS
+        R"_(|((?:"""|''').*\n))_"       // CONTINUOUS_TRIPLE_QUOTE
+        R"_(|"([^"\n]*)"|'([^'\n]*)')_" // DOUBLE_QUOTED_CONTENTS, SINGLE_QUOTED_CONTENTS
+        "))"                            // (end (?:)), (end STRING_LITERAL)
+        ""                              //
+        R"(|([(\[{]))"                  // OPENING_BRACKET
+        R"(|([)\]}]))"                  // CLOSING_BRACKET
+        R"(|(\\\n))"                    // EXPLICIT_LINE_CONTINUATION
+        R"(|(#.*\n))"                   // COMMENT
+        R"(|(\n))"                      // NEWLINE
+        R"(|([^[:space:]\n\\]+))"       // ANY_OTHER
     };
     struct sub_match_index
     {
@@ -44,16 +51,29 @@ private:
             WHITESPACE_AT_BIGGINING_OF_LINE,
             PYTHON_KEYWORD,
             //
+            STRING_LITERAL,
             BYTES_LITERAL_PREFIX,
-            QUOTED,
+            TRIPLE_DOUBLE_QUOTED_CONTENTS,
+            TRIPLE_SINGLE_QUOTED_CONTENTS,
             CONTINUOUS_TRIPLE_QUOTE,
-            //
+            DOUBLE_QUOTED_CONTENTS,
+            SINGLE_QUOTED_CONTENTS,
+            // //
             OPENING_BRACKET,
             CLOSING_BRACKET,
             EXPLICIT_LINE_CONTINUATION,
             COMMENT,
             NEWLINE,
-            ANY_OTHER
+            ANY_OTHER,
+            //
+            // STRING_LITERAL,
+            // BYTES_LITERAL_PREFIX,
+            // TRIPLE_DOUBLE_QUOTED_CONTENTS,
+            // TRIPLE_SINGLE_QUOTED_CONTENTS,
+            // CONTINUOUS_TRIPLE_QUOTE,
+            // DOUBLE_QUOTED_CONTENTS,
+            // SINGLE_QUOTED_CONTENTS,
+            //
         };
     };
 
@@ -177,6 +197,10 @@ private:
             for (; it != end; ++it)
             {
                 auto &match_result = *it;
+
+                std::cout << "sub_match_index=" << get_first_sub_match_index(match_result) //
+                          << ", match_result.str()=" << match_result.str()                 //
+                          << ", cat=" << (int)match_result_to_token_category(match_result) << "\n";
                 if (match_result[sub_match_index::EMPTY_LINE].matched)
                 {
                     // ignore it
@@ -193,9 +217,9 @@ private:
                     has_continuous_line = true;
                     continue;
                 }
-                token_category cat = match_result_to_token_category(match_result);
-                tokens.push_back(Token(match_result.str(), get_current_source_location(), cat));
-                std::cout << "sub_match_index=" << get_first_sub_match_index(match_result) << ", match_result.str()=" << match_result.str() << ", cat=" << int(cat) << "\n";
+
+                auto token = create_token_from_match_result(match_result);
+                tokens.push_back(token);
             }
             if (has_continuous_line)
             {
@@ -216,6 +240,60 @@ private:
         }
     }
 
+    Token create_token_from_match_result(const std::smatch &match_result)
+    {
+
+        if (has_sub_match<sub_match_index::STRING_LITERAL>(match_result))
+        {
+            auto prefix = match_result[sub_match_index::BYTES_LITERAL_PREFIX].str();
+            auto contents = get_string_literal_contents(match_result);
+            return Token::create_string_literal_token(
+                match_result.str(),
+                prefix,
+                contents,
+                get_current_source_location());
+        }
+
+        token_category cat = match_result_to_token_category(match_result);
+        if (cat == token_category::INVALID)
+        {
+            return Token::create_invalid_token(match_result.str(),
+                                               get_current_source_location(),
+                                               "invalid token");
+        }
+        return Token(match_result.str(),
+                     get_current_source_location(),
+                     cat);
+    }
+
+    static std::string get_string_literal_contents(const std::smatch &match_result)
+    {
+        if (has_sub_match<sub_match_index::TRIPLE_DOUBLE_QUOTED_CONTENTS>(match_result))
+        {
+            return match_result[sub_match_index::TRIPLE_DOUBLE_QUOTED_CONTENTS].str();
+        }
+        if (has_sub_match<sub_match_index::TRIPLE_SINGLE_QUOTED_CONTENTS>(match_result))
+        {
+            return match_result[sub_match_index::TRIPLE_SINGLE_QUOTED_CONTENTS].str();
+        }
+        if (has_sub_match<sub_match_index::DOUBLE_QUOTED_CONTENTS>(match_result))
+        {
+            return match_result[sub_match_index::DOUBLE_QUOTED_CONTENTS].str();
+        }
+        if (has_sub_match<sub_match_index::SINGLE_QUOTED_CONTENTS>(match_result))
+        {
+            return match_result[sub_match_index::SINGLE_QUOTED_CONTENTS].str();
+        }
+        assert(false && "never come here");
+        return "";
+    }
+
+    template <size_t I>
+    static bool has_sub_match(const std::smatch &match_result)
+    {
+        return match_result[I].matched;
+    }
+
     static token_category match_result_to_token_category(const std::smatch &match_result)
     {
         auto index = get_first_sub_match_index(match_result);
@@ -234,6 +312,9 @@ private:
 
         case sub_match_index::CLOSING_BRACKET:
             return token_category::CLOSING_BRACKET;
+
+        case sub_match_index::STRING_LITERAL:
+            return token_category::STRING_LITERAL;
 
         default:
             return token_category::INVALID;

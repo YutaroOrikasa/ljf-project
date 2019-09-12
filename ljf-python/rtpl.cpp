@@ -70,6 +70,13 @@ void tokenize_line_and_print_it(Tokenizer &tokenizer, bool &eof, bool verbose)
         if (verbose)
         {
             std::cout << token.source_location() << ":";
+            if (token.is_string_literal())
+            {
+                std::cout << "(string: "
+                          << "prefix=" << token.get_string_literal().prefix()
+                          << ", contents=" << token.get_string_literal().contents()
+                          << ")";
+            }
         }
 
         std::cout << token_to_str(token);

@@ -1,8 +1,12 @@
 #pragma once
 
 #include <string>
+#include <variant>
+
+#include <cassert>
 
 #include "SourceLocation.hpp"
+#include "literal.hpp"
 
 namespace ljf::python
 {
@@ -16,6 +20,7 @@ enum class token_category
     NEWLINE,
     OPENING_BRACKET,
     CLOSING_BRACKET,
+    STRING_LITERAL,
     INVALID, // representing tokenizeing error
     ANY_OTHER
 };
@@ -28,20 +33,29 @@ private:
 
     token_category token_category_;
 
-    std::string error_message_;
+    using error_msg_string = std::string;
 
+    std::variant<std::monostate,
+                 literal::StringLiteral,
+                 error_msg_string>
+        concrete_data_variant_;
+
+    template <typename T>
     Token(const std::string &token, const SourceLocation &loc, token_category ty,
-                const std::string &error_msg)
+          T &&concrete_data)
         : token_(token),
           loc_(loc),
           token_category_(ty),
-          error_message_(error_msg) {}
+          concrete_data_variant_(std::forward<T>(concrete_data)) {}
 
 public:
     Token(const std::string &token, const SourceLocation &loc, token_category ty)
         : token_(token),
           loc_(loc),
-          token_category_(ty) {}
+          token_category_(ty)
+    {
+        assert(ty != token_category::INVALID);
+    }
 
     static Token create_eof_token(const SourceLocation &loc)
     {
@@ -63,14 +77,38 @@ public:
         return Token(orig_token.str(), orig_token.source_location(), token_category::INVALID, error_msg);
     }
 
-    std::string str() const
+    static Token create_invalid_token(const std::string &str, const SourceLocation &loc, const std::string &error_msg)
+    {
+        return Token(str, loc, token_category::INVALID, error_msg);
+    }
+
+    static Token create_string_literal_token(const std::string &entire,
+                                             const std::string &prefix,
+                                             const std::string &contents,
+                                             const SourceLocation &loc)
+    {
+        return Token(entire,
+                     loc,
+                     token_category::STRING_LITERAL,
+                     literal::StringLiteral(prefix, contents));
+    }
+
+    const std::string &str() const
     {
         return token_;
     }
 
     const std::string &error_message() const noexcept
     {
-        return error_message_;
+        assert(is_invalid());
+        assert(std::holds_alternative<error_msg_string>(concrete_data_variant_));
+        return std::get<error_msg_string>(concrete_data_variant_);
+    }
+
+    const literal::StringLiteral &get_string_literal() const
+    {
+        assert(is_string_literal());
+        return std::get<literal::StringLiteral>(concrete_data_variant_);
     }
 
     bool is_eof() const noexcept
@@ -96,6 +134,11 @@ public:
     bool is_invalid() const noexcept
     {
         return token_category_ == token_category::INVALID;
+    }
+
+    bool is_string_literal() const noexcept
+    {
+        return token_category_ == token_category::STRING_LITERAL;
     }
 
     token_category category() const noexcept
