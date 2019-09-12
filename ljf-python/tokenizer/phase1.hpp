@@ -279,12 +279,18 @@ class Phase1TokenStream
 private:
     IStream stream_;
     std::queue<Phase1Token> token_buffer_;
-    std::regex re{R"((^[ \t]*\n)|(^[ \t]*)|(def|class)|[\w]+|)"
-                  R"("""(?:.|\n)*?"""|'''(?:.|\n)*?'''|((?:"""|''').*\n))" // triple quote kinds
-                  R"(|([(\[{]))"                                           // opening brackets
-                  R"(|([)\]}]))"                                           // closing brackets
-                  R"(|(\\\n))"
-                  R"(|(#.*\n)|"[^"\n]*"|(\n)|\S)"};
+    std::regex re{
+        R"((^[ \t]*\n))"                                                                      // EMPTY_LINE
+        R"(|(^[ \t]*))"                                                                       // WHITESPACE_AT_BIGGINING_OF_LINE
+        R"(|(def|class))"                                                                     // PYTHON_KEYWORD
+        R"(|(b|B)?("""(?:.|\n)*?"""|'''(?:.|\n)*?'''|((?:"""|''').*\n)|"[^"\n]*"|'[^'\n]*'))" // BYTES_LITERAL_PREFIX, QUOTED, CONTINUOUS_TRIPLE_QUOTE
+        R"(|([(\[{]))"                                                                        // OPENING_BRACKET
+        R"(|([)\]}]))"                                                                        // CLOSING_BRACKET
+        R"(|(\\\n))"                                                                          // EXPLICIT_LINE_CONTINUATION
+        R"(|(#.*\n))"                                                                         // COMMENT
+        R"(|(\n))"                                                                            // NEWLINE
+        R"(|([^[:space:]\n\\]+))"                                                             // ANY_OTHER
+    };
     struct sub_match_index
     {
         enum sub_match_index_enum : size_t
@@ -293,12 +299,17 @@ private:
             EMPTY_LINE,
             WHITESPACE_AT_BIGGINING_OF_LINE,
             PYTHON_KEYWORD,
+            //
+            BYTES_LITERAL_PREFIX,
+            QUOTED,
             CONTINUOUS_TRIPLE_QUOTE,
+            //
             OPENING_BRACKET,
             CLOSING_BRACKET,
             EXPLICIT_LINE_CONTINUATION,
             COMMENT,
-            NEWLINE
+            NEWLINE,
+            ANY_OTHER
         };
     };
 
@@ -427,31 +438,6 @@ private:
                     // ignore it
                     continue;
                 }
-                if (match_result[sub_match_index::WHITESPACE_AT_BIGGINING_OF_LINE].matched)
-                {
-                    enqueue(Phase1Token(match_result.str(), get_current_source_location(), token_category::WHITESPACE_AT_BIGGINING_OF_LINE));
-                    continue;
-                }
-                if (match_result[sub_match_index::COMMENT].matched)
-                {
-                    tokens.push_back(Phase1Token(match_result.str(), get_current_source_location(), token_category::NEWLINE));
-                    continue;
-                }
-                if (match_result[sub_match_index::NEWLINE].matched)
-                {
-                    tokens.push_back(Phase1Token(match_result.str(), get_current_source_location(), token_category::NEWLINE));
-                    continue;
-                }
-                if (match_result[sub_match_index::OPENING_BRACKET].matched)
-                {
-                    tokens.push_back(Phase1Token(match_result.str(), get_current_source_location(), token_category::OPENING_BRACKET));
-                    continue;
-                }
-                if (match_result[sub_match_index::CLOSING_BRACKET].matched)
-                {
-                    tokens.push_back(Phase1Token(match_result.str(), get_current_source_location(), token_category::CLOSING_BRACKET));
-                    continue;
-                }
                 if (match_result[sub_match_index::EXPLICIT_LINE_CONTINUATION].matched)
                 {
                     // ignore it, don't push NEWLINE token
@@ -463,7 +449,9 @@ private:
                     has_continuous_line = true;
                     continue;
                 }
-                tokens.push_back(Phase1Token(match_result.str(), get_current_source_location(), token_category::ANY_OTHER));
+                token_category cat = match_result_to_token_category(match_result);
+                tokens.push_back(Phase1Token(match_result.str(), get_current_source_location(), cat));
+                std::cout << "sub_match_index=" << get_first_sub_match_index(match_result) << ", match_result.str()=" << match_result.str() << ", cat=" << int(cat) << "\n";
             }
             if (has_continuous_line)
             {
@@ -482,6 +470,43 @@ private:
             // break while(true) loop
             return;
         }
+    }
+
+    static token_category match_result_to_token_category(const std::smatch &match_result)
+    {
+        auto index = get_first_sub_match_index(match_result);
+        assert(index != 0);
+        switch (index)
+        {
+        case sub_match_index::WHITESPACE_AT_BIGGINING_OF_LINE:
+            return token_category::WHITESPACE_AT_BIGGINING_OF_LINE;
+
+        case sub_match_index::COMMENT:
+        case sub_match_index::NEWLINE:
+            return token_category::NEWLINE;
+
+        case sub_match_index::OPENING_BRACKET:
+            return token_category::OPENING_BRACKET;
+
+        case sub_match_index::CLOSING_BRACKET:
+            return token_category::CLOSING_BRACKET;
+
+        default:
+            return token_category::INVALID;
+        }
+    }
+
+    static size_t get_first_sub_match_index(const std::smatch &match_result)
+    {
+        // not i = 0, match_result[0] is not a sub match.
+        for (size_t i = 1; i < match_result.size(); ++i)
+        {
+            if (match_result[i].matched)
+            {
+                return i;
+            }
+        }
+        assert(false && "never come here, invalid match_result given");
     }
 
     SourceLocation get_current_source_location()

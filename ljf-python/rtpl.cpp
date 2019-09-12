@@ -42,6 +42,8 @@ std::string token_to_str(const Token &t)
         return "<NEWLINE>";
     case token_category::INVALID:
         return "<INVALID TOKEN: `" + t.str() + "`, error msg: " + t.error_message() + ">";
+    case token_category::ANY_OTHER:
+        return "<UNKNOWN TOKEN TYPE>`" + t.str() + "`";
     default:
         return "`" + t.str() + "`";
     }
