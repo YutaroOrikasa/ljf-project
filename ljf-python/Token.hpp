@@ -20,9 +20,11 @@ enum class token_category
     NEWLINE,
     OPENING_BRACKET,
     CLOSING_BRACKET,
-    STRING_LITERAL,
+    ANY_OTHER,
+    //
+    START_HAVING_CONCRETE_DATA_, // This is for internal check, not public.
+    STRING_LITERAL = START_HAVING_CONCRETE_DATA_,
     INVALID, // representing tokenizeing error
-    ANY_OTHER
 };
 
 class Token
@@ -48,13 +50,21 @@ private:
           token_category_(ty),
           concrete_data_variant_(std::forward<T>(concrete_data)) {}
 
-public:
     Token(const std::string &token, const SourceLocation &loc, token_category ty)
         : token_(token),
           loc_(loc),
           token_category_(ty)
     {
         assert(ty != token_category::INVALID);
+    }
+
+public:
+    template <token_category C>
+    static Token create_token(const std::string &str, const SourceLocation &loc)
+    {
+        static_assert(C < token_category::START_HAVING_CONCRETE_DATA_,
+                      "please use create_XXX_literal_token() or create_invalid_token() instead");
+        return Token(str, loc, C);
     }
 
     static Token create_eof_token(const SourceLocation &loc)

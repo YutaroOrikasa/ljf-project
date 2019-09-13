@@ -248,16 +248,36 @@ private:
                 get_current_source_location());
         }
 
-        token_category cat = match_result_to_token_category(match_result);
-        if (cat == token_category::INVALID)
         {
-            return Token::create_invalid_token(match_result.str(),
-                                               get_current_source_location(),
-                                               "invalid token");
+            auto index = get_first_sub_match_index(match_result);
+            assert(index != 0);
+            switch (index)
+            {
+            case sub_match_index::WHITESPACE_AT_BIGGINING_OF_LINE:
+                return create_token<token_category::WHITESPACE_AT_BIGGINING_OF_LINE>(match_result);
+
+            case sub_match_index::COMMENT:
+            case sub_match_index::NEWLINE:
+                return create_token<token_category::NEWLINE>(match_result);
+
+            case sub_match_index::OPENING_BRACKET:
+                return create_token<token_category::OPENING_BRACKET>(match_result);
+
+            case sub_match_index::CLOSING_BRACKET:
+                return create_token<token_category::CLOSING_BRACKET>(match_result);
+
+            default:
+                return Token::create_invalid_token(match_result.str(),
+                                                   get_current_source_location(),
+                                                   "invalid token");
+            }
         }
-        return Token(match_result.str(),
-                     get_current_source_location(),
-                     cat);
+    }
+
+    template <token_category C>
+    Token create_token(const std::smatch &match_result) const
+    {
+        return Token::create_token<C>(match_result.str(), get_current_source_location());
     }
 
     static std::string get_string_literal_contents(const std::smatch &match_result)
@@ -331,7 +351,7 @@ private:
         assert(false && "never come here, invalid match_result given");
     }
 
-    SourceLocation get_current_source_location()
+    SourceLocation get_current_source_location() const
     {
         return SourceLocation(zero_based_index, source_file_name_, row_, col_);
     }
