@@ -67,7 +67,7 @@ public:
         return !std::holds_alternative<T>(value_);
     }
 
-    explicit operator bool()  const noexcept
+    explicit operator bool() const noexcept
     {
         return !failed();
     }
@@ -323,6 +323,31 @@ private:
         }
     }
 };
+
+template <typename Parser, typename TokenStream>
+using result_content_t = std::decay_t <
+                         decltype(
+                             std::declval<Parser>()(
+                                 std::declval<TokenStream>())
+                                 .success())>;
+
+/// return type: Parser<std::vector<?>,?>
+/// The parser many() generates will not return failed result.
+template <typename P>
+constexpr auto many(P &&parser)
+{
+    return Parser(
+        [parser](auto &&token_stream) {
+            using result_ty = result_content_t<P, decltype(token_stream)>;
+            std::vector<result_ty> vec;
+            while (auto result = parser(token_stream))
+            {
+                vec.push_back(result.extract_success());
+            }
+            return vec;
+        });
+}
+
 
 template <typename R>
 struct ResultType

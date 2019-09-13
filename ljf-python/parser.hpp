@@ -136,7 +136,7 @@ inline constexpr Parser literal = read_if([](const Token &token) {
 
 inline constexpr auto atom = identifier | literal/*  | enclosure */;
 
-inline constexpr Parser statement = atom;// many(atom);
+inline constexpr Parser statement = many(atom);
 
 } // namespace ljf::python::parser
 
