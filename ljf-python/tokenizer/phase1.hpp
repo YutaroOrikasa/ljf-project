@@ -35,6 +35,11 @@ private:
         R"_(|"([^"\n]*)"|'([^'\n]*)')_"                                // DOUBLE_QUOTED_CONTENTS, SINGLE_QUOTED_CONTENTS
         "))"                                                           // (end (?:)), (end STRING_LITERAL)
         ""                                                             //
+        "|(0[bB](?:_?[0-1])+)"                                         // BIN_INTEGER_LITERAL
+        "|(0[oO](?:_?[0-7])+)"                                         // OCT_INTEGER_LITERAL
+        "|(0[xX](?:_?[0-9a-fA-F])+)"                                   // HEX_INTEGER_LITERAL
+        "|([1-9](?:_?[0-9])*|0+(?:_?0)*)"                              // DEC_INTEGER_LITERAL
+        ""                                                             //
         R"(|([(\[{]))"                                                 // OPENING_BRACKET
         R"(|([)\]}]))"                                                 // CLOSING_BRACKET
         R"(|(\\\n))"                                                   // EXPLICIT_LINE_CONTINUATION
@@ -60,6 +65,11 @@ private:
             CONTINUOUS_TRIPLE_QUOTE,
             DOUBLE_QUOTED_CONTENTS,
             SINGLE_QUOTED_CONTENTS,
+            //
+            BIN_INTEGER_LITERAL,
+            OCT_INTEGER_LITERAL,
+            HEX_INTEGER_LITERAL,
+            DEC_INTEGER_LITERAL,
             //
             OPENING_BRACKET,
             CLOSING_BRACKET,
@@ -265,7 +275,19 @@ private:
 
             case sub_match_index::CLOSING_BRACKET:
                 return create_token<token_category::CLOSING_BRACKET>(match_result);
-            
+
+            case sub_match_index::DEC_INTEGER_LITERAL:
+                return create_integer_literal_token(10, match_result);
+
+            case sub_match_index::BIN_INTEGER_LITERAL:
+                return create_integer_literal_token(2, match_result);
+
+            case sub_match_index::OCT_INTEGER_LITERAL:
+                return create_integer_literal_token(8, match_result);
+
+            case sub_match_index::HEX_INTEGER_LITERAL:
+                return create_integer_literal_token(16, match_result);
+
             case sub_match_index::PYTHON_KEYWORD:
             case sub_match_index::IDENTIFIER:
             case sub_match_index::DELIMITER:
@@ -283,6 +305,11 @@ private:
     Token create_token(const std::smatch &match_result) const
     {
         return Token::create_token<C>(match_result.str(), get_current_source_location());
+    }
+
+    Token create_integer_literal_token(size_t radix, const std::smatch &match_result) const
+    {
+        return Token::create_integer_literal_token(radix, match_result.str(), get_current_source_location());
     }
 
     static std::string get_string_literal_contents(const std::smatch &match_result)

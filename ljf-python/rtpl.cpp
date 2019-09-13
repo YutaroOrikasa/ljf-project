@@ -77,6 +77,13 @@ void tokenize_line_and_print_it(Tokenizer &tokenizer, bool &eof, bool verbose)
                           << ", contents=" << token.get_string_literal().contents()
                           << ")";
             }
+            if (token.is_integer_literal())
+            {
+                std::cout << "(integer: "
+                          << "radix=" << token.get_integer_literal().radix()
+                          << ", integer_str=" << token.get_integer_literal().integer_str()
+                          << ")";
+            }
         }
 
         std::cout << token_to_str(token);

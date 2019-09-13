@@ -24,6 +24,7 @@ enum class token_category
     //
     START_HAVING_CONCRETE_DATA_, // This is for internal check, not public.
     STRING_LITERAL = START_HAVING_CONCRETE_DATA_,
+    INTEGER_LITERAL,
     INVALID, // representing tokenizeing error
 };
 
@@ -39,6 +40,7 @@ private:
 
     std::variant<std::monostate,
                  literals::StringLiteral,
+                 literals::IntegerLiteral,
                  error_msg_string>
         concrete_data_variant_;
 
@@ -103,6 +105,16 @@ public:
                      literals::StringLiteral(prefix, contents));
     }
 
+    static Token create_integer_literal_token(size_t radix,
+                                              const std::string &integer_str,
+                                              const SourceLocation &loc)
+    {
+        return Token(integer_str,
+                     loc,
+                     token_category::INTEGER_LITERAL,
+                     literals::IntegerLiteral(radix, integer_str));
+    }
+
     const std::string &str() const
     {
         return token_;
@@ -119,6 +131,12 @@ public:
     {
         assert(is_string_literal());
         return std::get<literals::StringLiteral>(concrete_data_variant_);
+    }
+
+    const literals::IntegerLiteral &get_integer_literal() const
+    {
+        assert(is_integer_literal());
+        return std::get<literals::IntegerLiteral>(concrete_data_variant_);
     }
 
     bool is_eof() const noexcept
@@ -149,6 +167,11 @@ public:
     bool is_string_literal() const noexcept
     {
         return token_category_ == token_category::STRING_LITERAL;
+    }
+
+    bool is_integer_literal() const noexcept
+    {
+        return token_category_ == token_category::INTEGER_LITERAL;
     }
 
     token_category category() const noexcept
