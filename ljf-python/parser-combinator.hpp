@@ -67,6 +67,11 @@ public:
         return !std::holds_alternative<T>(value_);
     }
 
+    explicit operator bool()  const noexcept
+    {
+        return !failed();
+    }
+
     const T &success() const &noexcept
     {
         assert(!failed());
