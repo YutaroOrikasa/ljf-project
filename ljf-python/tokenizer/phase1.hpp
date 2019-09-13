@@ -265,11 +265,16 @@ private:
 
             case sub_match_index::CLOSING_BRACKET:
                 return create_token<token_category::CLOSING_BRACKET>(match_result);
+            
+            case sub_match_index::PYTHON_KEYWORD:
+            case sub_match_index::IDENTIFIER:
+            case sub_match_index::DELIMITER:
+                return create_token<token_category::ANY_OTHER>(match_result);
 
             default:
                 return Token::create_invalid_token(match_result.str(),
                                                    get_current_source_location(),
-                                                   "invalid token");
+                                                   "invalid token (phase 1 lexer)");
             }
         }
     }
