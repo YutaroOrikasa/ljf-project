@@ -41,6 +41,7 @@ private:
     std::string msg_;
 
 public:
+    Error() = default;
     explicit Error(const std::string &&msg) : msg_(msg) {}
     virtual ~Error() = default;
 
@@ -325,11 +326,11 @@ private:
 };
 
 template <typename Parser, typename TokenStream>
-using result_content_t = std::decay_t <
-                         decltype(
-                             std::declval<Parser>()(
-                                 std::declval<TokenStream>())
-                                 .success())>;
+using result_content_t = std::decay_t<
+    decltype(
+        std::declval<Parser>()(
+            std::declval<TokenStream>())
+            .success())>;
 
 /// return type: Parser<std::vector<?>,?>
 /// The parser many() generates will not return failed result.
@@ -347,7 +348,6 @@ constexpr auto many(P &&parser)
             return vec;
         });
 }
-
 
 template <typename R>
 struct ResultType
