@@ -124,21 +124,19 @@ constexpr auto token(token_category cat)
     });
 };
 
-// This is incomplete.
-// Correct definition is:
-// stringprefix    ::=  "r" | "u" | "R" | "U" | "f" | "F"
-//                     | "fr" | "Fr" | "fR" | "FR" | "rf" | "rF" | "Rf" | "RF"
-inline constexpr auto stringprefix = string("r") | "u";
+// This definition is incomplete.
+inline constexpr Parser identifier = token(token_category::ANY_OTHER);
 
-// inline constexpr auto stringliteral =
-//     inline constexpr auto identifier = token(token_category::ANY_OTHER);
-// inline constexpr auto literal = stringliteral | bytesliteral | integer | floatnumber | imagnumber;
-// inline constexpr auto enclosure = parenth_form | list_display | dict_display | set_display | generator_expression | yield_atom;
+inline constexpr Parser literal = read_if([](const Token &token) {
+    return token.is_string_literal() || token.is_integer_literal();
+});
 
-// inline constexpr auto atom = identifier; // | literal | enclosure
+// inline constexpr Parser enclosure = parenth_form | list_display | dict_display | set_display
+//                | generator_expression | yield_atom;
+
+inline constexpr auto atom = identifier | literal/*  | enclosure */;
+
+inline constexpr Parser statement = atom;// many(atom);
 
 } // namespace ljf::python::parser
 
-void test()
-{
-}
