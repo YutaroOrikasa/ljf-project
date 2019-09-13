@@ -93,6 +93,7 @@ private:
     Phase1TokenStream<std::istream> stream_;
     // std::optional<Token> last_token_;
     std::queue<Token> token_buffer_;
+    std::size_t current_position_ = 0;
 
     using Nester = detail::tokenizer::phase2::Nester;
     using IndentNester = detail::tokenizer::phase2::IndentNester;
@@ -152,6 +153,7 @@ public:
     {
         fill_token_buffer();
 
+        ++current_position_;
         return dequeue();
     }
 
@@ -168,6 +170,12 @@ public:
 
         return token_buffer_.front();
     }
+
+    std::size_t current_position() const noexcept
+    {
+        return current_position_;
+    }
+
     template <typename Str>
     void prompt(Str &&str)
     {
