@@ -139,7 +139,7 @@ public:
     /*implicit*/ constexpr Parser(const F &f) : f_(f) {}
 
     template <typename TokenStream>
-    auto operator()(TokenStream &&ts)
+    auto operator()(TokenStream &&ts) const
     {
         // We don't create Result<Result<T>>, so use to_result() helper.
         // Type of result is flatten.
@@ -207,7 +207,7 @@ public:
     constexpr Sequence(const Ps &... parsers) : parser_tuple_(parsers...) {}
 
     template <typename TokenStream>
-    auto operator()(TokenStream &token_stream)
+    auto operator()(TokenStream &token_stream) const
     {
         return parse<0>(token_stream);
     }
@@ -261,7 +261,7 @@ public:
     constexpr Choice(const Ps &... parsers) : parser_tuple_(parsers...) {}
 
     template <typename TokenStream>
-    auto operator()(TokenStream &token_stream)
+    auto operator()(TokenStream &token_stream) const
     {
         return parse<0>(token_stream);
     }
@@ -283,7 +283,7 @@ public:
 private:
     // return type: Result<std::variant<...>>
     template <size_t I, typename TokenStream>
-    auto parse(TokenStream &token_stream)
+    auto parse(TokenStream &token_stream) const
     {
         using variant_type = std::variant<
             std::decay_t<
@@ -388,7 +388,7 @@ public:
         parser_ = parser;
     }
 
-    auto operator()(TokenStream &ts)
+    auto operator()(TokenStream &ts) const
     {
         return parser_(ts);
     }
