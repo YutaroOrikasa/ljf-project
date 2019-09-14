@@ -93,12 +93,12 @@ Out &operator<<(Out &out, const Error &e)
     }
     else if (token.is_invalid())
     {
-        out << "invalid token `" <<token.str() << "`: ";
+        out << "invalid token `" << token.str() << "`: ";
         out << token.error_message();
     }
     else
     {
-        out << "error token = `" <<token.str() << "`";
+        out << "error token = `" << token.str() << "`";
     }
 
     return out;
@@ -301,7 +301,7 @@ public:
 private:
     // return type: Result<std::tuple<...>>
     template <size_t I, typename TokenStream, typename... Results>
-    auto parse(TokenStream &token_stream, Results &&... results)
+    auto parse(TokenStream &token_stream, Results &&... results) const
     {
         if constexpr (I == tuple_size_)
         {
@@ -400,7 +400,7 @@ template <typename Parser, typename TokenStream>
 using result_content_t = std::decay_t<
     decltype(
         std::declval<Parser>()(
-            std::declval<TokenStream>())
+            std::declval<TokenStream &>())
             .success())>;
 
 /// return type: Parser<std::vector<?>,?>
