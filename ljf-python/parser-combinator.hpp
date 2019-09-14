@@ -114,6 +114,24 @@ public:
     {
         return std::get<I>(success());
     }
+    template <typename F>
+    auto visit(F &&visitor) const
+    {
+        return visit_impl(std::forward<F>(visitor), success());
+    }
+
+private:
+    template <typename F, typename U>
+    static auto visit_impl(F &&visitor, const U &t)
+    {
+        return std::forward<F>(visitor)(t);
+    }
+
+    template <typename F, typename... Ts>
+    static auto visit_impl(F &&visitor, const std::variant<Ts...> &t)
+    {
+        return std::visit(std::forward<F>(visitor), t);
+    }
 };
 
 template <size_t I, typename T>
