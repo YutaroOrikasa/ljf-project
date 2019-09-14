@@ -93,7 +93,8 @@ inline constexpr auto read_if = [](auto &&pred, auto &&... error_args) {
                 return Result<result_content_type>(token_stream.read());
             }
 
-            return make_error_result<result_content_type>(std::forward<decltype(error_args)>(error_args)...);
+            return make_error_result<result_content_type>(token_stream.peek(),
+                                                          std::forward<decltype(error_args)>(error_args)...);
         });
 };
 

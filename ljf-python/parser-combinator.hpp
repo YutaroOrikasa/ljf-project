@@ -38,12 +38,26 @@ class Choice;
 class Error
 {
 private:
+    // The token that caused parsing error.
+    Token token_;
     std::string msg_;
 
 public:
-    Error() = default;
-    explicit Error(const std::string &&msg) : msg_(msg) {}
+    // token: The token that caused parsing error.
+    Error(const Token &token, const std::string &&msg)
+        : token_(token),
+          msg_(msg) {}
+
+    // token: The token that caused parsing error.
+    explicit Error(const Token &token) : Error(token, ""){};
+
     virtual ~Error() = default;
+
+    // return: The token that caused parsing error.
+    virtual const Token &token() const
+    {
+        return token_;
+    }
 
     virtual const std::string &str() const
     {
