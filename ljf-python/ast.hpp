@@ -1,4 +1,7 @@
 #pragma once
+
+#include "tuple"
+
 #include "Token.hpp"
 
 namespace ljf::python::ast
@@ -17,8 +20,18 @@ class ListExpr
 {
 private:
 public:
-    template <typename... Ts>
-    ListExpr(Ts...) {}
+    ListExpr(std::tuple<>) {}
+};
+
+/// kind of
+///  1. (expr)
+///  2. ()
+class ParenthFormExpr
+{
+private:
+    /* data */
+public:
+    ParenthFormExpr(/* args */) {}
 };
 
 } // namespace ljf::python::ast

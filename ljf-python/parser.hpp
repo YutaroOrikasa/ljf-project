@@ -108,9 +108,25 @@ inline constexpr auto string = [](auto &&str) {
     });
 };
 
-inline constexpr auto operator""_p(const char *str, size_t)
+inline constexpr auto separator = [](auto &&str) {
+    return result_type<Separator> <<= string(str);
+};
+
+// inline constexpr auto operator""_p(const char *str, size_t)
+// {
+//     return string(str);
+// }
+
+// create a parser that returns Result<Separator>.
+// The result Separator will be discarded when used with sequence.
+// For example, parser = identifier + ","_sep + identifier;
+// type of parser(stream).success() is std::tuple<Identifier, Identifier>,
+// NOT std::tuple<Identifier, Separator, Identifier>.
+//
+// return type: Parser<?>
+inline constexpr auto operator""_sep(const char *str, size_t)
 {
-    return string(str);
+    return separator(str);
 }
 
 // return type: Sequence<Parser<?>...>
@@ -143,13 +159,14 @@ inline constexpr Parser literal = read_if(
     [](const Token &token) {
         return token.is_string_literal() || token.is_integer_literal();
     });
-
-inline constexpr Parser list_display = result_type<ast::ListExpr> <<= "["_p + "]"_p;
+// inline constexpr Parser parenth_form;
+inline constexpr Parser list_display = result_type<ast::ListExpr> <<= "["_sep + "]"_sep;
 
 inline constexpr Parser enclosure = /* parenth_form | */ list_display /* | dict_display | set_display
-               | generator_expression | yield_atom */;
+               | generator_expression | yield_atom */
+    ;
 
-inline constexpr auto atom = identifier | literal  | enclosure;
+inline constexpr auto atom = identifier | literal | enclosure;
 
 inline constexpr Parser statement = many(atom);
 

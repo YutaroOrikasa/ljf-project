@@ -35,6 +35,40 @@ class Sequence;
 template <typename... P>
 class Choice;
 
+struct Separator
+{
+    template <typename... Args>
+    explicit Separator(Args...) {}
+};
+
+namespace detail
+{
+
+// wrap T with std::tuple
+// but if T is Separator, return empty tuple
+template <typename T>
+auto to_tuple(T &&t)
+{
+    if constexpr (std::is_same_v<std::decay_t<T>, Separator>)
+    {
+        return std::tuple();
+    }
+    else
+    {
+        return std::tuple<T>(std::forward<T>(t));
+    }
+}
+// return type: std::tuple<...>
+template <typename... Ts>
+auto discard_separator(Ts &&... ts)
+{
+    return std::tuple_cat(
+        to_tuple(
+            std::forward<Ts>(ts))...);
+}
+
+} // namespace detail
+
 class Error
 {
 private:
@@ -312,7 +346,9 @@ private:
     {
         if constexpr (I == tuple_size_)
         {
-            return Result(std::tuple(std::move(results)...));
+            return Result(
+                detail::discard_separator(
+                    std::move(results)...));
         }
         else
         {
