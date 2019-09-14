@@ -125,6 +125,8 @@ constexpr auto token(token_category cat)
     });
 };
 
+inline constexpr Parser eof = token(token_category::EOF_TOKEN);
+
 // This definition is incomplete.
 inline constexpr Parser identifier = token(token_category::ANY_OTHER);
 
