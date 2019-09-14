@@ -125,13 +125,6 @@ public:
         stream_.prompt(std::forward<Str>(str));
     }
 
-    template <typename Str>
-    void set_prompt(Str &&str)
-    {
-
-        stream_.set_prompt(std::forward<Str>(str));
-    }
-
 private:
     void enqueue(Token &&token)
     {

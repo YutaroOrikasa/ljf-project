@@ -27,15 +27,6 @@ public:
         return istream_.eof();
     }
 
-    // return: old prompt
-    template <typename Str>
-    std::string set_prompt(Str &&str)
-    {
-        auto old = prompt_;
-        prompt_ = std::forward<Str>(str);
-        return old;
-    }
-
     template <typename Str>
     void prompt(Str &&str)
     {
