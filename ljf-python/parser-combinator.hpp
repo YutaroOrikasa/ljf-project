@@ -65,6 +65,45 @@ public:
     }
 };
 
+template <typename Out>
+Out &operator<<(Out &out, const Error &e)
+{
+    out << "Error: ";
+    if (!e.str().empty())
+    {
+        out << e.str() << ": ";
+    }
+
+    auto &token = e.token();
+    if (token.is_eof())
+    {
+        out << "error token = <EOF>";
+    }
+    else if (token.is_newline())
+    {
+        out << "error token = <NEWLINE>";
+    }
+    else if (token.is_indent())
+    {
+        out << "error token = <INDENT>";
+    }
+    else if (token.is_dedent())
+    {
+        out << "error token = <DEDENT>";
+    }
+    else if (token.is_invalid())
+    {
+        out << "invalid token `" <<token.str() << "`: ";
+        out << token.error_message();
+    }
+    else
+    {
+        out << "error token = `" <<token.str() << "`";
+    }
+
+    return out;
+}
+
 template <typename T>
 class Result
 {
