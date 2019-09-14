@@ -128,16 +128,16 @@ constexpr auto token(token_category cat)
 // This definition is incomplete.
 inline constexpr Parser identifier = token(token_category::ANY_OTHER);
 
-inline constexpr Parser literal = read_if([](const Token &token) {
-    return token.is_string_literal() || token.is_integer_literal();
-});
+inline constexpr Parser literal = read_if(
+    [](const Token &token) {
+        return token.is_string_literal() || token.is_integer_literal();
+    });
 
 // inline constexpr Parser enclosure = parenth_form | list_display | dict_display | set_display
 //                | generator_expression | yield_atom;
 
-inline constexpr auto atom = identifier | literal/*  | enclosure */;
+inline constexpr auto atom = identifier | literal /*  | enclosure */;
 
 inline constexpr Parser statement = many(atom);
 
 } // namespace ljf::python::parser
-
