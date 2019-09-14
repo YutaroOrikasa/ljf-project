@@ -1,16 +1,24 @@
 #pragma once
-#include "token.hpp"
+#include "Token.hpp"
 
-#include "parser.hpp"
 namespace ljf::python::ast
 {
 
-class StringLiteral
+class StringLiteralExpr
 {
 private:
     Token token_;
+
 public:
-    StringLiteral(Token&& token) : token_(std::move(token)) {}
+    StringLiteralExpr(Token &&token) : token_(std::move(token)) {}
+};
+
+class ListExpr
+{
+private:
+public:
+    template <typename... Ts>
+    ListExpr(Ts...) {}
 };
 
 } // namespace ljf::python::ast

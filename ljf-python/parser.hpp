@@ -1,5 +1,9 @@
+#pragma once
+
 #include "tokenizer.hpp"
 #include "parser-combinator.hpp"
+
+#include "ast.hpp"
 
 namespace ljf::python::parser
 {
@@ -104,6 +108,11 @@ inline constexpr auto string = [](auto &&str) {
     });
 };
 
+inline constexpr auto operator""_p(const char *str, size_t)
+{
+    return string(str);
+}
+
 // return type: Sequence<Parser<?>...>
 template <typename Parser, size_t N>
 constexpr auto operator+(Parser &&parser, const char (&str)[N])
@@ -135,10 +144,12 @@ inline constexpr Parser literal = read_if(
         return token.is_string_literal() || token.is_integer_literal();
     });
 
-// inline constexpr Parser enclosure = parenth_form | list_display | dict_display | set_display
-//                | generator_expression | yield_atom;
+inline constexpr Parser list_display = result_type<ast::ListExpr> <<= "["_p + "]"_p;
 
-inline constexpr auto atom = identifier | literal /*  | enclosure */;
+inline constexpr Parser enclosure = /* parenth_form | */ list_display /* | dict_display | set_display
+               | generator_expression | yield_atom */;
+
+inline constexpr auto atom = identifier | literal  | enclosure;
 
 inline constexpr Parser statement = many(atom);
 

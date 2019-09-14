@@ -1,11 +1,43 @@
+
+#include <type_traits>
 #include <iostream>
 
-#include "parser.hpp"
 #include "tokenizer.hpp"
+#include "parser.hpp"
+#include "ast.hpp"
+
+using namespace ljf::python;
+using namespace ljf::python::ast;
+
+class Visitor
+{
+private:
+    auto impl(const ListExpr &expr) const
+    {
+        std::cout << "ListExpr"
+                  << "\n";
+    }
+
+public:
+    bool operator()(const Token &token) const
+    {
+        if (token.is_eof())
+        {
+            return true;
+        }
+        std::cout << "Token: " << token.str() << "\n";
+        return false;
+    }
+    template <typename T>
+    bool operator()(const T &t) const
+    {
+        impl(t);
+        return false;
+    }
+};
 
 int main(int argc, const char **argv)
 {
-    using namespace ljf::python;
 
     // discard tokens other than NEWLINE
     // and then, discard NEWLINE itself
@@ -26,7 +58,11 @@ int main(int argc, const char **argv)
     std::cout << "Read Parse Print Loop" << std::endl;
     using namespace ljf::python::parser;
     constexpr auto program = atom | eof;
+
     TokenStream<std::istream> ts{std::cin};
+
+    // int dummy = result_content_t<decltype(program), decltype(ts)>();
+
     bool eof = false;
     while (!eof)
     {
@@ -37,13 +73,6 @@ int main(int argc, const char **argv)
             discard_until_end_of_line(ts);
             continue;
         }
-        eof = result.visit([&](const Token &token) {
-            if (token.is_eof())
-            {
-                return true;
-            }
-            std::cout << "Token: " << token.str() << "\n";
-            return false;
-        });
+        eof = result.visit(Visitor());
     }
 }
