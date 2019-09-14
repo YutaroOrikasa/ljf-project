@@ -244,7 +244,7 @@ private:
                 if (nester_stack_.back().is_bracket_nester())
                 {
                     // skip newline in bracket
-                    set_prompt("(in bracket)> ");
+                    prompt("(in bracket)> ");
                     continue;
                 }
             }
