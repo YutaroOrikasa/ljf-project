@@ -269,7 +269,7 @@ private:
     template <typename T>
     friend struct ResultType;
 
-    auto extract_func()
+    constexpr auto extract_func()
     {
         return std::move(f_);
     }
