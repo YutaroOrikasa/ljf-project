@@ -223,7 +223,14 @@ public:
         }
         else
         {
-            return Result(TResult(std::move(result).success()));
+            if (result)
+            {
+                return Result(TResult(result.extract_success()));
+            }
+            else
+            {
+                return Result<TResult>(result.extract_error_ptr());
+            }
         }
     }
 
