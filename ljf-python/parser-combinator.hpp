@@ -498,6 +498,40 @@ struct ResultType
 template <typename T>
 inline constexpr auto result_type = ResultType<T>();
 
+template <typename F>
+class Converter
+{
+private:
+    F conv_;
+public:
+    explicit Converter(const F& conv) : conv_(conv) {}
+
+    template <typename P>
+    constexpr auto operator<<=(const P &parser) const
+    {
+        return Parser([=, *this](auto && token_stream){
+            return conv_(parser(token_stream));
+        });
+    }
+};
+
+// usage: Parser p2 = converter(function_object) <<= p0
+// p2's result.success() will be function_object(p0(stream).success())
+// if p0 result is success.
+template <typename F>
+constexpr auto converter(F&&f)
+{
+    return Converter(
+        [conv = std::forward<F>(f)](auto && result){
+            using ConvertedContent = decltype(conv(result.extract_success()));
+            if (result.failed())
+            {
+                return Result<ConvertedContent>(result.extract_error_ptr());
+            }
+            return Result<ConvertedContent>(conv(result.extract_success()));
+        });
+}
+
 template <typename TResult, class TokenStream>
 class PlaceHolder
 {
