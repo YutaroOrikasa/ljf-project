@@ -241,6 +241,7 @@ class Parser
     using this_type = Parser<TResult, F>;
 
 public:
+    constexpr Parser() = default;
     /*implicit*/ constexpr Parser(F &&f) : f_(std::move(f)) {}
     /*implicit*/ constexpr Parser(const F &f) : f_(f) {}
 
@@ -303,9 +304,19 @@ private:
     template <typename T>
     friend struct ResultType;
 
-    constexpr auto extract_func()
+    constexpr auto copy_func() const
     {
-        return std::move(f_);
+        return f_;
+    }
+
+    /*** for PlaceHolder ***/
+
+    template <typename TResult_, class TokenStream>
+    friend class PlaceHolder;
+
+    constexpr auto set_func(const F &f)
+    {
+        return f_ = f;
     }
 };
 
@@ -467,15 +478,15 @@ template <typename R>
 struct ResultType
 {
     template <typename R0, typename F>
-    constexpr auto operator<<=(Parser<R0, F> &&p) const
+    constexpr auto operator<<=(const Parser<R0, F> &p) const
     {
-        return Parser<R, F>(p.extract_func());
+        return Parser<R, F>(p.copy_func());
     }
 
     template <typename F>
-    constexpr auto operator<<=(F &&f) const
+    constexpr auto operator<<=(const F &f) const
     {
-        return Parser<R, F>(std::move(f));
+        return Parser<R, F>(f);
     }
 };
 
@@ -486,25 +497,35 @@ template <typename TResult, class TokenStream>
 class PlaceHolder
 {
 private:
-    using func_type = std::function<TResult(TokenStream &)>;
-    Parser<TResult, func_type> parser_;
+    using func_type = std::function<Result<TResult>(TokenStream &)>;
+    using parser_type = Parser<TResult, func_type>;
+    std::shared_ptr<parser_type> parser_sptr_ = std::make_shared<parser_type>();
 
 public:
-    template <typename F>
-    PlaceHolder &operator=(const Parser<void, F> &parser)
-    {
-        parser_ = result_type<TResult> <<= parser;
-    }
+    // template <typename F>
+    // PlaceHolder &operator=(const Parser<void, F> &parser)
+    // {
+    //     parser_ = result_type<TResult> <<= parser;
+    //     return *this;
+    // }
 
-    template <typename F>
-    PlaceHolder &operator=(const Parser<TResult, F> &parser)
+    // template <typename F>
+    // PlaceHolder &operator=(const Parser<TResult, F> &parser)
+    // {
+    //     parser_ = parser;
+    //     return *this;
+    // }
+
+    template <typename UResult, typename F>
+    PlaceHolder &operator=(const Parser<UResult, F> &parser)
     {
-        parser_ = parser;
+        parser_sptr_->set_func(func_type(result_type<TResult> <<= parser));
+        return *this;
     }
 
     auto operator()(TokenStream &ts) const
     {
-        return parser_(ts);
+        return (*parser_sptr_)(ts);
     }
 
     template <typename Parser2>
@@ -517,6 +538,11 @@ public:
     auto operator|(const Parser2 &parser2) const
     {
         return Choice<PlaceHolder, Parser2>(*this, parser2);
+    }
+
+    bool has_parser() const noexcept
+    {
+        return bool(parser_sptr_);
     }
 };
 
