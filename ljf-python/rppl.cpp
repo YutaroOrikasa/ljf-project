@@ -18,6 +18,39 @@ private:
                   << "\n";
     }
 
+    auto impl(const ParenthFormExpr &expr) const
+    {
+        std::cout << "ParenthFormExpr"
+                  << "\n";
+    }
+
+    auto impl(const StringLiteralExpr &expr) const
+    {
+        std::cout << "StringLiteralExpr: "
+                  << expr.token().str()
+                  << "\n";
+    }
+
+    auto impl(const IntegerLiteralExpr &expr) const
+    {
+        std::cout << "IntegerLiteralExpr: "
+                  << expr.token().str()
+                  << "\n";
+    }
+
+    auto impl(const IdentifierExpr &expr) const
+    {
+        std::cout << "IdentifierExpr: "
+                  << expr.token().str()
+                  << "\n";
+    }
+
+    auto impl(const std::any &any) const
+    {
+        std::cout << "Any: type: " << any.type().name()
+                  << "\n";
+    }
+
 public:
     bool operator()(const Token &token) const
     {
@@ -28,9 +61,17 @@ public:
         std::cout << "Token: " << token.str() << "\n";
         return false;
     }
+
+    template <typename... Ts>
+    bool operator()(const std::variant<Ts...> &var) const
+    {
+        return std::visit(*this, var);
+    }
+
     template <typename T>
     bool operator()(const T &t) const
     {
+        std::cout << "visit " << typeid(T).name() << "\n";
         impl(t);
         return false;
     }
@@ -57,7 +98,7 @@ int main(int argc, const char **argv)
     };
     std::cout << "Read Parse Print Loop" << std::endl;
     using namespace ljf::python::parser;
-    constexpr auto program = atom | eof;
+    const auto program = eof | make_expr_parser();
 
     TokenStream<std::istream> ts{std::cin};
 

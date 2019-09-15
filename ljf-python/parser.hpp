@@ -1,5 +1,7 @@
 #pragma once
 
+#include <any>
+
 #include "tokenizer.hpp"
 #include "parser-combinator.hpp"
 
@@ -7,6 +9,9 @@
 
 namespace ljf::python::parser
 {
+
+template <typename TResult = std::any>
+using ParserPlaceHolder = PlaceHolder<TResult, TokenStream<std::istream>>;
 // inline constexpr Parser XXX = [](auto &&token_stream) {
 
 // };
@@ -88,6 +93,42 @@ inline constexpr auto optional = [](auto parser) {
         });
 };
 
+namespace detail
+{
+
+template <typename T>
+constexpr bool is_variant_v_impl = false;
+
+template <typename... Ts>
+constexpr bool is_variant_v_impl<std::variant<Ts...>> = true;
+
+template <typename T>
+constexpr bool is_variant_v = is_variant_v_impl<std::decay_t<T>>;
+
+template <typename Ret>
+struct MakeFromVariantVisitor
+{
+    template <typename T>
+    Ret operator()(T &&t) const
+    {
+        if constexpr (is_variant_v<T>)
+        {
+            return std::visit(*this, std::forward<T>(t));
+        }
+        else
+        {
+            return Ret(std::forward<T>(t));
+        }
+    }
+};
+} // namespace detail
+
+template <typename Ret>
+inline constexpr auto make_from_variant = [](auto &&variant) {
+    return detail::MakeFromVariantVisitor<Ret>()(
+        std::forward<decltype(variant)>(variant));
+};
+
 inline constexpr auto read_if = [](auto &&pred, auto &&... error_args) {
     return Parser(
         [=](auto &&token_stream) {
@@ -153,21 +194,66 @@ constexpr auto token(token_category cat)
 inline constexpr Parser eof = token(token_category::EOF_TOKEN);
 
 // This definition is incomplete.
-inline constexpr Parser identifier = token(token_category::ANY_OTHER);
+inline constexpr Parser identifier = result_type<ast::IdentifierExpr> <<= token(token_category::ANY_OTHER);
 
-inline constexpr Parser literal = read_if(
-    [](const Token &token) {
-        return token.is_string_literal() || token.is_integer_literal();
-    });
-// inline constexpr Parser parenth_form;
-inline constexpr Parser list_display = result_type<ast::ListExpr> <<= "["_sep + "]"_sep;
+inline constexpr Parser string_literal =
+    result_type<ast::StringLiteralExpr> <<= read_if(
+        [](const Token &token) {
+            return token.is_string_literal();
+        });
+inline constexpr Parser integer_literal =
+    result_type<ast::IntegerLiteralExpr> <<= read_if(
+        [](const Token &token) {
+            return token.is_integer_literal();
+        });
 
-inline constexpr Parser enclosure = /* parenth_form | */ list_display /* | dict_display | set_display
+inline constexpr Parser literal = string_literal | integer_literal;
+
+auto make_expr_parser()
+{
+    using std::any;
+
+    ParserPlaceHolder<ast::ExprVariant> expression;
+
+    // Enclosures
+    ParserPlaceHolder<ast::ParenthFormExpr> parenth_form;
+    ParserPlaceHolder<ast::ListExpr> list_display;
+    ParserPlaceHolder<ast::DictExpr> dict_display;
+    // ParserPlaceHolder<ast::>
+
+    // Atoms
+    Parser enclosure = parenth_form | list_display | dict_display /* | set_display
                | generator_expression | yield_atom */
-    ;
+        ;
+    const Parser atom = identifier | literal | enclosure;
 
-inline constexpr auto atom = identifier | literal | enclosure;
+    parenth_form = "("_sep + ")"_sep;
+    list_display = "["_sep + "]"_sep;
+    dict_display = "{"_sep + "}"_sep;
 
-inline constexpr Parser statement = many(atom);
+    expression = converter(make_from_variant<ast::ExprVariant>) <<= atom;
+    // constexpr Parser parenth_form = "("_sep + optional(starred_expression) + ")"_sep;
+
+    // // Boolean operations
+    // constexpr Parser or_test = and_test | or_test "or" and_test;
+    // // constexpr Parser and_test =  not_test | and_test "and" not_test;
+    // // constexpr Parser not_test =  comparison | "not" not_test;
+
+    // // Conditional expressions
+    // constexpr Parser conditional_expression = or_test + optional("if"_sep + or_test + "else"_sep + expression);
+    // constexpr Parser expression = conditional_expression /* | lambda_expr */;
+    // // expression_nocond      ::=  or_test | lambda_expr_nocond
+
+    // // Expression lists
+    // constexpr Parser starred_item = expression /* | "*" or_expr */;
+    // // constexpr Parser expression_list  = expression + ( ","_sep + expression) * optional_str(",");
+    // // constexpr Parser starred_list  = starred_item("," starred_item) * [","];
+    // constexpr Parser starred_expression = expression | many(starred_item + ","_sep) + optional(starred_item);
+
+    // constexpr Parser statement = many(atom);
+
+    // assert(expression.has_parser());
+    return expression;
+}
 
 } // namespace ljf::python::parser

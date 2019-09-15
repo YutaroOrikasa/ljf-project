@@ -1,6 +1,7 @@
 #pragma once
 
-#include "tuple"
+#include <tuple>
+#include <variant>
 
 #include "Token.hpp"
 
@@ -89,5 +90,12 @@ struct DictExpr : detail::EnclosureExpr
     using EnclosureExpr::EnclosureExpr;
 };
 
+using ExprVariant = std::variant<
+    StringLiteralExpr,
+    IntegerLiteralExpr,
+    IdentifierExpr,
+    ListExpr,
+    ParenthFormExpr,
+    DictExpr>;
 
 } // namespace ljf::python::ast
