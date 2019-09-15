@@ -318,6 +318,11 @@ private:
     {
         return f_ = f;
     }
+
+    constexpr const F &func() const
+    {
+        return f_;
+    }
 };
 
 template <typename... Ps>
@@ -502,22 +507,15 @@ private:
     std::shared_ptr<parser_type> parser_sptr_ = std::make_shared<parser_type>();
 
 public:
-    // template <typename F>
-    // PlaceHolder &operator=(const Parser<void, F> &parser)
-    // {
-    //     parser_ = result_type<TResult> <<= parser;
-    //     return *this;
-    // }
-
-    // template <typename F>
-    // PlaceHolder &operator=(const Parser<TResult, F> &parser)
-    // {
-    //     parser_ = parser;
-    //     return *this;
-    // }
-
     template <typename UResult, typename F>
     PlaceHolder &operator=(const Parser<UResult, F> &parser)
+    {
+        parser_sptr_->set_func(func_type(result_type<TResult> <<= parser));
+        return *this;
+    }
+
+    template <typename F>
+    PlaceHolder &operator=(const F &parser)
     {
         parser_sptr_->set_func(func_type(result_type<TResult> <<= parser));
         return *this;
@@ -542,7 +540,7 @@ public:
 
     bool has_parser() const noexcept
     {
-        return bool(parser_sptr_);
+        return bool(parser_sptr_->func());
     }
 };
 
