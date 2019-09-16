@@ -45,9 +45,10 @@ private:
                   << "\n";
     }
 
-    auto impl(const std::any &any) const
+    template <typename T>
+    auto impl(const T& t) const
     {
-        std::cout << "Any: type: " << any.type().name()
+        std::cout << "Unknown type: " << typeid(t).name()
                   << "\n";
     }
 
@@ -66,6 +67,12 @@ public:
     bool operator()(const std::variant<Ts...> &var) const
     {
         return std::visit(*this, var);
+    }
+
+    bool operator()(const Expr& expr) const
+    {
+        std::cout << "visit Expr\n";
+        return expr.accept(*this);
     }
 
     template <typename T>

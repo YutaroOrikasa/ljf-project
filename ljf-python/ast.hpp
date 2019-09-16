@@ -3,11 +3,41 @@
 #include <tuple>
 #include <variant>
 #include <memory>
+#include <type_traits>
 
 #include "Token.hpp"
 
 namespace ljf::python::ast
 {
+struct ExprVariant;
+
+class Expr
+{
+private:
+    std::unique_ptr<ExprVariant> expr_var_ptr_;
+
+public:
+    // template <typename T>
+    template <typename T,
+              std::enable_if_t<
+                  !std::is_same_v<std::decay_t<T>,
+                                 Expr>> * = nullptr>
+    Expr(T &&t)
+    {
+        expr_var_ptr_ = std::make_unique<ExprVariant>(std::forward<T>(t));
+    }
+
+    // Expr may be moved on construction.
+    Expr(const Expr&) = delete;
+    Expr(Expr&&) = default;
+
+    template <typename Visitor>
+    auto accept(Visitor &&visitor) const
+    {
+        assert(expr_var_ptr_);
+        return std::visit(std::forward<Visitor>(visitor), *expr_var_ptr_);
+    }
+};
 
 class StringLiteralExpr
 {
@@ -83,7 +113,7 @@ class ParenthFormExpr
 private:
     /* data */
 public:
-    ParenthFormExpr(std::tuple<>) {}
+    ParenthFormExpr() {}
 };
 
 struct DictExpr : detail::EnclosureExpr
@@ -91,30 +121,34 @@ struct DictExpr : detail::EnclosureExpr
     using EnclosureExpr::EnclosureExpr;
 };
 
-using ExprVariant = std::variant<
-    StringLiteralExpr,
-    IntegerLiteralExpr,
-    IdentifierExpr,
-    ListExpr,
-    ParenthFormExpr,
-    DictExpr>;
-
-class Expr
+class UnaryExpr
 {
 private:
-    std::unique_ptr<ExprVariant> expr_var_ptr_;
-public:
-    template<typename T>
-    Expr(T&&t) {
-        expr_var_ptr_ = std::make_unique<ExprVariant>(std::forward<T>(t));
-    }
+    Token operator_;
+    Expr operand_;
 
-    template <typename Visitor>
-    auto accept(Visitor && visitor) const
-    {
-        assert(expr_var_ptr_);
-        return std::visit(std::forward<Visitor>(visitor), *expr_var_ptr_);
-    }
+public:
+    UnaryExpr(Token _operator, Expr operand)
+        : operator_(std::move(_operator)),
+          operand_(std::move(operand)) {}
+
+    // template <typename... Ts>
+    // explicit UnaryExpr(std::tuple<Ts...> tuple)
+    //     : UnaryExpr(std::make_from_tuple<UnaryExpr>(tuple))
+    // {
+    // }
+};
+
+struct ExprVariant : std::variant<
+                         StringLiteralExpr,
+                         IntegerLiteralExpr,
+                         IdentifierExpr,
+                         ListExpr,
+                         ParenthFormExpr,
+                         DictExpr,
+                         UnaryExpr>
+{
+    using variant::variant;
 };
 
 } // namespace ljf::python::ast

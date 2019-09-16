@@ -14,6 +14,27 @@
 namespace ljf::python::parser::detail
 {
 
+template <template <typename...> class class_template, typename T>
+constexpr bool is_class_template_instance_v_impl = false;
+
+template <template <typename...> class class_template, typename... Ts>
+constexpr bool is_class_template_instance_v_impl<class_template, class_template<Ts...>> = true;
+
+template <template <typename...> class class_template, typename T>
+constexpr bool is_class_template_instance_v = is_class_template_instance_v_impl<class_template, std::decay_t<T>>;
+
+static_assert(is_class_template_instance_v<std::vector, std::vector<int>>);
+static_assert(!is_class_template_instance_v<std::tuple, std::vector<int>>);
+
+template <typename T>
+constexpr bool is_variant_v = is_class_template_instance_v<std::variant, T>;
+
+template <typename T>
+constexpr bool is_tuple_v = is_class_template_instance_v<std::tuple, T>;
+
+static_assert(is_tuple_v<std::tuple<int>>);
+static_assert(!is_tuple_v<int>);
+
 template <typename T, typename Tuple, typename... Args>
 constexpr T make_from_tuple_and_args(Tuple &&tuple, Args &&... args)
 {
@@ -23,6 +44,27 @@ constexpr T make_from_tuple_and_args(Tuple &&tuple, Args &&... args)
             std::tuple(std::forward<Args>(args)...)));
 }
 
+template <typename Ret>
+struct MakeFromVariantVisitor
+{
+    template <typename T>
+    Ret operator()(T &&t) const
+    {
+        if constexpr (is_variant_v<T>)
+        {
+            return std::visit(*this, std::forward<T>(t));
+        }
+        else if constexpr (is_tuple_v<T>)
+        {
+            return std::make_from_tuple<Ret>(std::forward<T>(t));
+        }
+        
+        else
+        {
+            return Ret(std::forward<T>(t));
+        }
+    }
+};
 } // namespace ljf::python::parser::detail
 
 namespace ljf::python::parser
@@ -233,8 +275,14 @@ Result<T> make_error_result(Args &&... args)
     return Result<T>(std::make_unique<Error>(std::forward<Args>(args)...));
 }
 
+template <typename Ret>
+inline constexpr auto make_from_variant = [](auto &&variant) {
+    return detail::MakeFromVariantVisitor<Ret>()(
+        std::forward<decltype(variant)>(variant));
+};
+
 /// F should be deduced by constructor argument, void is dummy.
-template <typename TResult = void, typename F = void>
+template <typename TResult = void, typename F = void, bool convert_from_variant_tuple = true>
 class Parser
 {
     F f_;
@@ -260,7 +308,14 @@ public:
         {
             if (result)
             {
-                return Result(TResult(result.extract_success()));
+                if constexpr (convert_from_variant_tuple)
+                {
+                    return Result(make_from_variant<TResult>(result.extract_success()));
+                }
+                else
+                {
+                    return Result(TResult(result.extract_success()));
+                }
             }
             else
             {
@@ -503,13 +558,14 @@ class Converter
 {
 private:
     F conv_;
+
 public:
-    explicit constexpr Converter(const F& conv) : conv_(conv) {}
+    explicit constexpr Converter(const F &conv) : conv_(conv) {}
 
     template <typename P>
     constexpr auto operator<<=(const P &parser) const
     {
-        return Parser([=, *this](auto && token_stream){
+        return Parser([=, *this](auto &&token_stream) {
             return conv_(parser(token_stream));
         });
     }
@@ -519,10 +575,10 @@ public:
 // p2's result.success() will be function_object(p0(stream).success())
 // if p0 result is success.
 template <typename F>
-constexpr auto converter(F&&f)
+constexpr auto converter(F &&f)
 {
     return Converter(
-        [conv = std::forward<F>(f)](auto && result){
+        [conv = std::forward<F>(f)](auto &&result) {
             using ConvertedContent = decltype(conv(result.extract_success()));
             if (result.failed())
             {

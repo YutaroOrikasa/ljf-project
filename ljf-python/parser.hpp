@@ -52,7 +52,7 @@ auto to_optional_result(Result<T> &&result)
 {
     if (result.failed())
     {
-        Result<std::optional<T>>(std::optional<T>(result.extract_error_ptr()));
+        Result<std::optional<T>>(result.extract_error_ptr());
     }
 
     return Result<std::optional<T>>(std::optional<T>(result.extract_success()));
@@ -67,7 +67,7 @@ auto to_empty_optional_result(Result<T> &&result)
     return Result<std::optional<T>>(std::optional<T>());
 }
 
-inline constexpr auto optional_str = [](auto str) {
+inline constexpr auto option_str = [](auto str) {
     return Parser(
         [=](auto &&token_stream) {
             if (token_stream.peek().str() == str)
@@ -78,7 +78,7 @@ inline constexpr auto optional_str = [](auto str) {
         });
 };
 
-inline constexpr auto optional = [](auto parser) {
+inline constexpr auto option = [](auto parser) {
     return Parser(
         [=](auto &&token_stream) {
             auto initial_pos = token_stream.current_position();
@@ -91,42 +91,6 @@ inline constexpr auto optional = [](auto parser) {
             }
             return to_optional_result(std::move(result));
         });
-};
-
-namespace detail
-{
-
-template <typename T>
-constexpr bool is_variant_v_impl = false;
-
-template <typename... Ts>
-constexpr bool is_variant_v_impl<std::variant<Ts...>> = true;
-
-template <typename T>
-constexpr bool is_variant_v = is_variant_v_impl<std::decay_t<T>>;
-
-template <typename Ret>
-struct MakeFromVariantVisitor
-{
-    template <typename T>
-    Ret operator()(T &&t) const
-    {
-        if constexpr (is_variant_v<T>)
-        {
-            return std::visit(*this, std::forward<T>(t));
-        }
-        else
-        {
-            return Ret(std::forward<T>(t));
-        }
-    }
-};
-} // namespace detail
-
-template <typename Ret>
-inline constexpr auto make_from_variant = [](auto &&variant) {
-    return detail::MakeFromVariantVisitor<Ret>()(
-        std::forward<decltype(variant)>(variant));
 };
 
 inline constexpr auto read_if = [](auto &&pred, auto &&... error_args) {
@@ -153,10 +117,10 @@ inline constexpr auto separator = [](auto &&str) {
     return result_type<Separator> <<= string(str);
 };
 
-// inline constexpr auto operator""_p(const char *str, size_t)
-// {
-//     return string(str);
-// }
+inline constexpr auto operator""_p(const char *str, size_t)
+{
+    return string(str);
+}
 
 // create a parser that returns Result<Separator>.
 // The result Separator will be discarded when used with sequence.
@@ -213,26 +177,41 @@ auto make_expr_parser()
 {
     using std::any;
 
-    ParserPlaceHolder<ast::ExprVariant> expression;
+    constexpr auto as_expr = converter(make_from_variant<ast::Expr>);
+
+    using ast::Expr;
+    ParserPlaceHolder<Expr> expression;
 
     // Enclosures
     ParserPlaceHolder<ast::ParenthFormExpr> parenth_form;
-    ParserPlaceHolder<ast::ListExpr> list_display;
-    ParserPlaceHolder<ast::DictExpr> dict_display;
+    // ParserPlaceHolder<ast::ListExpr> list_display;
+    // ParserPlaceHolder<ast::DictExpr> dict_display;
     // ParserPlaceHolder<ast::>
 
     // Atoms
-    Parser enclosure = parenth_form | list_display | dict_display /* | set_display
+    Parser enclosure = parenth_form /* | list_display | dict_display  | set_display
                | generator_expression | yield_atom */
         ;
-    const Parser atom = identifier | literal | enclosure;
+    const Parser atom = identifier | literal /*  | enclosure */;
 
-    parenth_form = "("_sep + ")"_sep;
-    list_display = "["_sep + "]"_sep;
-    dict_display = "{"_sep + "}"_sep;
+    /* parenth_form = "("_sep + option(starred_expression) + ")"_sep; */
+    parenth_form = "("_sep + /* option(expression) + */ ")"_sep;
+    // list_display = "["_sep + "]"_sep;
+    // dict_display = "{"_sep + "}"_sep;
 
-    expression = converter(make_from_variant<ast::ExprVariant>) <<= atom;
-    // constexpr Parser parenth_form = "("_sep + optional(starred_expression) + ")"_sep;
+    /* attributeref ::=  primary "." identifier */
+    /* subscription ::=  primary "[" expression_list "]" */
+    /* slice */
+    /* call */
+    const Parser primary = atom /* | attributeref | subscription | slicing | call */;
+
+    ParserPlaceHolder<ast::Expr> u_expr;
+    /* const Parser power =  (await_expr | primary) ["**" u_expr] */
+    const Parser power = primary /* + option("**"_p + u_expr) */;
+
+    u_expr = power | ( result_type<ast::UnaryExpr> <<= "-"_p + u_expr | "+"_p + u_expr | "~"_p + u_expr);
+
+    expression = as_expr <<= u_expr;
 
     // // Boolean operations
     // constexpr Parser or_test = and_test | or_test "or" and_test;
@@ -240,15 +219,15 @@ auto make_expr_parser()
     // // constexpr Parser not_test =  comparison | "not" not_test;
 
     // // Conditional expressions
-    // constexpr Parser conditional_expression = or_test + optional("if"_sep + or_test + "else"_sep + expression);
+    // constexpr Parser conditional_expression = or_test + option("if"_sep + or_test + "else"_sep + expression);
     // constexpr Parser expression = conditional_expression /* | lambda_expr */;
     // // expression_nocond      ::=  or_test | lambda_expr_nocond
 
     // // Expression lists
     // constexpr Parser starred_item = expression /* | "*" or_expr */;
-    // // constexpr Parser expression_list  = expression + ( ","_sep + expression) * optional_str(",");
+    // // constexpr Parser expression_list  = expression + ( ","_sep + expression) * option_str(",");
     // // constexpr Parser starred_list  = starred_item("," starred_item) * [","];
-    // constexpr Parser starred_expression = expression | many(starred_item + ","_sep) + optional(starred_item);
+    // constexpr Parser starred_expression = expression | many(starred_item + ","_sep) + option(starred_item);
 
     // constexpr Parser statement = many(atom);
 
