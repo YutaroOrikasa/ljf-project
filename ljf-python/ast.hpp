@@ -2,6 +2,7 @@
 
 #include <tuple>
 #include <variant>
+#include <memory>
 
 #include "Token.hpp"
 
@@ -97,5 +98,23 @@ using ExprVariant = std::variant<
     ListExpr,
     ParenthFormExpr,
     DictExpr>;
+
+class Expr
+{
+private:
+    std::unique_ptr<ExprVariant> expr_var_ptr_;
+public:
+    template<typename T>
+    Expr(T&&t) {
+        expr_var_ptr_ = std::make_unique<ExprVariant>(std::forward<T>(t));
+    }
+
+    template <typename Visitor>
+    auto accept(Visitor && visitor) const
+    {
+        assert(expr_var_ptr_);
+        return std::visit(std::forward<Visitor>(visitor), *expr_var_ptr_);
+    }
+};
 
 } // namespace ljf::python::ast
