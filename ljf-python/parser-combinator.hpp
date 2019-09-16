@@ -504,7 +504,7 @@ class Converter
 private:
     F conv_;
 public:
-    explicit Converter(const F& conv) : conv_(conv) {}
+    explicit constexpr Converter(const F& conv) : conv_(conv) {}
 
     template <typename P>
     constexpr auto operator<<=(const P &parser) const
