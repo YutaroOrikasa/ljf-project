@@ -20,6 +20,7 @@ enum class token_category
     NEWLINE,
     OPENING_BRACKET,
     CLOSING_BRACKET,
+    IDENTIFIER,
     ANY_OTHER,
     //
     START_HAVING_CONCRETE_DATA_, // This is for internal check, not public.
@@ -157,6 +158,11 @@ public:
     bool is_newline() const noexcept
     {
         return token_category_ == token_category::NEWLINE;
+    }
+
+    bool is_identifier() const noexcept
+    {
+        return token_category_ == token_category::IDENTIFIER;
     }
 
     bool is_invalid() const noexcept

@@ -281,8 +281,10 @@ private:
             case sub_match_index::HEX_INTEGER_LITERAL:
                 return create_integer_literal_token(16, match_result);
 
-            case sub_match_index::PYTHON_KEYWORD:
             case sub_match_index::IDENTIFIER:
+                return create_token<token_category::IDENTIFIER>(match_result);
+
+            case sub_match_index::PYTHON_KEYWORD:
             case sub_match_index::DELIMITER:
                 return create_token<token_category::ANY_OTHER>(match_result);
 

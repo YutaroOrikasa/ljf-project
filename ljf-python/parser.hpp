@@ -7,6 +7,10 @@
 
 #include "ast.hpp"
 
+// TODO
+// - add binary +-*/ parser
+// - add simple S Expr printer
+
 namespace ljf::python::parser
 {
 
@@ -157,8 +161,7 @@ constexpr auto token(token_category cat)
 
 inline constexpr Parser eof = token(token_category::EOF_TOKEN);
 
-// This definition is incomplete.
-inline constexpr Parser identifier = result_type<ast::IdentifierExpr> <<= token(token_category::ANY_OTHER);
+inline constexpr Parser identifier = result_type<ast::IdentifierExpr> <<= token(token_category::IDENTIFIER);
 
 inline constexpr Parser string_literal =
     result_type<ast::StringLiteralExpr> <<= read_if(
