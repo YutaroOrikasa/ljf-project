@@ -45,8 +45,16 @@ private:
                   << "\n";
     }
 
+    auto impl(const UnaryExpr &expr) const
+    {
+        std::cout << "UnaryExpr: "
+                  <<"'" << expr.operator_.str() << "'"
+                  << " ";
+        (*this)(expr.operand_);
+    }
+
     template <typename T>
-    auto impl(const T& t) const
+    auto impl(const T &t) const
     {
         std::cout << "Unknown type: " << typeid(t).name()
                   << "\n";
@@ -69,7 +77,7 @@ public:
         return std::visit(*this, var);
     }
 
-    bool operator()(const Expr& expr) const
+    bool operator()(const Expr &expr) const
     {
         std::cout << "visit Expr\n";
         return expr.accept(*this);

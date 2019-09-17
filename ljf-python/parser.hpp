@@ -180,8 +180,6 @@ auto make_expr_parser()
 {
     using std::any;
 
-    constexpr auto as_expr = converter(make_from_variant<ast::Expr>);
-
     using ast::Expr;
     ParserPlaceHolder<Expr> expression;
 
@@ -212,9 +210,23 @@ auto make_expr_parser()
     /* const Parser power =  (await_expr | primary) ["**" u_expr] */
     const Parser power = primary /* + option("**"_p + u_expr) */;
 
-    u_expr = power | ( result_type<ast::UnaryExpr> <<= "-"_p + u_expr | "+"_p + u_expr | "~"_p + u_expr);
+    u_expr = power | (result_type<ast::UnaryExpr> <<= "-"_p + u_expr | "+"_p + u_expr | "~"_p + u_expr);
 
-    expression = as_expr <<= u_expr;
+    ParserPlaceHolder<ast::Expr> m_expr;
+    // It's left recursion.
+    // m_expr = u_expr | (result_type<ast::BinaryExpr> <<= //
+    //                    m_expr + "*"_p + u_expr |       //
+    //                    m_expr + "@"_p + m_expr |       //
+    //                    m_expr + "//"_p + u_expr |      //
+    //                    m_expr + "/"_p + u_expr |       //
+    //                    m_expr + "%"_p + u_expr);
+    m_expr = u_expr | (result_type<ast::BinaryExpr> <<= //
+                       u_expr + "*"_p + u_expr |       //
+                       u_expr + "@"_p + m_expr |       //
+                       u_expr + "//"_p + u_expr |      //
+                       u_expr + "/"_p + u_expr |       //
+                       u_expr + "%"_p + u_expr);
+    expression = m_expr;
 
     // // Boolean operations
     // constexpr Parser or_test = and_test | or_test "or" and_test;

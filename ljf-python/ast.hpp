@@ -121,22 +121,26 @@ struct DictExpr : detail::EnclosureExpr
     using EnclosureExpr::EnclosureExpr;
 };
 
-class UnaryExpr
+struct UnaryExpr
 {
-private:
     Token operator_;
     Expr operand_;
 
-public:
     UnaryExpr(Token _operator, Expr operand)
         : operator_(std::move(_operator)),
           operand_(std::move(operand)) {}
+};
 
-    // template <typename... Ts>
-    // explicit UnaryExpr(std::tuple<Ts...> tuple)
-    //     : UnaryExpr(std::make_from_tuple<UnaryExpr>(tuple))
-    // {
-    // }
+struct BinaryExpr
+{
+    Token operator_;
+    Expr left_;
+    Expr right_;
+
+    BinaryExpr(Expr left, Token oper, Expr right)
+        : operator_(std::move(oper)),
+          left_(std::move(left)),
+          right_(std::move(right)) {}
 };
 
 struct ExprVariant : std::variant<
@@ -146,7 +150,8 @@ struct ExprVariant : std::variant<
                          ListExpr,
                          ParenthFormExpr,
                          DictExpr,
-                         UnaryExpr>
+                         UnaryExpr,
+                         BinaryExpr>
 {
     using variant::variant;
 };
