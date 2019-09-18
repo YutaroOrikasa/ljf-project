@@ -161,6 +161,8 @@ constexpr auto token(token_category cat)
 
 inline constexpr Parser eof = token(token_category::EOF_TOKEN);
 
+inline constexpr Parser newline = token(token_category::NEWLINE);
+
 inline constexpr Parser identifier = result_type<ast::IdentifierExpr> <<= token(token_category::IDENTIFIER);
 
 inline constexpr Parser string_literal =
