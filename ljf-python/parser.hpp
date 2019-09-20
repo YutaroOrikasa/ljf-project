@@ -56,7 +56,7 @@ auto to_optional_result(Result<T> &&result)
 {
     if (result.failed())
     {
-        Result<std::optional<T>>(result.extract_error_ptr());
+        return Result<std::optional<T>>(result.extract_error_ptr());
     }
 
     return Result<std::optional<T>>(std::optional<T>(result.extract_success()));
@@ -163,6 +163,9 @@ inline constexpr Parser eof = token(token_category::EOF_TOKEN);
 
 inline constexpr Parser newline = token(token_category::NEWLINE);
 
+inline constexpr Parser indent = token(token_category::INDENT);
+inline constexpr Parser dedent = token(token_category::DEDENT);
+
 inline constexpr Parser identifier = result_type<ast::IdentifierExpr> <<= token(token_category::IDENTIFIER);
 
 inline constexpr Parser string_literal =
@@ -178,7 +181,7 @@ inline constexpr Parser integer_literal =
 
 inline constexpr Parser literal = string_literal | integer_literal;
 
-auto make_expr_parser()
+inline auto make_expr_parser()
 {
     using std::any;
 
@@ -223,10 +226,10 @@ auto make_expr_parser()
     //                    m_expr + "/"_p + u_expr |       //
     //                    m_expr + "%"_p + u_expr);
     m_expr = u_expr | (result_type<ast::BinaryExpr> <<= //
-                       u_expr + "*"_p + u_expr |       //
-                       u_expr + "@"_p + m_expr |       //
-                       u_expr + "//"_p + u_expr |      //
-                       u_expr + "/"_p + u_expr |       //
+                       u_expr + "*"_p + u_expr |        //
+                       u_expr + "@"_p + m_expr |        //
+                       u_expr + "//"_p + u_expr |       //
+                       u_expr + "/"_p + u_expr |        //
                        u_expr + "%"_p + u_expr);
     expression = m_expr;
 

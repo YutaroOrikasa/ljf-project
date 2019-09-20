@@ -114,7 +114,7 @@ auto to_tuple(T &&t)
     }
     else
     {
-        return std::tuple<T>(std::forward<T>(t));
+        return std::tuple<std::decay_t<T>>(std::forward<T>(t));
     }
 }
 // return type: std::tuple<...>
@@ -313,6 +313,9 @@ public:
     template <typename TokenStream>
     auto operator()(TokenStream &&ts) const
     {
+        static_assert(!std::is_void_v<decltype(f_(std::forward<TokenStream>(ts)))>,
+        "parser function must return non void type");
+
         // We don't create Result<Result<T>>, so use to_result() helper.
         // Type of result is flatten.
         Result result = to_result(f_(std::forward<TokenStream>(ts)));
@@ -630,6 +633,7 @@ public:
 
     auto operator()(TokenStream &ts) const
     {
+        assert(has_parser() && "no parsers assigned");
         return (*parser_sptr_)(ts);
     }
 
