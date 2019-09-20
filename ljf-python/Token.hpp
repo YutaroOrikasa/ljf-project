@@ -95,6 +95,27 @@ public:
         return Token(str, loc, token_category::INVALID, error_msg);
     }
 
+    // template <token_category CAT>
+    // static Token create_token(const std::string &str,
+    //                           const SourceLocation &loc)
+    // {
+    //     return Token(str,
+    //                  loc,
+    //                  CAT);
+    // }
+
+    template <token_category CAT>
+    static Token create_string_literal_token(const std::string &entire,
+                                             const std::string &prefix,
+                                             const std::string &contents,
+                                             const SourceLocation &loc)
+    {
+        return Token(entire,
+                     loc,
+                     CAT,
+                     literals::StringLiteral(prefix, contents));
+    }
+
     static Token create_string_literal_token(const std::string &entire,
                                              const std::string &prefix,
                                              const std::string &contents,
@@ -215,4 +236,11 @@ public:
         return !(t == u);
     }
 };
+// template <>
+// Token Token::create_token<token_category::STRING_LITERAL>(const std::string &str,
+//                                                           const SourceLocation &loc)
+// {
+//     return Token(str,
+//                  loc,
+//                  CAT);
 } // namespace ljf::python
