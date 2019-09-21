@@ -692,6 +692,12 @@ public:
         return *this;
     }
 
+    PlaceHolder &operator=(const PlaceHolder &parser)
+    {
+        parser_sptr_->set_func(func_type(result_type<TResult> <<= parser));
+        return *this;
+    }
+
     auto operator()(TokenStream &ts) const
     {
         if (!has_parser())
