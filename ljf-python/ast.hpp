@@ -21,15 +21,11 @@ public:
     template <typename T,
               std::enable_if_t<
                   !std::is_same_v<std::decay_t<T>,
-                                 Expr>> * = nullptr>
-    Expr(T &&t)
+                                  Expr>> * = nullptr>
+    /*implicit*/ Expr(T &&t)
     {
         expr_var_ptr_ = std::make_unique<ExprVariant>(std::forward<T>(t));
     }
-
-    // Expr may be moved on construction.
-    Expr(const Expr&) = delete;
-    Expr(Expr&&) = default;
 
     template <typename Visitor>
     auto accept(Visitor &&visitor) const
