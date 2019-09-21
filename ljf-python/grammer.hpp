@@ -53,9 +53,7 @@ public:
 
     explicit SExpr(Token token) : variant_(std::in_place_type<Token>, std::move(token)) {}
 
-    template <typename T,
-              std::enable_if_t<std::is_constructible_v<ast::Expr, T> > * = nullptr>
-    explicit SExpr(T expr) : variant_(std::in_place_type<ast::Expr>, std::move(expr)) {}
+    explicit SExpr(ast::Expr expr) : variant_(std::in_place_type<ast::Expr>, std::move(expr)) {}
 };
 
 auto printer(const std::string &str)
@@ -211,41 +209,17 @@ inline auto make_python_grammer_parser()
     // #       file_input is a module or sequence of commands read from an input file;
     // #       eval_input is the input for the eval() functions.
     // # NB: compound_stmt in single_input is followed by extra NEWLINE!
-    /*     single_input = NEWLINE | simple_stmt | compound_stmt + NEWLINE;
+    single_input = NEWLINE | simple_stmt | compound_stmt + NEWLINE;
     file_input = (NEWLINE | stmt) * _many + ENDMARKER;
     eval_input = testlist + NEWLINE * _many + ENDMARKER;
 
- */
-    // debug
-    using namespace ast;
-    auto x = detail::discard_separator(Expr(ParenthFormExpr()));
-
-    SExpr s0, s1;
-    s1 = std::move(s0);
-    // s0 = SExpr(1, 2, 3);
-    // std::tuple<SExpr &&> se{std::move(s0)};
-    // std::tuple<SExpr> se2 = std::move(se);
-
-    std::tuple_cat(std::make_tuple(SExpr()));
-    auto x2 = detail::discard_separator(SExpr());
-    auto x3 = detail::discard_separator(Separator(), SExpr());
-    ParserPlaceHolder<Expr> expression;
-    const Parser p = [](auto &&) { return SExpr(); };
-    parameters = "hoge"_sep + NAME;
-    parameters = "hoge"_sep + ENDMARKER;
-    // parameters = "hoge"_sep + expression;
-    parameters = "hoge"_sep + p;
-    // parameters = "hoge"_sep + yield_arg;
-    // parameters = printer("funcdef") + yield_arg;
-    //
-    /* 
     decorator = "@"_p + dotted_name + opt["("_p + opt[arglist] + ")"] + NEWLINE;
     decorators = decorator * _many1;
     decorated = decorators + (classdef | funcdef | async_funcdef);
     async_funcdef = "async"_p + funcdef;
     funcdef = printer("funcdef") + "def"_p + NAME + parameters + opt["->"_p + test] + ":"_p + suite;
     assert(funcdef.has_parser());
-    
+
     parameters = "("_p + opt[typedargslist] + ")";
     typedargslist = (tfpdef + opt["="_p + test] + (","_p + tfpdef + opt["="_p + test]) * _many + opt[","_p + opt["*"_p + opt[tfpdef] + (","_p + tfpdef + opt["="_p + test]) * _many + opt[","_p + "**"_p + tfpdef] | "**"_p + tfpdef]] | "*"_p + opt[tfpdef] + (","_p + tfpdef + opt["="_p + test]) * _many + opt[","_p + "**"_p + tfpdef] | "**"_p + tfpdef);
     tfpdef = NAME + opt[":"_p + test];
@@ -356,7 +330,7 @@ inline auto make_python_grammer_parser()
 
     yield_expr = "yield"_p + opt[yield_arg];
     yield_arg = "from"_p + test | testlist;
- */
+
     return single_input;
 }
 

@@ -251,7 +251,7 @@ inline auto make_expr_parser()
 
     // constexpr Parser statement = many(atom);
 
-    // assert(expression.has_parser());
+    assert(expression.has_parser());
     return expression;
 }
 
