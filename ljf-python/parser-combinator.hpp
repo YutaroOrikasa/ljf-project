@@ -650,11 +650,21 @@ template <typename TResult, class TokenStream>
 class PlaceHolder
 {
 private:
+    struct NonPropagateBool;
+    NonPropagateBool lazy_init_check_;
     using func_type = std::function<Result<TResult>(TokenStream &)>;
     using parser_type = Parser<TResult, func_type>;
     std::shared_ptr<parser_type> parser_sptr_ = std::make_shared<parser_type>();
 
 public:
+    PlaceHolder() : lazy_init_check_(true) {}
+    ~PlaceHolder()
+    {
+        if (lazy_init_check_)
+        {
+            assert(has_parser());
+        }
+    }
     template <typename UResult, typename F>
     PlaceHolder &operator=(const Parser<UResult, F> &parser)
     {
@@ -691,6 +701,22 @@ public:
     {
         return bool(parser_sptr_->func());
     }
+
+private:
+    struct NonPropagateBool
+    {
+        bool value = false;
+        /*implicit*/ NonPropagateBool(bool b) : value(b) {};
+        NonPropagateBool(const NonPropagateBool &){};
+        NonPropagateBool &operator=(const NonPropagateBool &)
+        {
+            return *this;
+        };
+        explicit operator bool() const noexcept
+        {
+            return value;
+        }
+    };
 };
 
 } // namespace ljf::python::parser
