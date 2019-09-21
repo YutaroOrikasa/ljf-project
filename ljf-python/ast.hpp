@@ -27,6 +27,11 @@ public:
         expr_var_ptr_ = std::make_unique<ExprVariant>(std::forward<T>(t));
     }
 
+    Expr(const Expr &other)
+    {
+        expr_var_ptr_ = std::make_unique<ExprVariant>(*other.expr_var_ptr_);
+    }
+
     template <typename Visitor>
     auto accept(Visitor &&visitor) const
     {
