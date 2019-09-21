@@ -29,6 +29,15 @@ public:
         expr_var_ptr_ = std::make_unique<ExprVariant>(*other.expr_var_ptr_);
     }
 
+    Expr(Expr &&) = default;
+
+    Expr& operator=(const Expr &other)
+    {
+        return *this = Expr(other);
+    }
+
+    Expr& operator=(Expr &&) = default;
+
     template <typename Visitor>
     auto accept(Visitor &&visitor) const
     {
