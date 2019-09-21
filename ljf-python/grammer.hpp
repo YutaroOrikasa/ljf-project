@@ -65,6 +65,14 @@ auto printer(const std::string &str)
     });
 }
 
+auto prompter(const std::string &str)
+{
+    return Parser([str](auto &token_steram) {
+        token_steram.prompt(str);
+        return Separator();
+    });
+}
+
 namespace impl
 {
 struct Opt
@@ -221,7 +229,7 @@ inline auto make_python_grammer_parser()
     decorators = decorator * _many1;
     decorated = decorators + (classdef | funcdef | async_funcdef);
     async_funcdef = "async"_p + funcdef;
-    funcdef = printer("funcdef") + "def"_p + NAME + parameters + opt["->"_p + test] + ":"_p + suite;
+    funcdef = "def"_p + printer("funcdef") + NAME + parameters + opt["->"_p + test] + ":"_p + suite;
 
     parameters = "("_p + opt[typedargslist] + ")";
     typedargslist = (tfpdef + opt["="_p + test] + (","_p + tfpdef + opt["="_p + test]) * _many + opt[","_p + opt["*"_p + opt[tfpdef] + (","_p + tfpdef + opt["="_p + test]) * _many + opt[","_p + "**"_p + tfpdef] | "**"_p + tfpdef]] | "*"_p + opt[tfpdef] + (","_p + tfpdef + opt["="_p + test]) * _many + opt[","_p + "**"_p + tfpdef] | "**"_p + tfpdef);
@@ -230,7 +238,7 @@ inline auto make_python_grammer_parser()
     vfpdef = NAME;
     stmt = simple_stmt | compound_stmt;
     simple_stmt = printer("simple_stmt") + small_stmt + (";"_p + small_stmt) * _many + opt[";"] + NEWLINE;
-    small_stmt = (printer("small_stmt") + del_stmt | pass_stmt | flow_stmt |
+    small_stmt = printer("small_stmt") + (del_stmt | pass_stmt | flow_stmt |
                   import_stmt | global_stmt | nonlocal_stmt | assert_stmt | expr_stmt);
     expr_stmt = testlist_star_expr + (augassign + (yield_expr | testlist) |
                                       ("="_p + (yield_expr | testlist_star_expr)) * _many);
@@ -259,7 +267,7 @@ inline auto make_python_grammer_parser()
     nonlocal_stmt = "nonlocal"_p + NAME + (","_p + NAME) * _many;
     assert_stmt = "assert"_p + test + opt[","_p + test];
 
-    compound_stmt = printer("compound_stmt") + if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | printer("call funcdef") + funcdef | classdef | decorated | async_stmt;
+    compound_stmt = printer("compound_stmt") + if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated | async_stmt;
     async_stmt = "async"_p + (funcdef | with_stmt | for_stmt);
     if_stmt = "if"_p + test + ":"_p + suite + ("elif"_p + test + ":"_p + suite) * _many + opt["else"_p + ":"_p + suite];
     while_stmt = "while"_p + test + ":"_p + suite + opt["else"_p + ":"_p + suite];
@@ -269,7 +277,7 @@ inline auto make_python_grammer_parser()
     with_item = test + opt["as"_p + expr];
     // # NB compile.c makes sure that the default except clause is last
     except_clause = "except"_p + opt[test + opt["as"_p + NAME]];
-    suite = simple_stmt | NEWLINE + INDENT + stmt * _many1 + DEDENT;
+    suite = simple_stmt | NEWLINE + (prompter("(please indent)> ") + INDENT) + (stmt + prompter("(in indent)> ")) * _many1 + DEDENT + printer("<DEDENT>");
 
     test = or_test + opt["if"_p + or_test + "else"_p + test] | lambdef;
     test_nocond = or_test | lambdef_nocond;
