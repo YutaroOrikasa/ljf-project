@@ -6,7 +6,7 @@
 #include "parser.hpp"
 #include "ast.hpp"
 
-#include "grammer.hpp"
+#include "grammar.hpp"
 
 using namespace ljf::python;
 using namespace ljf::python::ast;
