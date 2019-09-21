@@ -94,6 +94,7 @@ private:
     // std::optional<Token> last_token_;
     std::queue<Token> token_buffer_;
     std::size_t current_position_ = 0;
+    bool is_prev_token_newline_ = false;
 
     using Nester = detail::tokenizer::phase2::Nester;
     using IndentNester = detail::tokenizer::phase2::IndentNester;
@@ -186,6 +187,7 @@ public:
 private:
     void enqueue(Token &&token)
     {
+        is_prev_token_newline_ = token.is_newline();
         token_buffer_.push(std::move(token));
     }
 
@@ -206,6 +208,11 @@ private:
     //     tokens.clear();
     // }
 
+    bool is_prev_token_newline() const noexcept
+    {
+        return is_prev_token_newline_;
+    }
+
     void fill_token_buffer()
     {
 
@@ -219,7 +226,7 @@ private:
                 proccess_indentation(token);
                 if (token.is_eof())
                 {
-                    token_buffer_.push(token);
+                    enqueue(std::move(token));
                     return;
                 }
 
@@ -241,8 +248,12 @@ private:
                     prompt("(in bracket)> ");
                     continue;
                 }
+                if (is_prev_token_newline())
+                {
+                    push_dedent_from_newline(std::move(token));
+                }
             }
-            token_buffer_.push(token);
+            enqueue(std::move(token));
         }
         // auto token = get_token();
         // if (token.is_eof())
@@ -364,6 +375,20 @@ private:
         //     return Token::create_invalid_token(token, "invalid dedent");
         // }
         // return Token::create_dedent_token(token);
+    }
+
+    void push_dedent_from_newline(Token &&token)
+    {
+        auto back = nester_stack_.back();
+        assert(back.is_indent_nester());
+        auto back_nester = back.get_indent_nester();
+        if (back_nester.indent_width() == 0)
+        {
+            return;
+        }
+
+        nester_stack_.pop_back();
+        enqueue(Token::create_dedent_token(token));
     }
 
     // Token dedent_on_eof(const Token &eof_token)
