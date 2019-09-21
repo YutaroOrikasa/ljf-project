@@ -11,6 +11,8 @@
 using namespace ljf::python;
 using namespace ljf::python::ast;
 
+using ljf::python::parser::SExpr;
+
 class Visitor
 {
 private:
@@ -82,6 +84,12 @@ public:
     bool operator()(const Expr &expr) const
     {
         std::cout << "visit Expr\n";
+        return expr.accept(*this);
+    }
+
+    bool operator()(const SExpr &expr) const
+    {
+        std::cout << "visit SExpr\n";
         return expr.accept(*this);
     }
 

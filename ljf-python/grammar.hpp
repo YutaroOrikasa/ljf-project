@@ -54,6 +54,12 @@ public:
     explicit SExpr(Token token) : variant_(std::in_place_type<Token>, std::move(token)) {}
 
     explicit SExpr(ast::Expr expr) : variant_(std::in_place_type<ast::Expr>, std::move(expr)) {}
+
+    template <typename V>
+    auto accept(V&& visitor) const
+    {
+        return std::visit(std::forward<V>(visitor), variant_);
+    }
 };
 
 auto printer(const std::string &str)
