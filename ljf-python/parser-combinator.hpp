@@ -126,7 +126,8 @@ auto tuple_cat(Tuples &&... t)
         };
 
         auto tpl = std::tuple_cat(std::tuple<Dummy>(), std::forward<Tuples>(t)...);
-        return std::move(std::get<1>(tpl));
+        using tpl_elem1_ty = std::tuple_element_t<1, decltype(tpl)>;
+        return std::make_tuple(std::forward<tpl_elem1_ty>(std::get<1>(tpl)));
     }
     else
     {
