@@ -128,6 +128,11 @@ int main(int argc, const char **argv)
         auto result = program(ts);
         if (result.failed())
         {
+            if (result.error().token().is_eof())
+            {
+                return 0;
+            }
+            
             std::cout << result.error() << "\n";
             discard_until_end_of_line(ts);
             continue;
