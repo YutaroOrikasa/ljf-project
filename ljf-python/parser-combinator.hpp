@@ -46,13 +46,13 @@ constexpr T make_from_tuple_and_args(Tuple &&tuple, Args &&... args)
 
 // These wrapper functions make_from_tuple() exist to show human readable compile error message
 // when type error occurred.
-template <typename Ret, typename...Ts>
+template <typename Ret, typename... Ts>
 Ret make_from_tuple(std::tuple<Ts...> &&t)
 {
     static_assert(std::is_constructible_v<Ret, Ts...>);
     return std::make_from_tuple<Ret>(std::move(t));
 }
-template <typename Ret, typename...Ts>
+template <typename Ret, typename... Ts>
 Ret make_from_tuple(std::tuple<Ts...> &t)
 {
     static_assert(std::is_constructible_v<Ret, Ts...>);
@@ -102,6 +102,43 @@ struct Separator
 
 namespace detail
 {
+namespace impl
+{
+template <typename... Tuples>
+auto tuple_cat(Tuples &&... t)
+{
+    using result_tuple_ty = decltype(std::tuple_cat(std::forward<Tuples>(t)...));
+    // workaround for template constructor that accept 1 argument.
+    // Making tuple size of the restult of std::tuple_cat >= 2
+    // by adding Dummy object.
+    // In std::tuple_cat, codes that has same semantics executed:
+    //   std::tuple<T&&> t0 =...;
+    //   std::tuple<T> t = std::move(t0); // (A)
+    // Normally statement (A) calles T(T&&) constructor
+    // in template<class _Tuple> tuple(_Tuple&&) constructor,
+    // but if std::is_constructible_v<T, std::tuple<T&&> > is true,
+    // no constructor of tuple selected.
+    // This behavior does not occur tuple size of std::tuple_cat(...) >= 2.
+    if constexpr (std::tuple_size<result_tuple_ty>::value == 1)
+    {
+        struct Dummy
+        {
+        };
+
+        auto tpl = std::tuple_cat(std::tuple<Dummy>(), std::forward<Tuples>(t)...);
+        return std::move(std::get<1>(tpl));
+    }
+    else
+    {
+        return std::tuple_cat(std::forward<Tuples>(t)...);
+    }
+}
+// template <typename Tuples>
+// auto tuple_cat(Tuples && t)
+// {
+//     return std::forward<Tuples>(t);
+// }
+} // namespace impl
 
 // wrap T with std::tuple
 // but if T is Separator, return empty tuple
@@ -121,7 +158,7 @@ auto to_tuple(T &&t)
 template <typename... Ts>
 auto discard_separator(Ts &&... ts)
 {
-    return std::tuple_cat(
+    return impl::tuple_cat(
         to_tuple(
             std::forward<Ts>(ts))...);
 }
@@ -314,7 +351,7 @@ public:
     auto operator()(TokenStream &&ts) const
     {
         static_assert(!std::is_void_v<decltype(f_(std::forward<TokenStream>(ts)))>,
-        "parser function must return non void type");
+                      "parser function must return non void type");
 
         // We don't create Result<Result<T>>, so use to_result() helper.
         // Type of result is flatten.
