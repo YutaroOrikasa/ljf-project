@@ -35,16 +35,11 @@ private:
 
 public:
     template <typename... Args, std::enable_if_t<sizeof...(Args) >= 2> * = nullptr>
-    SExpr(Args &&...) {}
+    SExpr(Args &&... args)
+        : variant_(std::in_place_type<SExprList>,
+                   {SExpr(std::forward<Args>(args))...}) {}
 
     SExpr() = default;
-    // SExpr(const SExpr&) = delete;
-    // SExpr(SExpr&& other) : variant_(std::move(other.variant_)) {};
-    // SExpr& operator=(const SExpr&) = delete;
-    // SExpr& operator=(SExpr&&other) {
-    //     variant_ =std::move(other.variant_);
-    //     return *this;
-    // }
 
     SExpr(const SExpr &) = default;
     SExpr(SExpr &&other) = default;
@@ -55,8 +50,26 @@ public:
 
     explicit SExpr(ast::Expr expr) : variant_(std::in_place_type<ast::Expr>, std::move(expr)) {}
 
+    template <typename T>
+    explicit SExpr(std::vector<T> vec) : variant_(SExprList(vec.begin(), vec.end())) {}
+
+    template <typename T>
+    explicit SExpr(std::optional<T> opt)
+    {
+        if (opt)
+        {
+            *this = make_from_variant<SExpr>(std::move(opt.value()));
+        }
+    }
+
+    template <typename... Ts>
+    explicit SExpr(std::variant<Ts...> var) : SExpr(make_from_variant<SExpr>(std::move(var))) {}
+
+    template <typename... Ts>
+    explicit SExpr(std::tuple<Ts...> tup) : SExpr(make_from_variant<SExpr>(std::move(tup))) {}
+
     template <typename V>
-    auto accept(V&& visitor) const
+    auto accept(V &&visitor) const
     {
         return std::visit(std::forward<V>(visitor), variant_);
     }
@@ -245,7 +258,7 @@ inline auto make_python_grammer_parser()
     stmt = simple_stmt | compound_stmt;
     simple_stmt = printer("simple_stmt") + small_stmt + (";"_p + small_stmt) * _many + opt[";"] + NEWLINE;
     small_stmt = printer("small_stmt") + (del_stmt | pass_stmt | flow_stmt |
-                  import_stmt | global_stmt | nonlocal_stmt | assert_stmt | expr_stmt);
+                                          import_stmt | global_stmt | nonlocal_stmt | assert_stmt | expr_stmt);
     expr_stmt = testlist_star_expr + (augassign + (yield_expr | testlist) |
                                       ("="_p + (yield_expr | testlist_star_expr)) * _many);
     testlist_star_expr = (test | star_expr) + (","_p + (test | star_expr)) * _many + opt[","];
