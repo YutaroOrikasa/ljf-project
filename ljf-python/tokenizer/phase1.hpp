@@ -24,7 +24,8 @@ private:
     IStream stream_;
     std::queue<Token> token_buffer_;
     std::regex re{
-        R"((^[ \t]*\n))"                                               // EMPTY_LINE
+        R"((^\n))"                                                     // EMPTY_LINE
+        R"(|(^[ \t]*\n))"                                              // WHITESPACE_LINE
         R"(|(^[ \t]*))"                                                // WHITESPACE_AT_BIGGINING_OF_LINE
         R"(|(def|class))"                                              // PYTHON_KEYWORD
         ""                                                             //
@@ -55,6 +56,7 @@ private:
         {
             ZERO = 0, // this is dummy, exists so that next enum starts with 1
             EMPTY_LINE,
+            WHITESPACE_LINE,
             WHITESPACE_AT_BIGGINING_OF_LINE,
             PYTHON_KEYWORD,
             //
@@ -200,6 +202,13 @@ private:
                           << ", cat=" << (int)match_result_to_token_category(match_result) << "\n";
                 if (match_result[sub_match_index::EMPTY_LINE].matched)
                 {
+                    auto token = create_token_from_match_result(match_result);
+                    assert(token.is_newline());
+                    tokens.push_back(token);
+                    continue;
+                }
+                if (match_result[sub_match_index::WHITESPACE_LINE].matched)
+                {
                     // ignore it
                     continue;
                 }
@@ -259,6 +268,7 @@ private:
             case sub_match_index::WHITESPACE_AT_BIGGINING_OF_LINE:
                 return create_token<token_category::WHITESPACE_AT_BIGGINING_OF_LINE>(match_result);
 
+            case sub_match_index::EMPTY_LINE:
             case sub_match_index::COMMENT:
             case sub_match_index::NEWLINE:
                 return create_token<token_category::NEWLINE>(match_result);
