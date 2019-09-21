@@ -17,11 +17,8 @@ private:
     std::unique_ptr<ExprVariant> expr_var_ptr_;
 
 public:
-    // template <typename T>
     template <typename T,
-              std::enable_if_t<
-                  !std::is_same_v<std::decay_t<T>,
-                                  Expr>> * = nullptr>
+              typename = typename T::is_expr_impl>
     /*implicit*/ Expr(T &&t)
     {
         expr_var_ptr_ = std::make_unique<ExprVariant>(std::forward<T>(t));
@@ -40,12 +37,15 @@ public:
     }
 };
 
+static_assert(std::is_copy_constructible_v<Expr>);
+
 class StringLiteralExpr
 {
 private:
     Token token_;
 
 public:
+    using is_expr_impl = void;
     StringLiteralExpr(Token &&token) : token_(std::move(token)) {}
 
     const Token &token() const noexcept
@@ -60,6 +60,7 @@ private:
     Token token_;
 
 public:
+    using is_expr_impl = void;
     IntegerLiteralExpr(Token &&token) : token_(std::move(token)) {}
 
     const Token &token() const noexcept
@@ -76,6 +77,7 @@ private:
     Token token_;
 
 public:
+    using is_expr_impl = void;
     SingleTokenExpr(Token &&token) : token_(std::move(token)) {}
 
     const Token &token() const noexcept
@@ -89,6 +91,7 @@ class EnclosureExpr
 private:
     /* data */
 public:
+    using is_expr_impl = void;
     EnclosureExpr(std::tuple<>) {}
 };
 
@@ -103,6 +106,7 @@ class ListExpr
 {
 private:
 public:
+    using is_expr_impl = void;
     ListExpr(std::tuple<>) {}
 };
 
@@ -114,6 +118,7 @@ class ParenthFormExpr
 private:
     /* data */
 public:
+    using is_expr_impl = void;
     ParenthFormExpr() {}
 };
 
@@ -124,6 +129,7 @@ struct DictExpr : detail::EnclosureExpr
 
 struct UnaryExpr
 {
+    using is_expr_impl = void;
     Token operator_;
     Expr operand_;
 
@@ -134,6 +140,7 @@ struct UnaryExpr
 
 struct BinaryExpr
 {
+    using is_expr_impl = void;
     Token operator_;
     Expr left_;
     Expr right_;
