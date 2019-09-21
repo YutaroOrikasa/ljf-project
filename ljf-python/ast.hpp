@@ -18,7 +18,7 @@ private:
 
 public:
     template <typename T,
-              typename = typename T::is_expr_impl>
+              typename = typename std::remove_reference_t<T>::is_expr_impl>
     /*implicit*/ Expr(T &&t)
     {
         expr_var_ptr_ = std::make_unique<ExprVariant>(std::forward<T>(t));
