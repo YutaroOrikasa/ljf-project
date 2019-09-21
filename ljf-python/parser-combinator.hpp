@@ -652,16 +652,29 @@ class PlaceHolder
 private:
     struct NonPropagateBool;
     NonPropagateBool lazy_init_check_;
+    std::string name_;
     using func_type = std::function<Result<TResult>(TokenStream &)>;
     using parser_type = Parser<TResult, func_type>;
     std::shared_ptr<parser_type> parser_sptr_ = std::make_shared<parser_type>();
 
 public:
-    PlaceHolder() : lazy_init_check_(true) {}
+    PlaceHolder() : lazy_init_check_(true)
+    {
+        // std::cerr << " PlaceHolder() " << this << "\n";
+    }
+    explicit PlaceHolder(const char *name) : lazy_init_check_(true), name_(name)
+    {
+        // std::cerr << " PlaceHolder() " << this << "\n";
+    }
     ~PlaceHolder()
     {
         if (lazy_init_check_)
         {
+            if (!has_parser())
+            {
+                std::cerr << "~PlaceHolder() name=" << name_ << " at " << this << " not initialized!\n";
+            }
+
             assert(has_parser());
         }
     }
@@ -681,6 +694,11 @@ public:
 
     auto operator()(TokenStream &ts) const
     {
+        if (!has_parser())
+        {
+            std::cerr << "PlaceHolder name=" << name_ << " at " << this << " not initialized!\n";
+        }
+
         assert(has_parser() && "no parsers assigned");
         return (*parser_sptr_)(ts);
     }
@@ -706,7 +724,7 @@ private:
     struct NonPropagateBool
     {
         bool value = false;
-        /*implicit*/ NonPropagateBool(bool b) : value(b) {};
+        /*implicit*/ NonPropagateBool(bool b) : value(b){};
         NonPropagateBool(const NonPropagateBool &){};
         NonPropagateBool &operator=(const NonPropagateBool &)
         {
