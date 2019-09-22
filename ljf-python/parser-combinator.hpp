@@ -82,6 +82,29 @@ struct MakeFromVariantVisitor
         }
     }
 };
+
+struct ApplyToVariantTupleVisitor
+{
+    template <typename F, typename T>
+    auto operator()(F &&f, T &&t) const
+    {
+        if constexpr (is_variant_v<T>)
+        {
+            return std::visit(*this, std::forward<F>(f), std::forward<T>(t));
+        }
+        else if constexpr (is_tuple_v<T>)
+        {
+            return std::apply(std::forward<F>(f), std::forward<T>(t));
+        }
+        else
+        {
+            // This static_assert is for printing human readable compile error message
+            // when type error occurred.
+            static_assert(std::is_invocable_v<F, T>);
+            return std::forward<F>(f)(std::forward<T>(t));
+        }
+    }
+};
 } // namespace ljf::python::parser::detail
 
 namespace ljf::python::parser
@@ -645,12 +668,13 @@ constexpr auto converter(F &&f)
 {
     return Converter(
         [conv = std::forward<F>(f)](auto &&result) {
-            using ConvertedContent = decltype(conv(result.extract_success()));
+            detail::ApplyToVariantTupleVisitor applier;
+            using ConvertedContent = decltype(applier(conv, result.extract_success()));
             if (result.failed())
             {
                 return Result<ConvertedContent>(result.extract_error_ptr());
             }
-            return Result<ConvertedContent>(conv(result.extract_success()));
+            return Result<ConvertedContent>(applier(conv, result.extract_success()));
         });
 }
 
