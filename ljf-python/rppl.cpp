@@ -144,8 +144,8 @@ int main(int argc, const char **argv)
     std::cout << "Read Parse Print Loop" << std::endl;
     using namespace ljf::python::parser;
     // const auto program = eof | newline | make_expr_parser();
-    const auto program_ = make_python_grammer_parser();
-    (void)program_;
+    // const auto program_ = make_python_grammer_parser();
+    // (void)program_;
     const auto program = make_python_eval_input_parser();
 
     TokenStream<std::istream> ts{std::cin};
