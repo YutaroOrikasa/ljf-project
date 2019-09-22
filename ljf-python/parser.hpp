@@ -139,15 +139,15 @@ inline constexpr auto operator""_sep(const char *str, size_t)
 }
 
 // return type: Sequence<Parser<?>...>
-template <typename Parser, size_t N>
-constexpr auto operator+(Parser &&parser, const char (&str)[N])
+template <typename Parser, typename charT>
+constexpr auto operator+(Parser &&parser, const charT *str)
 {
     return std::forward<Parser>(parser) + string(str);
 }
 
 // return type: Choice<Parser<?>...>
-template <typename Parser, size_t N>
-constexpr auto operator|(Parser &&parser, const char (&str)[N])
+template <typename Parser, typename charT>
+constexpr auto operator|(Parser &&parser, const charT *str)
 {
     return std::forward<Parser>(parser) | string(str);
 }
