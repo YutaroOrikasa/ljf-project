@@ -27,11 +27,17 @@
 namespace ljf::python::parser
 {
 
+struct EmptySExpr
+{
+};
+
 class SExpr
 {
-private:
+public:
     using SExprList = std::vector<SExpr>;
-    std::variant<std::monostate, Token, SExprList, ast::Expr> variant_;
+
+private:
+    std::variant<EmptySExpr, Token, SExprList, ast::Expr> variant_;
 
 public:
     template <typename... Args, std::enable_if_t<sizeof...(Args) >= 2> * = nullptr>
@@ -74,6 +80,8 @@ public:
         return std::visit(std::forward<V>(visitor), variant_);
     }
 };
+
+using SExprList = SExpr::SExprList;
 
 auto printer(const std::string &str)
 {

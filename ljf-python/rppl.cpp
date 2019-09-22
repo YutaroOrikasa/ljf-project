@@ -8,10 +8,10 @@
 
 #include "grammar.hpp"
 
+
 using namespace ljf::python;
 using namespace ljf::python::ast;
-
-using ljf::python::parser::SExpr;
+using namespace ljf::python::parser;
 
 class Visitor
 {
@@ -30,38 +30,56 @@ private:
 
     auto impl(const StringLiteralExpr &expr) const
     {
-        std::cout << "StringLiteralExpr: "
-                  << expr.token().str()
-                  << "\n";
+        std::cout << expr.token().str();
     }
 
     auto impl(const IntegerLiteralExpr &expr) const
     {
-        std::cout << "IntegerLiteralExpr: "
-                  << expr.token().str()
-                  << "\n";
+        std::cout << expr.token().str();
     }
 
     auto impl(const IdentifierExpr &expr) const
     {
-        std::cout << "IdentifierExpr: "
-                  << expr.token().str()
-                  << "\n";
+        std::cout << expr.token().str();
     }
 
     auto impl(const UnaryExpr &expr) const
     {
-        std::cout << "UnaryExpr: "
-                  <<"'" << expr.operator_.str() << "'"
+        std::cout << "[UnaryExpr: "
+                  << expr.operator_.str()
                   << " ";
         (*this)(expr.operand_);
+        std::cout << "]";
+    }
+
+    auto impl(const EmptySExpr &) const
+    {
+        std::cout << "()";
     }
 
     template <typename T>
     auto impl(const T &t) const
     {
-        std::cout << "Unknown type: " << typeid(t).name()
-                  << "\n";
+        std::cout << "(Unknown type: " << typeid(t).name() << ")";
+    }
+
+    auto impl(const SExprList &s_expr_list) const
+    {   
+        std::cout << "(";
+        bool is_first = true;
+        for (auto &&s_expr : s_expr_list)
+        {
+            if (is_first)
+            {
+                is_first = false;
+            }
+            else
+            {
+                std::cout << ", ";
+            }
+            (*this)(s_expr);
+        }
+        std::cout << ")";
     }
 
 public:
@@ -71,7 +89,13 @@ public:
         {
             return true;
         }
-        std::cout << "Token: " << token.str() << "\n";
+
+        if (token.is_newline())
+        {
+            std::cout << "<NEWLINE>";
+            return false;
+        }
+        std::cout << "Token: `" << token.str() << "`";
         return false;
     }
 
@@ -83,20 +107,17 @@ public:
 
     bool operator()(const Expr &expr) const
     {
-        std::cout << "visit Expr\n";
         return expr.accept(*this);
     }
 
     bool operator()(const SExpr &expr) const
     {
-        std::cout << "visit SExpr\n";
         return expr.accept(*this);
     }
 
     template <typename T>
     bool operator()(const T &t) const
     {
-        std::cout << "visit " << typeid(T).name() << "\n";
         impl(t);
         return false;
     }
@@ -140,11 +161,12 @@ int main(int argc, const char **argv)
             {
                 return 0;
             }
-            
+
             std::cout << result.error() << "\n";
             discard_until_end_of_line(ts);
             continue;
         }
         eof = result.visit(Visitor());
+        std::cout << "\n";
     }
 }
