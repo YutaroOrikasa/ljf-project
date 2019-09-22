@@ -19,4 +19,12 @@ $(BUILD_DIR)/ljf-python/%: ljf-python/%.cpp
 	mkdir -p $(BUILD_DIR)/ljf-python
 	$(CXX) $(CXXFLAGS) -fno-exceptions $< -o $@
 
+$(BUILD_DIR)/ljf-python/grammar/%.o: ljf-python/grammar/%.cpp
+	mkdir -p $(BUILD_DIR)/ljf-python/grammar
+	$(CXX) $(CXXFLAGS) -c -fno-exceptions $< -o $@
+
+$(BUILD_DIR)/ljf-python/rppl: $(BUILD_DIR)/ljf-python/grammar/grammar.o ljf-python/rppl.cpp
+	mkdir -p $(BUILD_DIR)/ljf-python
+	$(CXX) $(CXXFLAGS) -fno-exceptions $(BUILD_DIR)/ljf-python/grammar/grammar.o ljf-python/rppl.cpp -o $@
+
 -include $(DEPENDENCY_FILES)
