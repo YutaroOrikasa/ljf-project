@@ -186,6 +186,12 @@ public:
     }
 };
 
+struct LambdaExpr
+{
+    using is_expr_impl = void;
+};
+
+
 struct ExprVariant : std::variant<
                          StringLiteralExpr,
                          IntegerLiteralExpr,
@@ -195,7 +201,8 @@ struct ExprVariant : std::variant<
                          DictExpr,
                          UnaryExpr,
                          BinaryExpr,
-                         ConditionalExpr>
+                         ConditionalExpr,
+                         LambdaExpr>
 {
     using variant::variant;
 };
