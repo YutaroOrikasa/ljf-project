@@ -139,8 +139,17 @@ inline constexpr Opt opt;
 inline constexpr Many<0> _many;
 inline constexpr Many<1> _many1;
 
+const Parser NEWLINE = newline;
+const Parser ENDMARKER = eof;
+const Parser NAME = identifier;
+const Parser INDENT = indent;
+const Parser DEDENT = dedent;
+const Parser NUMBER = integer_literal;
+const Parser STRING = string_literal;
+
 } // namespace impl
 
 ParserPlaceHolder<SExpr> make_python_grammer_parser();
+ParserPlaceHolder<SExpr> make_python_eval_input_parser();
 
 } // namespace ljf::python::parser

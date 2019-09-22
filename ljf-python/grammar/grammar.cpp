@@ -96,14 +96,6 @@ ParserPlaceHolder<SExpr> make_python_grammer_parser()
 
 #undef INIT_PLACE_HOLDER
 
-    const Parser NEWLINE = newline;
-    const Parser ENDMARKER = eof;
-    const Parser NAME = identifier;
-    const Parser INDENT = indent;
-    const Parser DEDENT = dedent;
-    const Parser NUMBER = integer_literal;
-    const Parser STRING = string_literal;
-
     // # Start symbols for the grammar:
     // #       single_input is a single interactive statement;
     // #       file_input is a module or sequence of commands read from an input file;
@@ -167,6 +159,9 @@ ParserPlaceHolder<SExpr> make_python_grammer_parser()
     except_clause = "except"_p + opt[test + opt["as"_p + NAME]];
     suite = simple_stmt | NEWLINE + (prompter("(please indent)> ") + INDENT) + (stmt + prompter("(in indent)> ")) * _many1 + DEDENT + printer("<DEDENT>");
 
+    classdef = "class"_p + NAME + opt["("_p + opt[arglist] + ")"] + ":"_p + suite;
+
+    // --- expressions ---
     test = or_test + opt["if"_p + or_test + "else"_p + test] | lambdef;
     test_nocond = or_test | lambdef_nocond;
     lambdef = "lambda"_p + opt[varargslist] + ":"_p + test;
@@ -202,7 +197,6 @@ ParserPlaceHolder<SExpr> make_python_grammer_parser()
     dictorsetmaker = (((test + ":"_p + test | "**"_p + expr) + (comp_for | (","_p + (test + ":"_p + test | "**"_p + expr)) * _many + opt[","])) |
                       ((test | star_expr) + (comp_for | (","_p + (test | star_expr)) * _many + opt[","])));
 
-    classdef = "class"_p + NAME + opt["("_p + opt[arglist] + ")"] + ":"_p + suite;
 
     arglist = argument + (","_p + argument) * _many + opt[","];
 

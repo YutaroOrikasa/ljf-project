@@ -8,7 +8,6 @@
 
 #include "grammar.hpp"
 
-
 using namespace ljf::python;
 using namespace ljf::python::ast;
 using namespace ljf::python::parser;
@@ -64,7 +63,7 @@ private:
     }
 
     auto impl(const SExprList &s_expr_list) const
-    {   
+    {
         std::cout << "(";
         bool is_first = true;
         for (auto &&s_expr : s_expr_list)
@@ -145,7 +144,9 @@ int main(int argc, const char **argv)
     std::cout << "Read Parse Print Loop" << std::endl;
     using namespace ljf::python::parser;
     // const auto program = eof | newline | make_expr_parser();
-    const auto program = make_python_grammer_parser();
+    const auto program_ = make_python_grammer_parser();
+    (void)program_;
+    const auto program = make_python_eval_input_parser();
 
     TokenStream<std::istream> ts{std::cin};
 
