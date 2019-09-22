@@ -31,12 +31,12 @@ public:
 
     Expr(Expr &&) = default;
 
-    Expr& operator=(const Expr &other)
+    Expr &operator=(const Expr &other)
     {
         return *this = Expr(other);
     }
 
-    Expr& operator=(Expr &&) = default;
+    Expr &operator=(Expr &&) = default;
 
     template <typename Visitor>
     auto accept(Visitor &&visitor) const
@@ -160,6 +160,32 @@ struct BinaryExpr
           right_(std::move(right)) {}
 };
 
+struct ConditionalExpr
+{
+private:
+    struct IfElse
+    {
+        Expr if_;
+        Expr else_;
+    };
+
+public:
+    using is_expr_impl = void;
+    Expr or_test_;
+    std::optional<IfElse> if_else_;
+
+    ConditionalExpr(Expr or_test, 
+    std::optional<std::tuple<Expr, Expr>> opt_if_else)
+    : or_test_(std::move(or_test))
+    {
+        if (opt_if_else)
+        {
+            auto [if_, else_] = std::move(*opt_if_else);
+            if_else_ = {std::move(if_), std::move(else_)};
+        }
+    }
+};
+
 struct ExprVariant : std::variant<
                          StringLiteralExpr,
                          IntegerLiteralExpr,
@@ -168,7 +194,8 @@ struct ExprVariant : std::variant<
                          ParenthFormExpr,
                          DictExpr,
                          UnaryExpr,
-                         BinaryExpr>
+                         BinaryExpr,
+                         ConditionalExpr>
 {
     using variant::variant;
 };
