@@ -87,12 +87,18 @@ inline constexpr ApplyToVariantOptionalTupleVisitor apply_variant_optional_tuple
 // alias for compatibility
 inline constexpr auto apply_variant_tuple = apply_variant_optional_tuple;
 
+// This wrapper function exists only for printing human readable compile error message
+// when type error occurred.
+template <typename Ret, typename... Args>
+Ret construct_impl(Args &&... args)
+{
+    static_assert(std::is_constructible_v<Ret, Args...>);
+    return Ret(std::forward<Args>(args)...);
+}
+
 template <typename Ret>
 inline constexpr auto construct = [](auto &&... args) {
-    // This static_assert is for printing human readable compile error message
-    // when type error occurred.
-    static_assert(std::is_constructible_v<Ret, decltype(args)...>);
-    return Ret(std::forward<decltype(args)>(args)...);
+    return construct_impl<Ret>(std::forward<decltype(args)>(args)...);
 };
 
 } // namespace ljf::python::parser::detail
