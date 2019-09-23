@@ -626,8 +626,8 @@ constexpr auto many(P &&parser)
 template <typename R>
 struct ResultType
 {
-    template <typename R0, typename F>
-    constexpr auto operator<<=(const Parser<R0, F> &p) const
+    template <typename F>
+    constexpr auto operator<<=(const Parser<void, F> &p) const
     {
         return Parser<R, F>(p.copy_func());
     }
