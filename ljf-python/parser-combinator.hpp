@@ -54,7 +54,8 @@ struct ApplyToVariantOptionalTupleVisitor
     {
         if constexpr (is_variant_v<T>)
         {
-            auto visitor = [*this, f = std::forward<F>(f)](auto &&arg) {
+            // mutable is necessary for forward f
+            auto visitor = [*this, f = std::forward<F>(f)](auto &&arg) mutable {
                 return (*this)(std::forward<F>(f), std::forward<decltype(arg)>(arg));
             };
             return std::visit(std::move(visitor), std::forward<T>(t));
