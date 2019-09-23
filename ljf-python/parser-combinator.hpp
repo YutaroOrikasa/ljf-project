@@ -44,45 +44,6 @@ constexpr T make_from_tuple_and_args(Tuple &&tuple, Args &&... args)
             std::tuple(std::forward<Args>(args)...)));
 }
 
-// These wrapper functions make_from_tuple() exist to show human readable compile error message
-// when type error occurred.
-template <typename Ret, typename... Ts>
-Ret make_from_tuple(std::tuple<Ts...> &&t)
-{
-    static_assert(std::is_constructible_v<Ret, Ts...>);
-    return std::make_from_tuple<Ret>(std::move(t));
-}
-template <typename Ret, typename... Ts>
-Ret make_from_tuple(std::tuple<Ts...> &t)
-{
-    static_assert(std::is_constructible_v<Ret, Ts...>);
-    return std::make_from_tuple<Ret>(t);
-}
-
-template <typename Ret>
-struct MakeFromVariantVisitor
-{
-    template <typename T>
-    Ret operator()(T &&t) const
-    {
-        if constexpr (is_variant_v<T>)
-        {
-            return std::visit(*this, std::forward<T>(t));
-        }
-        else if constexpr (is_tuple_v<T>)
-        {
-            return detail::make_from_tuple<Ret>(std::forward<T>(t));
-        }
-        else
-        {
-            // This static_assert is for printing human readable compile error message
-            // when type error occurred.
-            static_assert(std::is_constructible_v<Ret, T>);
-            return Ret(std::forward<T>(t));
-        }
-    }
-};
-
 struct ApplyToVariantTupleVisitor
 {
     template <typename F, typename T>
@@ -90,7 +51,10 @@ struct ApplyToVariantTupleVisitor
     {
         if constexpr (is_variant_v<T>)
         {
-            return std::visit(*this, std::forward<F>(f), std::forward<T>(t));
+            auto visitor = [*this, f = std::forward<F>(f)](auto &&arg) {
+                return (*this)(std::forward<F>(f), std::forward<decltype(arg)>(arg));
+            };
+            return std::visit(std::move(visitor), std::forward<T>(t));
         }
         else if constexpr (is_tuple_v<T>)
         {
@@ -105,10 +69,20 @@ struct ApplyToVariantTupleVisitor
         }
     }
 };
+
+inline constexpr ApplyToVariantTupleVisitor apply_variant_tuple;
+
+template <typename Ret>
+inline constexpr auto construct = [](auto &&... args) {
+    return Ret(std::forward<decltype(args)>(args)...);
+};
+
 } // namespace ljf::python::parser::detail
 
 namespace ljf::python::parser
 {
+
+using detail::apply_variant_tuple;
 
 template <typename... P>
 class Sequence;
@@ -162,11 +136,7 @@ auto tuple_cat_and_strip(Tuples &&... t)
         return std::tuple_cat(std::forward<Tuples>(t)...);
     }
 }
-// template <typename Tuples>
-// auto tuple_cat(Tuples && t)
-// {
-//     return std::forward<Tuples>(t);
-// }
+
 } // namespace impl
 
 // wrap T with std::tuple
@@ -363,8 +333,7 @@ Result<T> make_error_result(Args &&... args)
 
 template <typename Ret>
 inline constexpr auto make_from_variant = [](auto &&variant) {
-    return detail::MakeFromVariantVisitor<Ret>()(
-        std::forward<decltype(variant)>(variant));
+    return apply_variant_tuple(detail::construct<Ret>, std::forward<decltype(variant)>(variant));
 };
 
 /// F should be deduced by constructor argument, void is dummy.
@@ -668,13 +637,12 @@ constexpr auto converter(F &&f)
 {
     return Converter(
         [conv = std::forward<F>(f)](auto &&result) {
-            detail::ApplyToVariantTupleVisitor applier;
-            using ConvertedContent = decltype(applier(conv, result.extract_success()));
+            using ConvertedContent = decltype(apply_variant_tuple(conv, result.extract_success()));
             if (result.failed())
             {
                 return Result<ConvertedContent>(result.extract_error_ptr());
             }
-            return Result<ConvertedContent>(applier(conv, result.extract_success()));
+            return Result<ConvertedContent>(apply_variant_tuple(conv, result.extract_success()));
         });
 }
 
