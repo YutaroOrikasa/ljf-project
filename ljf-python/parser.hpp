@@ -117,8 +117,8 @@ inline constexpr auto string = [](auto &&str) {
     });
 };
 
-inline constexpr auto separator = [](auto &&str) {
-    return result_type<Separator> <<= string(str);
+inline constexpr auto separator = [](auto &&parser) {
+    return result_type<Separator> <<= parser;
 };
 
 inline constexpr auto operator""_p(const char *str, size_t)
@@ -135,7 +135,7 @@ inline constexpr auto operator""_p(const char *str, size_t)
 // return type: Parser<?>
 inline constexpr auto operator""_sep(const char *str, size_t)
 {
-    return separator(str);
+    return separator(string(str));
 }
 
 // return type: Sequence<Parser<?>...>
