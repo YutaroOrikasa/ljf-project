@@ -150,6 +150,6 @@ const Parser STRING = string_literal;
 } // namespace impl
 
 ParserPlaceHolder<SExpr> make_python_grammer_parser();
-ParserPlaceHolder<SExpr> make_python_eval_input_parser();
+ParserPlaceHolder<ast::Expr> make_python_eval_input_parser();
 
 } // namespace ljf::python::parser

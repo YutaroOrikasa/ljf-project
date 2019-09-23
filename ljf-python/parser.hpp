@@ -111,6 +111,17 @@ inline constexpr auto read_if = [](auto &&pred, auto &&... error_args) {
         });
 };
 
+// /// usage:
+// /// parser = result_type<std::variant<T0, T1>>
+// ///     <<= ctor_arg(std::in_place_type<T0>) + parser0 |
+// ///       | ctor_arg(std::in_place_type<T1>) + parser1;
+// inline constexpr auto ctor_arg = [](auto arg) {
+//     return Parser(
+//         [=](auto&& token_stream) {
+//             return arg;
+//         });
+// };
+
 inline constexpr auto string = [](auto &&str) {
     return read_if([=](const Token &token) {
         return token.str() == str;
