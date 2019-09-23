@@ -32,6 +32,9 @@ constexpr bool is_variant_v = is_class_template_instance_v<std::variant, T>;
 template <typename T>
 constexpr bool is_tuple_v = is_class_template_instance_v<std::tuple, T>;
 
+template <typename T>
+constexpr bool is_optional_v = is_class_template_instance_v<std::optional, T>;
+
 static_assert(is_tuple_v<std::tuple<int>>);
 static_assert(!is_tuple_v<int>);
 
@@ -44,7 +47,7 @@ constexpr T make_from_tuple_and_args(Tuple &&tuple, Args &&... args)
             std::tuple(std::forward<Args>(args)...)));
 }
 
-struct ApplyToVariantTupleVisitor
+struct ApplyToVariantOptionalTupleVisitor
 {
     template <typename F, typename T>
     auto operator()(F &&f, T &&t) const
@@ -60,6 +63,15 @@ struct ApplyToVariantTupleVisitor
         {
             return std::apply(std::forward<F>(f), std::forward<T>(t));
         }
+        else if constexpr (is_optional_v<T>)
+        {
+            if (!t)
+            {
+                return std::forward<F>(f)();
+            }
+
+            return (*this)(std::forward<F>(f), *std::forward<T>(t));
+        }
         else
         {
             // This static_assert is for printing human readable compile error message
@@ -70,10 +82,16 @@ struct ApplyToVariantTupleVisitor
     }
 };
 
-inline constexpr ApplyToVariantTupleVisitor apply_variant_tuple;
+inline constexpr ApplyToVariantOptionalTupleVisitor apply_variant_optional_tuple;
+
+// alias for compatibility
+inline constexpr auto apply_variant_tuple = apply_variant_optional_tuple;
 
 template <typename Ret>
 inline constexpr auto construct = [](auto &&... args) {
+    // This static_assert is for printing human readable compile error message
+    // when type error occurred.
+    static_assert(std::is_constructible_v<Ret, decltype(args)...>);
     return Ret(std::forward<decltype(args)>(args)...);
 };
 
