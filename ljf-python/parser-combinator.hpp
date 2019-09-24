@@ -290,7 +290,9 @@ public:
     /*implicit*/ Result(Success<T> &&suc) : value_(std::move(suc.value)) {}
 
     template <typename U>
-    /*implicit*/ Result(Success<U> &&suc) : value_(std::move(suc.value)) {}
+    /*implicit*/ Result(Success<U> &&suc) : value_(std::move(suc.value))
+    {
+    }
 
     bool failed() const noexcept
     {
@@ -679,20 +681,37 @@ public:
     }
 };
 
+template <typename T>
+constexpr bool is_result_v = detail::is_class_template_instance_v<Result, T>;
+
+/// This function automatically wraps returned type of F() with Result.
+/// never makes nested Result<>
+template <typename F, typename R>
+auto apply_to_result(const F &func, R &&result)
+{
+    using ReturnedType = std::decay_t<decltype(func(std::forward<R>(result).success()))>;
+
+    using ResultType = std::conditional_t<is_result_v<ReturnedType>, ReturnedType, Result<ReturnedType>>;
+
+    if (result.failed())
+    {
+        return ResultType(std::forward<R>(result).error_ptr());
+    }
+    return ResultType(func(std::forward<R>(result).success()));
+}
+
 // usage: Parser p2 = converter(function_object) <<= p0
 // p2's result.success() will be function_object(p0(stream).success())
 // if p0 result is success.
 template <typename F>
-constexpr auto converter(F &&f)
+constexpr auto converter(const F &f)
 {
+    auto conv = [f](auto &&success) { 
+        return apply_variant_tuple(f, std::forward<decltype(success)>(success));
+     };
     return Converter(
-        [conv = std::forward<F>(f)](auto &&result) {
-            using ConvertedContent = decltype(apply_variant_tuple(conv, result.extract_success()));
-            if (result.failed())
-            {
-                return Result<ConvertedContent>(result.extract_error_ptr());
-            }
-            return Result<ConvertedContent>(apply_variant_tuple(conv, result.extract_success()));
+        [conv = std::move(conv)](auto &&result) {
+            return apply_to_result(std::move(conv), std::forward<decltype(result)>(result));
         });
 }
 
