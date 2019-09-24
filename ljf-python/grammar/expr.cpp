@@ -76,52 +76,6 @@ static Expr parenth_form_ctor_impl(YieldExpr expr)
     return expr;
 }
 
-static Expr parenth_form_ctor_impl()
-{
-    return TupleExpr();
-}
-
-static Expr parenth_form_ctor_impl(Comprehension comp)
-{
-    return GeneratorExpr(std::move(comp));
-}
-
-static Expr parenth_form_ctor_impl(std::vector<Expr> expr_list)
-{
-    if (expr_list.size() == 1)
-    {
-        return expr_list[0];
-    }
-
-    return TupleExpr(std::move(expr_list));
-}
-
-static constexpr auto parenth_form_ctor = [](auto &&... args) -> Expr {
-    return parenth_form_ctor_impl(std::move(args)...);
-};
-
-static constexpr auto parenth_form_conv = converter(parenth_form_ctor);
-
-// static Expr list_display_ctor_impl(YieldExpr expr)
-// {
-//     return expr;
-// }
-
-static Expr list_display_ctor_impl()
-{
-    return ListExpr();
-}
-
-static Expr list_display_ctor_impl(Comprehension comp)
-{
-    return ListComprehensionExpr(std::move(comp));
-}
-
-static Expr list_display_ctor_impl(std::vector<Expr> expr_list)
-{
-    return ListExpr(std::move(expr_list));
-}
-
 namespace
 {
 template <typename EnclosureExpr, typename ComprehensionExpr, typename ElemExpr = ast::Expr>
@@ -129,6 +83,7 @@ struct DisplayExprFactory
 {
     Expr operator()(std::vector<ElemExpr> expr_list) const
     {
+        static_assert(!std::is_same_v<EnclosureExpr, TupleExpr>);
         return EnclosureExpr(std::move(expr_list));
     }
 
@@ -142,13 +97,30 @@ struct DisplayExprFactory
         return EnclosureExpr();
     }
 };
+
+struct ParenthFormExprFactory : public DisplayExprFactory<TupleExpr, GeneratorExpr>
+{
+    using DisplayExprFactory::operator();
+
+    Expr operator()(std::vector<Expr> expr_list) const
+    {
+        if (expr_list.size() == 1)
+        {
+            return expr_list[0];
+        }
+
+        return TupleExpr(std::move(expr_list));
+    }
+    Expr operator()(YieldExpr expr) const
+    {
+        return expr;
+    }
+};
 } // namespace
 
-static constexpr auto list_display_ctor = [](auto &&... args) -> Expr {
-    return list_display_ctor_impl(std::move(args)...);
-};
+static constexpr auto parenth_form_conv = converter(ParenthFormExprFactory());
 
-static constexpr auto list_display_conv = converter(list_display_ctor);
+static constexpr auto list_display_conv = converter(DisplayExprFactory<ListExpr, ListComprehensionExpr>());
 
 template <typename T>
 static constexpr auto default_type = [](auto opt) {
