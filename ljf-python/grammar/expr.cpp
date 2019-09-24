@@ -26,28 +26,31 @@ static constexpr auto fold_left_opt = [](auto &&first, auto &&opt) -> Expr {
     return e0;
 };
 
-static constexpr auto fold_left_to_vec = [](auto &&first, const auto &&vec) {
+static constexpr auto fold_left_to_vec = [](auto &&first, auto &&vec) {
     using T = std::decay_t<decltype(first)>;
     std::vector<T> vec_ret;
     vec_ret.reserve(1 + vec.size());
 
     vec_ret.push_back(first);
-
-    for (auto &&elem : vec)
+    // This forward is exists for move elements.
+    // If vec is vector<T>& , copy and move.
+    // If vec is vector<T>&&, move and move.
+    auto vec2 = std::forward<decltype(vec)>(vec);
+    for (auto &&elem : vec2)
     {
-        vec_ret.push_back(elem);
+        vec_ret.push_back(std::move(elem));
     }
     return vec_ret;
 };
 
-template <typename T>
-static std::variant<std::vector<T>, Comprehension>
+template <typename Comp = Comprehension, typename T>
+static std::variant<std::vector<T>, Comp>
 fold_to_vector_or_comprehension(T t,
                                 std::variant<CompFor, std::vector<T>> rest)
 {
     if (auto comp_for = std::get_if<CompFor>(&rest))
     {
-        return Comprehension{std::move(t), std::move(*comp_for)};
+        return Comp{std::move(t), std::move(*comp_for)};
     }
     else
     {
@@ -119,36 +122,104 @@ static Expr list_display_ctor_impl(std::vector<Expr> expr_list)
     return ListExpr(std::move(expr_list));
 }
 
+namespace
+{
+template <typename EnclosureExpr, typename ComprehensionExpr, typename ElemExpr = ast::Expr>
+struct DisplayExprFactory
+{
+    Expr operator()(std::vector<ElemExpr> expr_list) const
+    {
+        return EnclosureExpr(std::move(expr_list));
+    }
+
+    Expr operator()(Comprehension comp) const
+    {
+        return ComprehensionExpr(std::move(comp));
+    }
+
+    Expr operator()() const
+    {
+        return EnclosureExpr();
+    }
+};
+} // namespace
+
 static constexpr auto list_display_ctor = [](auto &&... args) -> Expr {
     return list_display_ctor_impl(std::move(args)...);
 };
 
 static constexpr auto list_display_conv = converter(list_display_ctor);
 
-// dict_or_set
-static Expr dict_or_set_display_ctor_impl()
-{
-    return DictExpr();
-}
+template <typename T>
+static constexpr auto default_type = [](auto opt) {
+    using optional_type = std::decay_t<decltype(opt)>;
+    using optional_content_type = std::decay_t<decltype(*opt)>;
 
-static Expr dict_or_set_display_ctor_impl(Comprehension comp)
-{
-    return ListComprehensionExpr(std::move(comp));
-}
-
-static Expr dict_or_set_display_ctor_impl(std::vector<Expr> expr_list)
-{
-    return SetExpr(std::move(expr_list));
-}
-
-static constexpr auto dict_or_set_display_ctor = [](auto &&... args) -> Expr {
-    return dict_or_set_display_ctor_impl(std::move(args)...);
+    using return_variant_type = std::variant<T, optional_content_type>;
+    if (!opt)
+    {
+        return return_variant_type(std::in_place_index<0>, T());
+    }
+    else
+    {
+        return return_variant_type(std::in_place_index<1>, std::move(*opt));
+    }
 };
 
-static constexpr auto dict_or_set_display_conv = converter(dict_or_set_display_ctor);
+// // dict_or_set
+// static Expr dict_or_set_display_ctor_impl()
+// {
+//     return DictExpr();
+// }
+
+// static Expr dict_or_set_display_ctor_impl(Comprehension comp)
+// {
+//     return ListComprehensionExpr(std::move(comp));
+// }
+
+// static Expr dict_or_set_display_ctor_impl(std::vector<Expr> expr_list)
+// {
+//     return SetExpr(std::move(expr_list));
+// }
+
+// static constexpr auto dict_or_set_display_ctor = [](auto &&... args) -> Expr {
+//     return dict_or_set_display_ctor_impl(std::move(args)...);
+// };
+
+// static constexpr auto dict_or_set_display_conv = converter(dict_or_set_display_ctor);
+
+static constexpr auto dict_display_conv = converter(DisplayExprFactory<DictExpr, DictComprehensionExpr, DictKeyValueExpr>());
+
+// string
+static constexpr auto concat_str_exprs =
+    [](StringLiteralExpr str_expr, std::vector<StringLiteralExpr> rest) -> Result<StringLiteralExpr> {
+    if (rest.size() != 0)
+    {
+        return make_error(rest[0].token(), "unsupported feature: string literal concatnation");
+    }
+    return success_move(str_expr);
+};
+
+// expr list
+static constexpr auto expr_list_ctor = [](Expr first, std::vector<Expr> rest, auto &&opt_comma) -> Expr {
+    // matches such like:
+    //   a
+    //   a + b
+    if (rest.empty() && !opt_comma)
+    {
+
+        return first;
+    }
+
+    // matches such like:
+    //   a,
+    //   a, b
+    //   a, b,
+    return TupleExpr(fold_left_to_vec(std::move(first), std::move(rest)));
+};
 
 static constexpr auto combine_tokens = [](Token token1, Token token2) -> Token {
-    auto combined_str = token1.str() + "  " + token2.str();
+    auto combined_str = token1.str() + " " + token2.str();
     return Token::create_token<token_category::ANY_OTHER>(combined_str, token1.source_location());
 };
 
@@ -186,8 +257,8 @@ ParserPlaceHolder<Expr> make_python_eval_input_parser()
     // ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(testlist_comp);
     // ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(trailer);
     // ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(subscriptlist);
-    ParserPlaceHolder<Subscript> INIT_PLACE_HOLDER(subscript);
-    ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(sliceop);
+    ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(subscript);
+    // ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(sliceop);
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(exprlist);
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(testlist);
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(dictorsetmaker);
@@ -254,22 +325,27 @@ ParserPlaceHolder<Expr> make_python_eval_input_parser()
         (result_type<Expr> <<= test | star_expr) + (comp_for | (","_sep + (result_type<Expr> <<= test | star_expr)) * _many + sep(opt[","]));
     atom_expr = result_type<AtomExpr> <<= opt["await"] + atom + trailer * _many;
 
-    atom = ((parenth_form_conv <<= "("_sep + opt[yield_expr | testlist_comp] + ")"_sep) |
-            (list_display_conv <<= "["_sep + opt[testlist_comp] + "]"_sep) |
-            (result_type<DictExpr> <<= "{"_sep + opt[dictorsetmaker] + "}"_sep) |
-            NAME | NUMBER | STRING * _many1 | "..."_p | "None"_p | "True"_p | "False");
-    subscript = test | opt[test] + ":"_p + opt[test] + opt[sliceop];
-    sliceop = ":"_p + opt[test];
-    exprlist = (expr | star_expr) + (","_p + (expr | star_expr)) * _many + opt[","];
-    testlist = test + (","_sep + test) * _many + sep(opt[","]);
-    const Parser key_datum = test + ":"_sep + test | "**"_p + expr;
-    const Parser dict_maker = converter(fold_to_key_datum_list_or_comprehension) <<=
+    atom = ((parenth_form_conv <<= "("_sep + opt[yield_expr | testlist_comp] + ")"_sep)                //
+            | (list_display_conv <<= "["_sep + opt[testlist_comp] + "]"_sep)                           //
+            | (converter_no_strip(default_type<DictExpr>) <<= "{"_sep + opt[dictorsetmaker] + "}"_sep) //
+            | NAME | NUMBER | (converter(concat_str_exprs) <<= STRING * _many1)                        //
+            | (result_type<BuiltinObjectExpr> <<= "..."_p | "None"_p | "True"_p | "False"));
+
+    const Parser sliceop = ":"_sep + opt[test];
+    subscript = test | (result_type<SliceExpr> <<= opt[test] + ":"_sep + opt[test] + opt[sliceop]);
+
+    const Parser expr_or_star_expr = result_type<Expr> <<= expr | star_expr;
+    exprlist = converter(expr_list_ctor) <<= expr_or_star_expr + (","_sep + expr_or_star_expr) * _many + opt[","];
+    testlist = converter(expr_list_ctor) <<= test + (","_sep + test) * _many + opt[","];
+    const Parser key_datum = result_type<DictKeyValueExpr> <<= test + ":"_sep + test | "**"_p + expr;
+    const Parser dict_maker = dict_display_conv <<= converter(fold_to_key_datum_list_or_comprehension) <<=
         (key_datum + (comp_for | (","_sep + key_datum) * _many + sep(opt[","])));
     const Parser set_maker = testlist_comp;
-    dictorsetmaker = (dict_maker | set_maker);
+    // dictorsetmaker = (dict_maker | set_maker);
+    dictorsetmaker = (dict_maker);
 
     // # The reason that keywords are test nodes instead of NAME is that using NAME
-    // # results in an ambiguity. ast.c makes sure it's a NAME.
+    // # opt in an ambiguity. ast.c makes sure it's a NAME.
     // # "test '=' test" is really "keyword '=' test", but we have no such token.
     // # These need to be in a single rule to avoid grammar that is ambiguous
     // # to our LL(1) parser. Even though 'test' includes '*expr' in star_expr,

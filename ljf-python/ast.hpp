@@ -2,8 +2,13 @@
 
 #include <tuple>
 #include <variant>
+#include <optional>
+#include <string>
+#include <vector>
 #include <memory>
 #include <type_traits>
+
+#include <cassert>
 
 #include "Token.hpp"
 
@@ -144,11 +149,25 @@ struct ParenthFormExpr
     ParenthFormExpr(Expr expr) : expr_(std::move(expr)) {}
 };
 
-struct DictExpr : detail::EnclosureExpr
+struct DictKeyValueExpr;
+
+class DictExpr
 {
+public:
+    std::vector<DictKeyValueExpr> expr_list_;
+
+public:
     using is_expr_impl = void;
-    using EnclosureExpr::EnclosureExpr;
+    explicit DictExpr(std::vector<DictKeyValueExpr> expr_list) : expr_list_(std::move(expr_list)) {}
+    DictExpr() = default;
 };
+
+
+// struct DictExpr : detail::EnclosureExpr
+// {
+//     using is_expr_impl = void;
+//     using EnclosureExpr::EnclosureExpr;
+// };
 
 struct SetExpr : detail::EnclosureExpr
 {
@@ -248,7 +267,6 @@ static_assert(std::is_copy_assignable_v<DotIdentifier>);
 
 using IdentifierList = std::vector<IdentifierExpr>;
 
-
 // represents parts of comprehension:
 // if Expr
 // of
@@ -279,7 +297,7 @@ struct Comprehension
 using ExprList = std::vector<Expr>;
 
 using ArgList = std::vector<Argument>;
-using SubscriptList = std::vector<Subscript>;
+using SubscriptList = std::vector<Expr>;
 
 using Trailer = std::variant<ArgList, SubscriptList, DotIdentifier>;
 
@@ -302,7 +320,7 @@ struct AtomExpr
 
 struct YieldExpr
 {
-    using is_expr_impl = void;    
+    using is_expr_impl = void;
 };
 
 struct ComprehensionKindExpr
@@ -313,23 +331,65 @@ struct ComprehensionKindExpr
 
 struct GeneratorExpr : public ComprehensionKindExpr
 {
-    using is_expr_impl = void;    
+    using is_expr_impl = void;
     using ComprehensionKindExpr::ComprehensionKindExpr;
 };
 
 struct ListComprehensionExpr : public ComprehensionKindExpr
 {
-    using is_expr_impl = void;    
+    using is_expr_impl = void;
     using ComprehensionKindExpr::ComprehensionKindExpr;
 };
+
+struct KeyValue
+{
+    Expr key;
+    Expr value;
+};
+
+struct DictKeyValueExpr
+{
+    using is_expr_impl = void;
+    using DoubleStaredExpr = Expr;
+    std::variant<KeyValue, DoubleStaredExpr> key_datum_;
+
+    DictKeyValueExpr(Expr key, Expr value) : key_datum_(KeyValue{
+                                                 std::move(key),
+                                                 std::move(value)}) {}
+
+    DictKeyValueExpr(const Token &double_star, Expr expr)
+        : key_datum_(std::in_place_index<1>, std::move(expr))
+    {
+        assert(double_star == "**");
+    }
+};
+
+// struct DictComprehensionExpr
+// {
+//     // using is_expr_impl = void;
+//     DictComprehension comp_;
+//     DictComprehensionExpr(DictComprehension comp) : comp_(std::move(comp)) {}
+// };
 
 struct DictComprehensionExpr : public ComprehensionKindExpr
 {
-    // using is_expr_impl = void;    
+    using is_expr_impl = void;
     using ComprehensionKindExpr::ComprehensionKindExpr;
 };
 
+struct BuiltinObjectExpr : detail::SingleTokenExpr
+{
+    using is_expr_impl = void;
+    using SingleTokenExpr::SingleTokenExpr;
+};
 
+struct SliceExpr
+{
+    using is_expr_impl = void;
+
+    template <typename... Args>
+    explicit SliceExpr(Args &&...) {}
+};
 
 struct ExprVariant : std::variant<
                          StringLiteralExpr,
@@ -338,6 +398,7 @@ struct ExprVariant : std::variant<
                          TupleExpr,
                          ListExpr,
                          DictExpr,
+                         SetExpr,
                          UnaryExpr,
                          BinaryExpr,
                          ConditionalExpr,
@@ -346,7 +407,11 @@ struct ExprVariant : std::variant<
                          AtomExpr,
                          YieldExpr,
                          GeneratorExpr,
-                         ListComprehensionExpr>
+                         ListComprehensionExpr,
+                         DictComprehensionExpr,
+                         BuiltinObjectExpr,
+                         SliceExpr,
+                         DictKeyValueExpr>
 {
     using variant::variant;
 };
