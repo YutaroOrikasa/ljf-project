@@ -317,7 +317,7 @@ ParserPlaceHolder<Expr> make_python_eval_input_parser()
     dictorsetmaker = (dict_maker);
 
     // # The reason that keywords are test nodes instead of NAME is that using NAME
-    // # opt in an ambiguity. ast.c makes sure it's a NAME.
+    // # results in an ambiguity. ast.c makes sure it's a NAME.
     // # "test '=' test" is really "keyword '=' test", but we have no such token.
     // # These need to be in a single rule to avoid grammar that is ambiguous
     // # to our LL(1) parser. Even though 'test' includes '*expr' in star_expr,
