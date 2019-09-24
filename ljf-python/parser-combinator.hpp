@@ -262,6 +262,20 @@ Out &operator<<(Out &out, const Error &e)
 }
 
 template <typename T>
+struct Success
+{
+    T value;
+    explicit Success(T &&t) : value(std::move(t)) {}
+    explicit Success(T &t) : value(t) {}
+};
+
+template <typename T>
+auto success_move(T &&t)
+{
+    return Success(std::move(t));
+}
+
+template <typename T>
 class Result
 {
 private:
@@ -271,7 +285,12 @@ public:
     using success_type = T;
     explicit Result(T &&t) : value_(std::move(t)) {}
     explicit Result(const T &t) : value_(t) {}
-    explicit Result(std::unique_ptr<Error> e) : value_(std::move(e)) {}
+    /*implicit*/ Result(std::unique_ptr<Error> e) : value_(std::move(e)) {}
+
+    /*implicit*/ Result(Success<T> &&suc) : value_(std::move(suc.value)) {}
+
+    template <typename U>
+    /*implicit*/ Result(Success<U> &&suc) : value_(std::move(suc.value)) {}
 
     bool failed() const noexcept
     {
@@ -350,10 +369,16 @@ const auto &get(const Result<T> &result)
     return std::get<I>(result.success());
 }
 
+template <typename... Args>
+auto make_error(Args &&... args)
+{
+    return std::make_unique<Error>(std::forward<Args>(args)...);
+}
+
 template <typename T, typename... Args>
 Result<T> make_error_result(Args &&... args)
 {
-    return Result<T>(std::make_unique<Error>(std::forward<Args>(args)...));
+    return Result<T>(make_error(std::forward<Args>(args)...));
 }
 
 template <typename Ret>
@@ -668,6 +693,22 @@ constexpr auto converter(F &&f)
                 return Result<ConvertedContent>(result.extract_error_ptr());
             }
             return Result<ConvertedContent>(apply_variant_tuple(conv, result.extract_success()));
+        });
+}
+
+// same as converter, but
+// don't strip variant, optional and tuple
+template <typename F>
+constexpr auto converter_no_strip(F &&f)
+{
+    return Converter(
+        [conv = std::forward<F>(f)](auto &&result) {
+            using ConvertedContent = decltype(conv(result.extract_success()));
+            if (result.failed())
+            {
+                return Result<ConvertedContent>(result.extract_error_ptr());
+            }
+            return Result<ConvertedContent>(conv(result.extract_success()));
         });
 }
 
