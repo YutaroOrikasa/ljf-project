@@ -162,7 +162,6 @@ public:
     DictExpr() = default;
 };
 
-
 // struct DictExpr : detail::EnclosureExpr
 // {
 //     using is_expr_impl = void;
@@ -237,9 +236,6 @@ struct StarExpr
     explicit StarExpr(Expr expr) : expr_(std::move(expr)) {}
 };
 
-struct Argument
-{
-};
 
 struct Subscript
 {
@@ -292,6 +288,34 @@ struct Comprehension
 {
     Expr expr;
     CompFor comp_for;
+};
+
+
+struct Argument
+{
+    struct Arg
+    {
+        Expr expr;
+    };
+    struct KeywordArg
+    {
+        Expr keyword, expr;
+    };
+
+    std::variant<Arg, KeywordArg, Comprehension> arg_var;
+
+    explicit Argument(Comprehension comp) : arg_var(std::move(comp)) {}
+
+    explicit Argument(Expr expr) : arg_var(Arg{std::move(expr)}) {}
+
+    Argument(Expr keyword, Token eq, Expr expr)
+        : arg_var(
+              KeywordArg{
+                  std::move(keyword),
+                  std::move(expr)})
+    {
+        assert(eq == "=");
+    }
 };
 
 using ExprList = std::vector<Expr>;
