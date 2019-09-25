@@ -65,6 +65,18 @@ static constexpr auto fold_to_exprlist_or_comprehension =
     return fold_to_vector_or_comprehension(std::move(expr), std::move(rest));
 };
 
+static constexpr auto make_expr_or_comprehension =
+    [](Expr expr,
+       std::optional<CompFor> opt_comp_for)
+    -> std::variant<Expr, Comprehension> {
+    if (opt_comp_for)
+    {
+        return Comprehension{std::move(expr), std::move(*opt_comp_for)};
+    }
+
+    return expr;
+};
+
 static constexpr auto fold_to_key_datum_list_or_comprehension =
     [](auto key_datum,
        auto rest) {
@@ -325,10 +337,13 @@ ParserPlaceHolder<Expr> make_python_eval_input_parser()
     // # Illegal combinations and orderings are blocked in ast.c:
     // # multiple (test comp_for) arguments are blocked; keyword unpackings
     // # that precede iterable unpackings are blocked; etc.
-    argument = (test + opt[comp_for] |
-                test + "="_p + test |
-                "**"_p + test |
-                "*"_p + test);
+    argument = ((converter(make_expr_or_comprehension) <<= test + opt[comp_for]) |
+                (result_type<Argument> <<= test + "="_p + test)
+                // srared arg syntaxes are omitted.
+                /* |
+                 "**"_p + test |
+                "*"_p + test */
+    );
 
     comp_iter = comp_for | comp_if;
     comp_for = "for"_p + exprlist + "in"_p + or_test + opt[comp_iter];
