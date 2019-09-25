@@ -236,7 +236,6 @@ struct StarExpr
     explicit StarExpr(Expr expr) : expr_(std::move(expr)) {}
 };
 
-
 struct Subscript
 {
 };
@@ -261,7 +260,9 @@ static_assert(std::is_constructible_v<DotIdentifier, IdentifierExpr>);
 static_assert(std::is_copy_constructible_v<DotIdentifier>);
 static_assert(std::is_copy_assignable_v<DotIdentifier>);
 
-using IdentifierList = std::vector<IdentifierExpr>;
+struct CompIf;
+struct CompFor;
+using CompIter = std::variant<CompFor, CompIf>;
 
 // represents parts of comprehension:
 // if Expr
@@ -269,7 +270,15 @@ using IdentifierList = std::vector<IdentifierExpr>;
 // [ x * y * z for x, y, z in Expr if Expr]
 struct CompIf
 {
-    Expr expr_;
+    Expr test_;
+    // use pointer because CompIter is incomplete type.
+    // use shared pointer to make this class copyable.
+    std::shared_ptr<const CompIter> comp_iter_;
+
+    // define ctor after CompFor is defined.
+    // std::optional<CompIter> is incomplete type here
+    // because CompIter is include incomplete type CompFor.
+    CompIf(Expr test, std::optional<CompIter> comp_iter);
 };
 
 // represents parts of comprehension:
@@ -278,18 +287,37 @@ struct CompIf
 // [ x * y * z for x, y, z in Expr if Expr]
 struct CompFor
 {
-    IdentifierList ident_list_;
+    Expr target_list_;
     Expr in_expr_;
-    // use shared pointer to make this class copyable
-    std::shared_ptr<const std::variant<CompFor, CompIf>> comp_iter_;
+    // use pointer because CompIter is incomplete type.
+    // use shared pointer to make this class copyable.
+    std::shared_ptr<const CompIter> comp_iter_;
+
+    CompFor(Expr target_list, Expr in_expr, std::optional<CompIter> &&comp_iter)
+        : target_list_(target_list),
+          in_expr_(in_expr)
+    {
+        if (comp_iter)
+        {
+            comp_iter_ = std::make_shared<CompIter>(*comp_iter);
+        }
+    }
 };
+
+inline CompIf::CompIf(Expr test, std::optional<CompIter> comp_iter)
+    : test_(std::move(test))
+{
+    if (comp_iter.has_value())
+    {
+        comp_iter_ = std::make_shared<CompIter>(*comp_iter);
+    }
+}
 
 struct Comprehension
 {
     Expr expr;
     CompFor comp_for;
 };
-
 
 struct Argument
 {
@@ -318,8 +346,6 @@ struct Argument
     }
 };
 
-using ExprList = std::vector<Expr>;
-
 using ArgList = std::vector<Argument>;
 using SubscriptList = std::vector<Expr>;
 
@@ -344,7 +370,21 @@ struct AtomExpr
 
 struct YieldExpr
 {
+    bool yield_from = false;
+    std::optional<Expr> expr_;
+
     using is_expr_impl = void;
+    YieldExpr() = default;
+    explicit YieldExpr(Expr expr) : expr_(std::move(expr))
+    {
+    }
+
+    YieldExpr(const Token &from_token, Expr expr)
+        : yield_from(true),
+          expr_(std::move(expr))
+    {
+        assert(from_token == "from");
+    }
 };
 
 struct ComprehensionKindExpr
@@ -439,5 +479,7 @@ struct ExprVariant : std::variant<
 {
     using variant::variant;
 };
+
+using ExprList = std::vector<Expr>;
 
 } // namespace ljf::python::ast

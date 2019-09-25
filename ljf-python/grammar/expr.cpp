@@ -83,11 +83,6 @@ static constexpr auto fold_to_key_datum_list_or_comprehension =
         return fold_to_vector_or_comprehension(std::move(key_datum), std::move(rest));
     };
 
-static Expr parenth_form_ctor_impl(YieldExpr expr)
-{
-    return expr;
-}
-
 namespace
 {
 template <typename EnclosureExpr, typename ComprehensionExpr, typename ElemExpr = ast::Expr>
@@ -136,7 +131,6 @@ static constexpr auto list_display_conv = converter(DisplayExprFactory<ListExpr,
 
 template <typename T>
 static constexpr auto default_type = [](auto opt) {
-    using optional_type = std::decay_t<decltype(opt)>;
     using optional_content_type = std::decay_t<decltype(*opt)>;
 
     using return_variant_type = std::variant<T, optional_content_type>;
@@ -248,12 +242,12 @@ ParserPlaceHolder<Expr> make_python_eval_input_parser()
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(dictorsetmaker);
     // ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(arglist);
     ParserPlaceHolder<Argument> INIT_PLACE_HOLDER(argument);
-    ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(comp_iter);
+    ParserPlaceHolder<CompIter> INIT_PLACE_HOLDER(comp_iter);
     ParserPlaceHolder<CompFor> INIT_PLACE_HOLDER(comp_for);
     ParserPlaceHolder<CompIf> INIT_PLACE_HOLDER(comp_if);
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(encoding_decl);
     ParserPlaceHolder<YieldExpr> INIT_PLACE_HOLDER(yield_expr);
-    ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(yield_arg);
+    // ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(yield_arg);
 #undef INIT_PLACE_HOLDER
 
     const Parser vfpdef = NAME;
@@ -338,7 +332,7 @@ ParserPlaceHolder<Expr> make_python_eval_input_parser()
     // # multiple (test comp_for) arguments are blocked; keyword unpackings
     // # that precede iterable unpackings are blocked; etc.
     argument = ((converter(make_expr_or_comprehension) <<= test + opt[comp_for]) |
-                (result_type<Argument> <<= test + "="_p + test)
+                (test + "="_p + test)
                 // srared arg syntaxes are omitted.
                 /* |
                  "**"_p + test |
@@ -346,16 +340,16 @@ ParserPlaceHolder<Expr> make_python_eval_input_parser()
     );
 
     comp_iter = comp_for | comp_if;
-    comp_for = "for"_p + exprlist + "in"_p + or_test + opt[comp_iter];
-    comp_if = "if"_p + test_nocond + opt[comp_iter];
+    comp_for = "for"_sep + exprlist+ "in"_sep + or_test + opt[comp_iter];
+    comp_if = "if"_sep + test_nocond + opt[comp_iter];
 
     // # not used in grammar, but may appear in "node" passed from Parser to Compiler
     encoding_decl = NAME;
 
-    yield_expr = "yield"_p + opt[yield_arg];
-    yield_arg = "from"_p + test | testlist;
+    const Parser yield_arg = "from"_p + test | testlist;
+    yield_expr = "yield"_sep + opt[yield_arg];
 
-    eval_input = testlist + NEWLINE * _many + ENDMARKER;
+    eval_input = testlist + sep(NEWLINE * _many) + sep(ENDMARKER);
     return testlist;
 }
 } // namespace ljf::python::parser
