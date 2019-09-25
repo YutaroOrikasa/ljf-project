@@ -627,20 +627,41 @@ using result_content_t = std::decay_t<
             std::declval<TokenStream &>())
             .success())>;
 
+template <typename Result, typename Pos, typename TokenStream>
+bool LL1_parser_failed(const Result &result, const Pos &initial_position, const TokenStream &stream)
+{
+    return result.failed() && (initial_position != stream.current_position());
+}
+
 /// return type: Parser<std::vector<?>,?>
-/// The parser many() generates will not return failed result.
 template <typename P>
 constexpr auto many(P &&parser)
 {
     return Parser(
         [parser](auto &&token_stream) {
-            using result_ty = result_content_t<P, decltype(token_stream)>;
-            std::vector<result_ty> vec;
-            while (auto result = parser(token_stream))
+            using vec_value_ty = result_content_t<P, decltype(token_stream)>;
+            using vec_ty = std::vector<vec_value_ty>;
+            vec_ty vec;
+            while (true)
             {
+                auto init_pos = token_stream.current_position();
+
+                auto result = parser(token_stream);
+                if (LL1_parser_failed(result, init_pos, token_stream))
+                {
+                    return Result<vec_ty>(result.extract_error_ptr());
+                }
+
+                // parser not matched token and only lookahead was done.
+                // finish many()
+                if (result.failed())
+                {
+                    break;
+                }
+
                 vec.push_back(result.extract_success());
             }
-            return vec;
+            return Result<vec_ty>(std::move(vec));
         });
 }
 
