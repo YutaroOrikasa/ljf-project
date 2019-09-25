@@ -37,8 +37,9 @@ class Visitor
 private:
     auto impl(const ListExpr &expr) const
     {
-        std::cout << "ListExpr"
-                  << "\n";
+        std::cout << "[";
+        print_list(expr.expr_list_, *this);
+        std::cout << "]";
     }
 
     auto impl(const ParenthFormExpr &expr) const
