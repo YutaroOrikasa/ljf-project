@@ -112,7 +112,7 @@ public:
 
 } // namespace detail
 
-struct IdentifierExpr : detail::SingleTokenExpr
+struct IdentifierExpr : public detail::SingleTokenExpr
 {
     using SingleTokenExpr::SingleTokenExpr;
 
@@ -122,7 +122,7 @@ struct IdentifierExpr : detail::SingleTokenExpr
     }
 };
 
-class ListExpr : detail::EnclosureExpr
+class ListExpr : public detail::EnclosureExpr
 {
 private:
 public:
@@ -130,7 +130,7 @@ public:
     using EnclosureExpr::EnclosureExpr;
 };
 
-class TupleExpr : detail::EnclosureExpr
+class TupleExpr : public detail::EnclosureExpr
 {
 private:
 public:

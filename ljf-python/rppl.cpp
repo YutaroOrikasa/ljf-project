@@ -12,6 +12,26 @@ using namespace ljf::python;
 using namespace ljf::python::ast;
 using namespace ljf::python::parser;
 
+template <typename List, typename Visitor>
+auto &print_list(const List &list, Visitor &&elem_printer)
+{
+    bool is_first = true;
+    for (auto &&elem : list)
+    {
+        if (is_first)
+        {
+            is_first = false;
+        }
+        else
+        {
+            std::cout << ", ";
+        }
+        elem_printer(elem);
+    }
+
+    return std::cout;
+}
+
 class Visitor
 {
 private:
@@ -27,6 +47,27 @@ private:
                   << "\n";
     }
 
+    auto impl(const TupleExpr &expr) const
+    {
+        std::cout << "tuple(";
+        print_list(expr.expr_list_, *this);
+        std::cout << ")";
+    }
+
+    auto impl(const AtomExpr &expr) const
+    {
+        if (expr.has_await_)
+        {
+            std::cout << "await ";
+        }
+        visit(expr.atom_);
+        if (!expr.trailers_.empty())
+        {
+            std::cout << "<trailers>";
+        }
+    
+    }
+
     auto impl(const StringLiteralExpr &expr) const
     {
         std::cout << expr.token().str();
@@ -40,6 +81,26 @@ private:
     auto impl(const IdentifierExpr &expr) const
     {
         std::cout << expr.token().str();
+    }
+
+    auto impl(const ConditionalExpr &expr) const
+    {
+        (*this)(expr.or_test_);
+        if (expr.if_else_)
+        {
+            std::cout << " if " << (*this)(expr.if_else_->if_);
+            std::cout << " else " << (*this)(expr.if_else_->else_);
+        }
+    }
+
+    auto impl(const BinaryExpr &expr) const
+    {
+        std::cout << "(";
+        visit(expr.left_);
+        std::cout << " " << expr.operator_.str()
+                  << " ";
+        visit(expr.right_);
+        std::cout << ")";
     }
 
     auto impl(const UnaryExpr &expr) const
@@ -120,6 +181,12 @@ public:
         impl(t);
         return false;
     }
+
+    template <typename T>
+    bool visit(const T &t) const
+    {
+        return (*this)(t);
+    }
 };
 
 int main(int argc, const char **argv)
@@ -168,6 +235,7 @@ int main(int argc, const char **argv)
             continue;
         }
         eof = result.visit(Visitor());
+        std::cout << "\nEND";
         std::cout << "\n";
     }
 }
