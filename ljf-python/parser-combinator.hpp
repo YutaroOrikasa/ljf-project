@@ -83,10 +83,7 @@ struct ApplyToVariantOptionalTupleVisitor
     }
 };
 
-inline constexpr ApplyToVariantOptionalTupleVisitor apply_variant_optional_tuple;
-
-// alias for compatibility
-inline constexpr auto apply_variant_tuple = apply_variant_optional_tuple;
+inline constexpr ApplyToVariantOptionalTupleVisitor apply_to_variant_optional_tuple;
 
 // This wrapper function exists only for printing human readable compile error message
 // when type error occurred.
@@ -107,7 +104,10 @@ inline constexpr auto construct = [](auto &&... args) {
 namespace ljf::python::parser
 {
 
-using detail::apply_variant_tuple;
+using detail::apply_to_variant_optional_tuple;
+
+// alias for compatibility
+inline constexpr auto apply_variant_tuple = apply_to_variant_optional_tuple;
 
 template <typename... P>
 class Sequence;
@@ -706,9 +706,9 @@ auto apply_to_result(const F &func, R &&result)
 template <typename F>
 constexpr auto converter(const F &f)
 {
-    auto conv = [f](auto &&success) { 
+    auto conv = [f](auto &&success) {
         return apply_variant_tuple(f, std::forward<decltype(success)>(success));
-     };
+    };
     return Converter(
         [conv = std::move(conv)](auto &&result) {
             return apply_to_result(std::move(conv), std::forward<decltype(result)>(result));
@@ -730,6 +730,34 @@ constexpr auto converter_no_strip(F &&f)
             return Result<ConvertedContent>(conv(result.extract_success()));
         });
 }
+
+namespace detail
+{
+template <typename T>
+struct BraceInitialized
+{
+    T value;
+    template <typename... Args>
+    explicit BraceInitialized(Args &&... args) : value{std::forward<Args>(args)...} {}
+};
+template <typename Tuple>
+struct BraceInitArgs
+{
+    Tuple arg_tuple;
+    explicit BraceInitArgs(Tuple &&tpl) : arg_tuple(std::move(tpl)) {}
+    template <typename T>
+    /*implicit*/ operator T() &&
+    {
+        return std::move(std::apply(make_from_variant<BraceInitialized<T>>, arg_tuple).value);
+    }
+};
+
+inline constexpr auto brace_init_fn = [](auto &&... args) {
+    return BraceInitArgs(std::make_tuple(std::forward<decltype(args)>(args)...));
+};
+} // namespace detail
+
+inline constexpr auto brace_init = converter(detail::brace_init_fn);
 
 template <typename TResult, class TokenStream>
 class PlaceHolder
