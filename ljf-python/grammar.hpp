@@ -99,9 +99,15 @@ inline auto prompter(const std::string &str)
         return Separator();
     });
 }
+} // namespace ljf::python::parser
+
+namespace ljf::python::grammar
+{
 
 namespace impl
 {
+using namespace parser;
+
 struct Opt
 {
     template <typename Parser>
@@ -139,17 +145,17 @@ inline constexpr Opt opt;
 inline constexpr Many<0> _many;
 inline constexpr Many<1> _many1;
 
-const Parser NEWLINE = newline;
-const Parser ENDMARKER = eof;
-const Parser NAME = identifier;
-const Parser INDENT = indent;
-const Parser DEDENT = dedent;
-const Parser NUMBER = integer_literal;
-const Parser STRING = string_literal;
-
 } // namespace impl
 
-ParserPlaceHolder<SExpr> make_python_grammer_parser();
-ParserPlaceHolder<ast::Expr> make_python_eval_input_parser();
+const parser::Parser NEWLINE = parser::newline;
+const parser::Parser ENDMARKER = parser::eof;
+const parser::Parser NAME = parser::identifier;
+const parser::Parser INDENT = parser::indent;
+const parser::Parser DEDENT = parser::dedent;
+const parser::Parser NUMBER = parser::integer_literal;
+const parser::Parser STRING = parser::string_literal;
 
-} // namespace ljf::python::parser
+parser::ParserPlaceHolder<parser::SExpr> make_python_grammer_parser();
+parser::ParserPlaceHolder<ast::Expr> make_python_eval_input_parser();
+
+} // namespace ljf::python::grammar

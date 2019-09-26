@@ -1,8 +1,12 @@
 #include "../grammar.hpp"
 
-namespace ljf::python::parser
+namespace ljf::python::grammar
 {
+namespace detail
+{
+
 using namespace ast;
+using namespace parser;
 static constexpr auto fold_left = [](auto &&first, auto &&vec) -> Expr {
     Expr e0 = first;
 
@@ -205,9 +209,12 @@ static constexpr auto sep = [](auto &&parser) {
     return separator(std::forward<decltype(parser)>(parser));
 };
 
-ParserPlaceHolder<Expr> make_python_eval_input_parser()
+} // namespace detail
+
+parser::ParserPlaceHolder<ast::Expr> make_python_eval_input_parser()
 {
     using namespace impl;
+    using namespace detail;
 #define INIT_PLACE_HOLDER(name) name{#name}
 
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(eval_input);
@@ -340,7 +347,7 @@ ParserPlaceHolder<Expr> make_python_eval_input_parser()
     );
 
     comp_iter = comp_for | comp_if;
-    comp_for = "for"_sep + exprlist+ "in"_sep + or_test + opt[comp_iter];
+    comp_for = "for"_sep + exprlist + "in"_sep + or_test + opt[comp_iter];
     comp_if = "if"_sep + test_nocond + opt[comp_iter];
 
     // # not used in grammar, but may appear in "node" passed from Parser to Compiler
@@ -352,4 +359,4 @@ ParserPlaceHolder<Expr> make_python_eval_input_parser()
     eval_input = testlist + sep(NEWLINE * _many) + sep(ENDMARKER);
     return testlist;
 }
-} // namespace ljf::python::parser
+} // namespace ljf::python::grammar

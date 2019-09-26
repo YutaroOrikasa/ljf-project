@@ -11,6 +11,7 @@
 using namespace ljf::python;
 using namespace ljf::python::ast;
 using namespace ljf::python::parser;
+using namespace ljf::python::grammar;
 
 template <typename List, typename Visitor>
 auto &print_list(const List &list, Visitor &&elem_printer)
