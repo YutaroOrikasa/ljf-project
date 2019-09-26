@@ -374,7 +374,7 @@ struct ExprGrammars
         eval_input = testlist + sep(NEWLINE * _many) + sep(ENDMARKER);
     }
 };
-} // namespace Expr_
+} // namespace ExprGrammars_
 
 using ExprGrammars_::ExprGrammars;
 

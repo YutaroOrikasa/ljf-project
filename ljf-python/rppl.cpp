@@ -210,7 +210,9 @@ int main(int argc, const char **argv)
     // const auto program = eof | newline | make_expr_parser();
     // const auto program_ = make_python_grammer_parser();
     // (void)program_;
-    const auto expr = make_python_eval_input_parser();
+    // const auto expr = make_python_eval_input_parser();
+    ExprGrammars E;
+    const auto expr = E.exprlist;
     const auto program = expr + separator(newline);
     TokenStream<std::istream> ts{std::cin};
 
