@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../grammar.hpp"
 
 namespace ljf::python::grammar
@@ -375,11 +377,10 @@ struct ExprGrammars
 } // namespace Expr_
 
 using ExprGrammars_::ExprGrammars;
-using Expr = ExprGrammars;
 
-parser::ParserPlaceHolder<ast::Expr> make_python_eval_input_parser()
+inline parser::ParserPlaceHolder<ast::Expr> make_python_eval_input_parser()
 {
-    grammar::Expr expr_grammars;
+    ExprGrammars expr_grammars;
     return expr_grammars.testlist;
 }
 } // namespace ljf::python::grammar

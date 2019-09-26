@@ -7,6 +7,7 @@
 #include "ast.hpp"
 
 #include "grammar.hpp"
+#include "grammar/expr.hpp"
 
 using namespace ljf::python;
 using namespace ljf::python::ast;
