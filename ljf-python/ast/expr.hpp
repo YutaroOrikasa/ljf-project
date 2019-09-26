@@ -17,6 +17,7 @@
 #include "expr/literal.hpp"
 #include "expr/ident.hpp"
 #include "expr/enclosure.hpp"
+#include "expr/dict.hpp"
 
 namespace ljf::python::ast
 {
@@ -33,24 +34,6 @@ struct ParenthFormExpr
     ParenthFormExpr(Expr expr) : expr_(std::move(expr)) {}
 };
 
-struct DictKeyValueExpr;
-
-class DictExpr
-{
-public:
-    std::vector<DictKeyValueExpr> expr_list_;
-
-public:
-    using is_expr_impl = void;
-    explicit DictExpr(std::vector<DictKeyValueExpr> expr_list) : expr_list_(std::move(expr_list)) {}
-    DictExpr() = default;
-};
-
-// struct DictExpr : detail::EnclosureExpr
-// {
-//     using is_expr_impl = void;
-//     using EnclosureExpr::EnclosureExpr;
-// };
 
 
 struct UnaryExpr
