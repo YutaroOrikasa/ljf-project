@@ -15,48 +15,13 @@
 #include "expr/Expr.hpp"
 
 #include "expr/literal.hpp"
+#include "expr/ident.hpp"
 
 namespace ljf::python::ast
 {
 
-namespace detail
-{
-class SingleTokenExpr
-{
-private:
-    Token token_;
 
-public:
-    using is_expr_impl = void;
-    SingleTokenExpr(Token &&token) : token_(std::move(token)) {}
 
-    const Token &token() const noexcept
-    {
-        return token_;
-    }
-};
-
-class EnclosureExpr
-{
-public:
-    std::vector<Expr> expr_list_;
-
-public:
-    explicit EnclosureExpr(std::vector<Expr> expr_list) : expr_list_(std::move(expr_list)) {}
-    EnclosureExpr() = default;
-};
-
-} // namespace detail
-
-struct IdentifierExpr : public detail::SingleTokenExpr
-{
-    using SingleTokenExpr::SingleTokenExpr;
-
-    const std::string &name() const noexcept
-    {
-        return token().str();
-    }
-};
 
 class ListExpr : public detail::EnclosureExpr
 {

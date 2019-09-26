@@ -41,4 +41,33 @@ public:
 };
 
 static_assert(std::is_copy_constructible_v<Expr>);
+
+
+namespace detail
+{
+class SingleTokenExpr
+{
+private:
+    Token token_;
+
+public:
+    SingleTokenExpr(Token &&token) : token_(std::move(token)) {}
+
+    const Token &token() const noexcept
+    {
+        return token_;
+    }
+};
+
+class EnclosureExpr
+{
+public:
+    std::vector<Expr> expr_list_;
+
+public:
+    explicit EnclosureExpr(std::vector<Expr> expr_list) : expr_list_(std::move(expr_list)) {}
+    EnclosureExpr() = default;
+};
+
+} // namespace detail
 } // namespace ljf::python::ast
