@@ -16,28 +16,11 @@
 
 #include "expr/literal.hpp"
 #include "expr/ident.hpp"
+#include "expr/enclosure.hpp"
 
 namespace ljf::python::ast
 {
 
-
-
-
-class ListExpr : public detail::EnclosureExpr
-{
-private:
-public:
-    using is_expr_impl = void;
-    using EnclosureExpr::EnclosureExpr;
-};
-
-class TupleExpr : public detail::EnclosureExpr
-{
-private:
-public:
-    using is_expr_impl = void;
-    using EnclosureExpr::EnclosureExpr;
-};
 
 /// kind of
 ///  1. (expr)
@@ -69,11 +52,6 @@ public:
 //     using EnclosureExpr::EnclosureExpr;
 // };
 
-struct SetExpr : detail::EnclosureExpr
-{
-    using is_expr_impl = void;
-    using EnclosureExpr::EnclosureExpr;
-};
 
 struct UnaryExpr
 {

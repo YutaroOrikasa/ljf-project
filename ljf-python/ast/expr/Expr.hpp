@@ -59,15 +59,6 @@ public:
     }
 };
 
-class EnclosureExpr
-{
-public:
-    std::vector<Expr> expr_list_;
-
-public:
-    explicit EnclosureExpr(std::vector<Expr> expr_list) : expr_list_(std::move(expr_list)) {}
-    EnclosureExpr() = default;
-};
 
 } // namespace detail
 } // namespace ljf::python::ast
