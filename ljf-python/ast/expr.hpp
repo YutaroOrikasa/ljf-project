@@ -10,6 +10,8 @@
 
 #include <cassert>
 
+#include "./expr/Expr.hpp"
+
 namespace ljf::python::ast
 {
 struct ExprVariant;
