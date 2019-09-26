@@ -56,6 +56,9 @@ ParserPlaceHolder<SExpr> make_python_grammer_parser()
     ParserPlaceHolder<SExpr> INIT_PLACE_HOLDER(with_item);
     ParserPlaceHolder<SExpr> INIT_PLACE_HOLDER(except_clause);
     ParserPlaceHolder<SExpr> INIT_PLACE_HOLDER(suite);
+    ParserPlaceHolder<SExpr> INIT_PLACE_HOLDER(classdef);
+
+    // Expr
     ParserPlaceHolder<SExpr> INIT_PLACE_HOLDER(test);
     ParserPlaceHolder<SExpr> INIT_PLACE_HOLDER(test_nocond);
     ParserPlaceHolder<SExpr> INIT_PLACE_HOLDER(lambdef);
@@ -84,7 +87,6 @@ ParserPlaceHolder<SExpr> make_python_grammer_parser()
     ParserPlaceHolder<SExpr> INIT_PLACE_HOLDER(exprlist);
     ParserPlaceHolder<SExpr> INIT_PLACE_HOLDER(testlist);
     ParserPlaceHolder<SExpr> INIT_PLACE_HOLDER(dictorsetmaker);
-    ParserPlaceHolder<SExpr> INIT_PLACE_HOLDER(classdef);
     ParserPlaceHolder<SExpr> INIT_PLACE_HOLDER(arglist);
     ParserPlaceHolder<SExpr> INIT_PLACE_HOLDER(argument);
     ParserPlaceHolder<SExpr> INIT_PLACE_HOLDER(comp_iter);
@@ -196,7 +198,6 @@ ParserPlaceHolder<SExpr> make_python_grammer_parser()
     testlist = test + (","_p + test) * _many + opt[","];
     dictorsetmaker = (((test + ":"_p + test | "**"_p + expr) + (comp_for | (","_p + (test + ":"_p + test | "**"_p + expr)) * _many + opt[","])) |
                       ((test | star_expr) + (comp_for | (","_p + (test | star_expr)) * _many + opt[","])));
-
 
     arglist = argument + (","_p + argument) * _many + opt[","];
 
