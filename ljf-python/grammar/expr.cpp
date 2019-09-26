@@ -211,11 +211,18 @@ static constexpr auto sep = [](auto &&parser) {
 
 } // namespace detail
 
-parser::ParserPlaceHolder<ast::Expr> make_python_eval_input_parser()
+namespace ExprGrammars_
 {
-    using namespace impl;
-    using namespace detail;
-#define INIT_PLACE_HOLDER(name) name{#name}
+using namespace parser;
+using namespace ast;
+
+// template <class TokenStream>
+struct ExprGrammars
+{
+    // template <typename T>
+    // using ParserPlaceHolder = parser::PlaceHolder<T, TokenStream>;
+#define INIT_PLACE_HOLDER(name) \
+    name { #name }
 
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(eval_input);
 
@@ -257,106 +264,122 @@ parser::ParserPlaceHolder<ast::Expr> make_python_eval_input_parser()
     // ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(yield_arg);
 #undef INIT_PLACE_HOLDER
 
-    const Parser vfpdef = NAME;
-    const Parser defparameter = vfpdef + opt["="_sep + test];
-    const Parser parameter_list_starargs = "*"_p + opt[vfpdef]                  //
-                                               + (","_p + defparameter) * _many //
-                                               + opt[","_p + "**"_p + vfpdef]   //
-                                           | "**"_p + vfpdef;
-    const Parser varargslist = (defparameter + (","_sep + defparameter) * _many   //
-                                    + opt[","_sep + opt[parameter_list_starargs]] //
-                                | parameter_list_starargs);
+    ExprGrammars()
+    {
+        using namespace impl;
+        using namespace detail;
+        using ast::Expr;
 
-    const Parser and_test = converter(fold_left) <<= not_test + ("and"_p + not_test) * _many;
-    const Parser or_test = converter(fold_left) <<= and_test + ("or"_p + and_test) * _many;
-    not_test = (result_type<UnaryExpr> <<= "not"_p + not_test) | comparison;
+        const Parser vfpdef = NAME;
+        const Parser defparameter = vfpdef + opt["="_sep + test];
+        const Parser parameter_list_starargs = "*"_p + opt[vfpdef]                  //
+                                                   + (","_p + defparameter) * _many //
+                                                   + opt[","_p + "**"_p + vfpdef]   //
+                                               | "**"_p + vfpdef;
+        const Parser varargslist = (defparameter + (","_sep + defparameter) * _many   //
+                                        + opt[","_sep + opt[parameter_list_starargs]] //
+                                    | parameter_list_starargs);
 
-    test = (result_type<ConditionalExpr> <<= or_test + opt["if"_sep + or_test + "else"_sep + test]) | lambdef;
-    test_nocond = or_test | lambdef_nocond;
-    auto to_lambda_dummy = [](auto &&, Expr) {
-        return LambdaExpr();
-    };
-    lambdef = converter(to_lambda_dummy) <<= "lambda"_sep + opt[varargslist] + ":"_sep + test;
-    lambdef_nocond = converter(to_lambda_dummy) <<= "lambda"_sep + opt[varargslist] + ":"_sep + test_nocond;
+        const Parser and_test = converter(fold_left) <<= not_test + ("and"_p + not_test) * _many;
+        const Parser or_test = converter(fold_left) <<= and_test + ("or"_p + and_test) * _many;
+        not_test = (result_type<UnaryExpr> <<= "not"_p + not_test) | comparison;
 
-    const Parser expr = converter(fold_left) <<= xor_expr + ("|"_p + xor_expr) * _many;
+        test = (result_type<ConditionalExpr> <<= or_test + opt["if"_sep + or_test + "else"_sep + test]) | lambdef;
+        test_nocond = or_test | lambdef_nocond;
+        auto to_lambda_dummy = [](auto &&, Expr) {
+            return LambdaExpr();
+        };
+        lambdef = converter(to_lambda_dummy) <<= "lambda"_sep + opt[varargslist] + ":"_sep + test;
+        lambdef_nocond = converter(to_lambda_dummy) <<= "lambda"_sep + opt[varargslist] + ":"_sep + test_nocond;
 
-    auto combine_tokens_conv = converter(combine_tokens);
-    // # <> isn't actually a valid comparison operator in Python. It's here for the
-    // # sake of a __future__ import described in PEP 401 (which really works :-)
-    const Parser comp_op = "<"_p | ">"_p | "=="_p | ">="_p | "<="_p | "<>"_p | "!="_p //
-                           | "in"_p                                                   //
-                           | (combine_tokens_conv <<= "not"_p + "in"_p)               //
-                           | "is"_p                                                   //
-                           | (combine_tokens_conv <<= "is"_p + "not"_p);
-    comparison = converter(fold_left) <<= expr + (comp_op + expr) * _many;
-    star_expr = result_type<StarExpr> <<= "*"_sep + expr;
-    xor_expr = converter(fold_left) <<= and_expr + ("^"_p + and_expr) * _many;
-    and_expr = converter(fold_left) <<= shift_expr + ("&"_p + shift_expr) * _many;
-    shift_expr = converter(fold_left) <<= arith_expr + (("<<"_p | ">>") + arith_expr) * _many;
-    arith_expr = converter(fold_left) <<= term + (("+"_p | "-") + term) * _many;
-    term = converter(fold_left) <<= factor + (("*"_p | "@"_p | "/"_p | "%"_p | "//") + factor) * _many;
-    factor = (result_type<UnaryExpr> <<= (result_type<Token> <<= "+"_p | "-"_p | "~") + factor) | power;
-    power = converter(fold_left_opt) <<= atom_expr + opt["**"_p + factor];
+        const Parser expr = converter(fold_left) <<= xor_expr + ("|"_p + xor_expr) * _many;
 
-    const Parser arglist = converter(fold_left_to_vec) <<= argument + (","_sep + argument) * _many + sep(opt[","]);
-    const Parser subscriptlist = converter(fold_left_to_vec) <<= subscript + (","_sep + subscript) * _many + sep(opt[","]);
-    const Parser trailer = result_type<Trailer> <<=
-        "("_sep + opt[arglist] + ")"_sep    //
-        | "["_sep + subscriptlist + "]"_sep //
-        | (result_type<DotIdentifier> <<= "."_sep + NAME);
+        auto combine_tokens_conv = converter(combine_tokens);
+        // # <> isn't actually a valid comparison operator in Python. It's here for the
+        // # sake of a __future__ import described in PEP 401 (which really works :-)
+        const Parser comp_op = "<"_p | ">"_p | "=="_p | ">="_p | "<="_p | "<>"_p | "!="_p //
+                               | "in"_p                                                   //
+                               | (combine_tokens_conv <<= "not"_p + "in"_p)               //
+                               | "is"_p                                                   //
+                               | (combine_tokens_conv <<= "is"_p + "not"_p);
+        comparison = converter(fold_left) <<= expr + (comp_op + expr) * _many;
+        star_expr = result_type<StarExpr> <<= "*"_sep + expr;
+        xor_expr = converter(fold_left) <<= and_expr + ("^"_p + and_expr) * _many;
+        and_expr = converter(fold_left) <<= shift_expr + ("&"_p + shift_expr) * _many;
+        shift_expr = converter(fold_left) <<= arith_expr + (("<<"_p | ">>") + arith_expr) * _many;
+        arith_expr = converter(fold_left) <<= term + (("+"_p | "-") + term) * _many;
+        term = converter(fold_left) <<= factor + (("*"_p | "@"_p | "/"_p | "%"_p | "//") + factor) * _many;
+        factor = (result_type<UnaryExpr> <<= (result_type<Token> <<= "+"_p | "-"_p | "~") + factor) | power;
+        power = converter(fold_left_opt) <<= atom_expr + opt["**"_p + factor];
 
-    const Parser testlist_comp = converter(fold_to_exprlist_or_comprehension) <<=
-        (result_type<Expr> <<= test | star_expr) + (comp_for | (","_sep + (result_type<Expr> <<= test | star_expr)) * _many + sep(opt[","]));
-    atom_expr = result_type<AtomExpr> <<= opt["await"] + atom + trailer * _many;
+        const Parser arglist = converter(fold_left_to_vec) <<= argument + (","_sep + argument) * _many + sep(opt[","]);
+        const Parser subscriptlist = converter(fold_left_to_vec) <<= subscript + (","_sep + subscript) * _many + sep(opt[","]);
+        const Parser trailer = result_type<Trailer> <<=
+            "("_sep + opt[arglist] + ")"_sep    //
+            | "["_sep + subscriptlist + "]"_sep //
+            | (result_type<DotIdentifier> <<= "."_sep + NAME);
 
-    atom = ((parenth_form_conv <<= "("_sep + opt[yield_expr | testlist_comp] + ")"_sep)                //
-            | (list_display_conv <<= "["_sep + opt[testlist_comp] + "]"_sep)                           //
-            | (converter_no_strip(default_type<DictExpr>) <<= "{"_sep + opt[dictorsetmaker] + "}"_sep) //
-            | NAME | NUMBER | (converter(concat_str_exprs) <<= STRING * _many1)                        //
-            | (result_type<BuiltinObjectExpr> <<= "..."_p | "None"_p | "True"_p | "False"));
+        const Parser testlist_comp = converter(fold_to_exprlist_or_comprehension) <<=
+            (result_type<Expr> <<= test | star_expr) + (comp_for | (","_sep + (result_type<Expr> <<= test | star_expr)) * _many + sep(opt[","]));
+        atom_expr = result_type<AtomExpr> <<= opt["await"] + atom + trailer * _many;
 
-    const Parser sliceop = ":"_sep + opt[test];
-    subscript = test | (result_type<SliceExpr> <<= opt[test] + ":"_sep + opt[test] + opt[sliceop]);
+        atom = ((parenth_form_conv <<= "("_sep + opt[yield_expr | testlist_comp] + ")"_sep)                //
+                | (list_display_conv <<= "["_sep + opt[testlist_comp] + "]"_sep)                           //
+                | (converter_no_strip(default_type<DictExpr>) <<= "{"_sep + opt[dictorsetmaker] + "}"_sep) //
+                | NAME | NUMBER | (converter(concat_str_exprs) <<= STRING * _many1)                        //
+                | (result_type<BuiltinObjectExpr> <<= "..."_p | "None"_p | "True"_p | "False"));
 
-    const Parser expr_or_star_expr = result_type<Expr> <<= expr | star_expr;
-    exprlist = converter(expr_list_ctor) <<= expr_or_star_expr + (","_sep + expr_or_star_expr) * _many + opt[","];
-    testlist = converter(expr_list_ctor) <<= test + (","_sep + test) * _many + opt[","];
-    const Parser key_datum = result_type<DictKeyValueExpr> <<= test + ":"_sep + test | "**"_p + expr;
-    const Parser dict_maker = dict_display_conv <<= converter(fold_to_key_datum_list_or_comprehension) <<=
-        (key_datum + (comp_for | (","_sep + key_datum) * _many + sep(opt[","])));
-    const Parser set_maker = testlist_comp;
-    // dictorsetmaker = (dict_maker | set_maker);
-    dictorsetmaker = (dict_maker);
+        const Parser sliceop = ":"_sep + opt[test];
+        subscript = test | (result_type<SliceExpr> <<= opt[test] + ":"_sep + opt[test] + opt[sliceop]);
 
-    // # The reason that keywords are test nodes instead of NAME is that using NAME
-    // # results in an ambiguity. ast.c makes sure it's a NAME.
-    // # "test '=' test" is really "keyword '=' test", but we have no such token.
-    // # These need to be in a single rule to avoid grammar that is ambiguous
-    // # to our LL(1) parser. Even though 'test' includes '*expr' in star_expr,
-    // # we explicitly match '*' here, too, to give it proper precedence.
-    // # Illegal combinations and orderings are blocked in ast.c:
-    // # multiple (test comp_for) arguments are blocked; keyword unpackings
-    // # that precede iterable unpackings are blocked; etc.
-    argument = ((converter(make_expr_or_comprehension) <<= test + opt[comp_for]) |
-                (test + "="_p + test)
-                // srared arg syntaxes are omitted.
-                /* |
+        const Parser expr_or_star_expr = result_type<Expr> <<= expr | star_expr;
+        exprlist = converter(expr_list_ctor) <<= expr_or_star_expr + (","_sep + expr_or_star_expr) * _many + opt[","];
+        testlist = converter(expr_list_ctor) <<= test + (","_sep + test) * _many + opt[","];
+        const Parser key_datum = result_type<DictKeyValueExpr> <<= test + ":"_sep + test | "**"_p + expr;
+        const Parser dict_maker = dict_display_conv <<= converter(fold_to_key_datum_list_or_comprehension) <<=
+            (key_datum + (comp_for | (","_sep + key_datum) * _many + sep(opt[","])));
+        const Parser set_maker = testlist_comp;
+        // dictorsetmaker = (dict_maker | set_maker);
+        dictorsetmaker = (dict_maker);
+
+        // # The reason that keywords are test nodes instead of NAME is that using NAME
+        // # results in an ambiguity. ast.c makes sure it's a NAME.
+        // # "test '=' test" is really "keyword '=' test", but we have no such token.
+        // # These need to be in a single rule to avoid grammar that is ambiguous
+        // # to our LL(1) parser. Even though 'test' includes '*expr' in star_expr,
+        // # we explicitly match '*' here, too, to give it proper precedence.
+        // # Illegal combinations and orderings are blocked in ast.c:
+        // # multiple (test comp_for) arguments are blocked; keyword unpackings
+        // # that precede iterable unpackings are blocked; etc.
+        argument = ((converter(make_expr_or_comprehension) <<= test + opt[comp_for]) |
+                    (test + "="_p + test)
+                    // srared arg syntaxes are omitted.
+                    /* |
                  "**"_p + test |
                 "*"_p + test */
-    );
+        );
 
-    comp_iter = comp_for | comp_if;
-    comp_for = "for"_sep + exprlist + "in"_sep + or_test + opt[comp_iter];
-    comp_if = "if"_sep + test_nocond + opt[comp_iter];
+        comp_iter = comp_for | comp_if;
+        comp_for = "for"_sep + exprlist + "in"_sep + or_test + opt[comp_iter];
+        comp_if = "if"_sep + test_nocond + opt[comp_iter];
 
-    // # not used in grammar, but may appear in "node" passed from Parser to Compiler
-    encoding_decl = NAME;
+        // # not used in grammar, but may appear in "node" passed from Parser to Compiler
+        encoding_decl = NAME;
 
-    const Parser yield_arg = "from"_p + test | testlist;
-    yield_expr = "yield"_sep + opt[yield_arg];
+        const Parser yield_arg = "from"_p + test | testlist;
+        yield_expr = "yield"_sep + opt[yield_arg];
 
-    eval_input = testlist + sep(NEWLINE * _many) + sep(ENDMARKER);
-    return testlist;
+        eval_input = testlist + sep(NEWLINE * _many) + sep(ENDMARKER);
+    }
+};
+} // namespace Expr_
+
+using ExprGrammars_::ExprGrammars;
+using Expr = ExprGrammars;
+
+parser::ParserPlaceHolder<ast::Expr> make_python_eval_input_parser()
+{
+    grammar::Expr expr_grammars;
+    return expr_grammars.testlist;
 }
 } // namespace ljf::python::grammar
