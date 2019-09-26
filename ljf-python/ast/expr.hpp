@@ -23,17 +23,6 @@
 namespace ljf::python::ast
 {
 
-/// kind of
-///  1. (expr)
-///  2. ()
-struct ParenthFormExpr
-{
-    std::optional<Expr> expr_;
-    using is_expr_impl = void;
-    ParenthFormExpr() {}
-    ParenthFormExpr(Expr expr) : expr_(std::move(expr)) {}
-};
-
 struct UnaryExpr
 {
     using is_expr_impl = void;

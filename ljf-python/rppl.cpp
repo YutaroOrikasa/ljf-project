@@ -42,12 +42,6 @@ private:
         std::cout << "]";
     }
 
-    auto impl(const ParenthFormExpr &expr) const
-    {
-        std::cout << "ParenthFormExpr"
-                  << "\n";
-    }
-
     auto impl(const TupleExpr &expr) const
     {
         std::cout << "tuple(";
