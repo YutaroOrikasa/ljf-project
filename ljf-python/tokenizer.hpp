@@ -5,6 +5,9 @@
 #include <optional>
 #include <variant>
 #include <type_traits>
+#include <istream>
+#include <fstream>
+#include <sstream>
 
 #include "tokenizer/phase1.hpp"
 #include "Token.hpp"
@@ -410,4 +413,9 @@ private:
     //     }
     // }
 };
+
+using IStreamTokenStream = TokenStream<std::istream>;
+using FStreamTokenStream = TokenStream<std::fstream>;
+using SStreamTokenStream = TokenStream<std::stringstream>;
+
 } // namespace ljf::python
