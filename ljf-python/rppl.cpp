@@ -211,10 +211,10 @@ int main(int argc, const char **argv)
     // const auto program_ = make_python_grammer_parser();
     // (void)program_;
     // const auto expr = make_python_eval_input_parser();
-    ExprGrammars E;
+    ExprGrammars<IStreamTokenStream> E;
     const auto expr = E.exprlist;
     const auto program = expr + separator(newline);
-    TokenStream<std::istream> ts{std::cin};
+    IStreamTokenStream ts{std::cin};
 
     // int dummy = result_content_t<decltype(program), decltype(ts)>();
 

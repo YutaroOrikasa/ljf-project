@@ -218,11 +218,11 @@ namespace ExprGrammars_
 using namespace parser;
 using namespace ast;
 
-// template <class TokenStream>
+template <class TokenStream>
 struct ExprGrammars
 {
-    // template <typename T>
-    // using ParserPlaceHolder = parser::PlaceHolder<T, TokenStream>;
+    template <typename T>
+    using ParserPlaceHolder = parser::PlaceHolder<T, TokenStream>;
 #define INIT_PLACE_HOLDER(name) \
     name { #name }
 
@@ -378,9 +378,9 @@ struct ExprGrammars
 
 using ExprGrammars_::ExprGrammars;
 
-inline parser::ParserPlaceHolder<ast::Expr> make_python_eval_input_parser()
+inline parser::PlaceHolder<ast::Expr, IStreamTokenStream> make_python_eval_input_parser()
 {
-    ExprGrammars expr_grammars;
+    ExprGrammars<IStreamTokenStream> expr_grammars;
     return expr_grammars.testlist;
 }
 } // namespace ljf::python::grammar

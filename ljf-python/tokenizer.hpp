@@ -93,7 +93,7 @@ template <typename IStream>
 class TokenStream
 {
 private:
-    Phase1TokenStream<std::istream> stream_;
+    Phase1TokenStream<IStream> stream_;
     // std::optional<Token> last_token_;
     std::queue<Token> token_buffer_;
     std::size_t current_position_ = 0;
