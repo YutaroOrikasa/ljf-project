@@ -25,14 +25,14 @@ DEPENDENCY_FILES := $(SOURCE_FILES:%=$(BUILD_DIR)/%.d)
 _DEP_FLAGS := -MMD -MP
 override CXXFLAGS += -Wall -std=c++17 $(_DEP_FLAGS) $(INCLUDE_FLAGS)
 
-all: $(EXECUTABLE_FILES)
+all: $(EXECUTABLE_FILES) $(UNITTEST_EXECUTABLE)
 
 $(BUILD_DIR)/ljf-python/bin/%: $(BUILD_DIR)/ljf-python/%.cpp.o
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -fno-exceptions $< -o $@
 
 $(BUILD_DIR)/ljf-python/%.cpp.o: ljf-python/%.cpp
-	mkdir -p $(BUILD_DIR)/ljf-python
+	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c -fno-exceptions $< -o $@
 
 # $(BUILD_DIR)/ljf-python/rppl: \
