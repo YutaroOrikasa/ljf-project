@@ -8,6 +8,7 @@
 
 #include "grammar.hpp"
 #include "grammar/expr.hpp"
+#include "grammar/stmt.hpp"
 
 using namespace ljf::python;
 using namespace ljf::python::ast;
@@ -211,8 +212,8 @@ int main(int argc, const char **argv)
     // const auto program_ = make_python_grammer_parser();
     // (void)program_;
     // const auto expr = make_python_eval_input_parser();
-    ExprGrammars<IStreamTokenStream> E;
-    const auto expr = E.exprlist;
+    StmtGrammars<IStreamTokenStream> S;
+    const auto expr = S.exprlist;
     const auto program = expr + separator(newline);
     IStreamTokenStream ts{std::cin};
 

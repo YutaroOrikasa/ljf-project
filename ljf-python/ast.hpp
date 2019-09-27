@@ -13,6 +13,7 @@
 #include "Token.hpp"
 
 #include "ast/expr.hpp"
+#include "ast/stmt.hpp"
 
 namespace ljf::python::ast
 {
