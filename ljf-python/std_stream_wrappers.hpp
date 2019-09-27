@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 namespace ljf::python::detail
 {
@@ -58,6 +59,33 @@ public:
     bool eof()
     {
         return fstream_.eof();
+    }
+
+    template <typename Str>
+    void prompt(Str &&)
+    {
+        // do nothing
+    }
+};
+
+class StdStringStreamWrapper
+{
+    std::stringstream stream_;
+
+public:
+    /*implicit*/ StdStringStreamWrapper(std::stringstream &&fs) : stream_(std::move(fs)) {}
+    /*implicit*/ StdStringStreamWrapper(std::string s) : stream_(std::move(s)) {}
+
+    std::string getline()
+    {
+        std::string s;
+        std::getline(stream_, s);
+        return s;
+    }
+
+    bool eof()
+    {
+        return stream_.eof();
     }
 
     template <typename Str>

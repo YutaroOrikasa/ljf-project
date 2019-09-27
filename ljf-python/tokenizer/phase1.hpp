@@ -424,4 +424,13 @@ public:
     {
     }
 };
+
+template <>
+class Phase1TokenStream<std::stringstream> : public Phase1TokenStream<detail::StdStringStreamWrapper>
+{
+    using base_type = Phase1TokenStream<detail::StdStringStreamWrapper>;
+
+public:
+    using base_type::base_type;
+};
 } // namespace ljf::python
