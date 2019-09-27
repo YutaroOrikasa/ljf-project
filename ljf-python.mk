@@ -27,7 +27,7 @@ override CXXFLAGS += -Wall -std=c++17 $(_DEP_FLAGS) $(INCLUDE_FLAGS)
 
 all: $(EXECUTABLE_FILES)
 
-$(BUILD_DIR)/ljf-python/bin/%: $(BUILD_DIR)/ljf-python/%.o
+$(BUILD_DIR)/ljf-python/bin/%: $(BUILD_DIR)/ljf-python/%.cpp.o
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -fno-exceptions $< -o $@
 
