@@ -45,7 +45,7 @@ $(BUILD_DIR)/ljf-python/%.cpp.o: ljf-python/%.cpp
 # 										ljf-python/rppl.cpp -o $@
 
 $(BUILD_DIR)/ljf-python/bin/rppl: $(BUILD_DIR)/ljf-python/rppl.cpp.o
-	mkdir -p $(BUILD_DIR)/ljf-python
+	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -fno-exceptions $(BUILD_DIR)/ljf-python/rppl.cpp.o -o $@
 
 .PHONY: run-rppl
