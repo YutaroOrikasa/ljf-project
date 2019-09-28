@@ -48,6 +48,10 @@ $(BUILD_DIR)/ljf-python/bin/rppl: $(BUILD_DIR)/ljf-python/rppl.cpp.o
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -fno-exceptions $(BUILD_DIR)/ljf-python/rppl.cpp.o -o $@
 
+.PHONY: run-rtpl
+run-rtpl: $(BUILD_DIR)/ljf-python/bin/rtpl
+	$(BUILD_DIR)/ljf-python/bin/rtpl
+
 .PHONY: run-rppl
 run-rppl: $(BUILD_DIR)/ljf-python/bin/rppl
 	$(BUILD_DIR)/ljf-python/bin/rppl
