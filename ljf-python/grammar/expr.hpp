@@ -232,13 +232,13 @@ struct ExprGrammars
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(test_nocond);
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(lambdef);
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(lambdef_nocond);
-    // ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(or_test);
-    // ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(and_test);
+    ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(or_test);
+    ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(and_test);
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(not_test);
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(comparison);
     // ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(comp_op);
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(star_expr);
-    // ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(expr);
+    ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(expr);
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(xor_expr);
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(and_expr);
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(shift_expr);
@@ -256,7 +256,7 @@ struct ExprGrammars
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(exprlist);
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(testlist);
     ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(dictorsetmaker);
-    // ParserPlaceHolder<Expr> INIT_PLACE_HOLDER(arglist);
+    ParserPlaceHolder<ArgList> INIT_PLACE_HOLDER(arglist);
     ParserPlaceHolder<Argument> INIT_PLACE_HOLDER(argument);
     ParserPlaceHolder<CompIter> INIT_PLACE_HOLDER(comp_iter);
     ParserPlaceHolder<CompFor> INIT_PLACE_HOLDER(comp_for);
@@ -282,8 +282,8 @@ struct ExprGrammars
                                         + opt[","_sep + opt[parameter_list_starargs]] //
                                     | parameter_list_starargs);
 
-        const Parser and_test = converter(fold_left) <<= not_test + ("and"_p + not_test) * _many;
-        const Parser or_test = converter(fold_left) <<= and_test + ("or"_p + and_test) * _many;
+        and_test = converter(fold_left) <<= not_test + ("and"_p + not_test) * _many;
+        or_test = converter(fold_left) <<= and_test + ("or"_p + and_test) * _many;
         not_test = (result_type<UnaryExpr> <<= "not"_p + not_test) | comparison;
 
         test = (result_type<ConditionalExpr> <<= or_test + opt["if"_sep + or_test + "else"_sep + test]) | lambdef;
@@ -294,7 +294,7 @@ struct ExprGrammars
         lambdef = converter(to_lambda_dummy) <<= "lambda"_sep + opt[varargslist] + ":"_sep + test;
         lambdef_nocond = converter(to_lambda_dummy) <<= "lambda"_sep + opt[varargslist] + ":"_sep + test_nocond;
 
-        const Parser expr = converter(fold_left) <<= xor_expr + ("|"_p + xor_expr) * _many;
+        expr = converter(fold_left) <<= xor_expr + ("|"_p + xor_expr) * _many;
 
         auto combine_tokens_conv = converter(combine_tokens);
         // # <> isn't actually a valid comparison operator in Python. It's here for the
@@ -314,7 +314,7 @@ struct ExprGrammars
         factor = (result_type<UnaryExpr> <<= (result_type<Token> <<= "+"_p | "-"_p | "~") + factor) | power;
         power = converter(fold_left_opt) <<= atom_expr + opt["**"_p + factor];
 
-        const Parser arglist = converter(fold_left_to_vec) <<= argument + (","_sep + argument) * _many + sep(opt[","]);
+        arglist = converter(fold_left_to_vec) <<= argument + (","_sep + argument) * _many + sep(opt[","]);
         const Parser subscriptlist = converter(fold_left_to_vec) <<= subscript + (","_sep + subscript) * _many + sep(opt[","]);
         const Parser trailer = result_type<Trailer> <<=
             "("_sep + opt[arglist] + ")"_sep    //
