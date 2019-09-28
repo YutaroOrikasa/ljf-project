@@ -49,6 +49,7 @@ private:
         R"(|([+\-*/%&|~^@]=|(?:\*\*|//|<<|>>)=)"                       // DELIMITER
         R"_(|<=|>=|==|!=|\*\*|//|<<|>>|->|\.\.\.|[+\-*/%&|~^@,:.;]))_" // DELIMITER (cont.)
         R"(|([^[:space:]+\-*/%&|~^@<>=!,:.;(){}[\]$?`\n\\]+))"         // IDENTIFIER
+        R"(|(\S+))"                                                    // INVALID_TOKEN
     };
     struct sub_match_index
     {
@@ -80,6 +81,7 @@ private:
             NEWLINE,
             DELIMITER,
             IDENTIFIER,
+            INVALID_TOKEN,
         };
     };
 
@@ -298,6 +300,7 @@ private:
             case sub_match_index::DELIMITER:
                 return create_token<token_category::ANY_OTHER>(match_result);
 
+            case sub_match_index::INVALID_TOKEN:
             default:
                 return Token::create_invalid_token(match_result.str(),
                                                    get_current_source_location(),
