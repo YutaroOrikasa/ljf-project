@@ -24,32 +24,32 @@ private:
     IStream stream_;
     std::queue<Token> token_buffer_;
     std::regex re{
-        R"((^\n))"                                                     // EMPTY_LINE
-        R"(|(^[ \t]*\n))"                                              // WHITESPACE_LINE
-        R"(|(^[ \t]*))"                                                // WHITESPACE_AT_BIGGINING_OF_LINE
-        R"(|(def|class))"                                              // PYTHON_KEYWORD
-        ""                                                             //
-        R"(|((b|B)?(?:)"                                               // STRING_LITERAL, BYTES_LITERAL_PREFIX, (start (?:))
-        R"_("""((?:.|\n)*?)""")_"                                      // TRIPLE_DOUBLE_QUOTED_CONTENTS
-        R"_(|'''((?:.|\n)*?)''')_"                                     // TRIPLE_SINGLE_QUOTED_CONTENTS
-        R"_(|((?:"""|''').*\n))_"                                      // CONTINUOUS_TRIPLE_QUOTE
-        R"_(|"([^"\n]*)"|'([^'\n]*)')_"                                // DOUBLE_QUOTED_CONTENTS, SINGLE_QUOTED_CONTENTS
-        "))"                                                           // (end (?:)), (end STRING_LITERAL)
-        ""                                                             //
-        "|(0[bB](?:_?[0-1])+)"                                         // BIN_INTEGER_LITERAL
-        "|(0[oO](?:_?[0-7])+)"                                         // OCT_INTEGER_LITERAL
-        "|(0[xX](?:_?[0-9a-fA-F])+)"                                   // HEX_INTEGER_LITERAL
-        "|([1-9](?:_?[0-9])*|0+(?:_?0)*)"                              // DEC_INTEGER_LITERAL
-        ""                                                             //
-        R"(|([(\[{]))"                                                 // OPENING_BRACKET
-        R"(|([)\]}]))"                                                 // CLOSING_BRACKET
-        R"(|(\\\n))"                                                   // EXPLICIT_LINE_CONTINUATION
-        R"(|(#.*\n))"                                                  // COMMENT
-        R"(|(\n))"                                                     // NEWLINE
-        R"(|([+\-*/%&|~^@]=|(?:\*\*|//|<<|>>)=)"                       // DELIMITER
-        R"_(|<=|>=|==|!=|\*\*|//|<<|>>|->|\.\.\.|[+\-*/%&|~^@,:.;]))_" // DELIMITER (cont.)
-        R"(|([^[:space:]+\-*/%&|~^@<>=!,:.;(){}[\]$?`\n\\]+))"         // IDENTIFIER
-        R"(|(\S+))"                                                    // INVALID_TOKEN
+        R"((^\n))"                                                      // EMPTY_LINE
+        R"(|(^[ \t]*\n))"                                               // WHITESPACE_LINE
+        R"(|(^[ \t]*))"                                                 // WHITESPACE_AT_BIGGINING_OF_LINE
+        R"(|(def|class))"                                               // PYTHON_KEYWORD
+        ""                                                              //
+        R"(|((b|B)?(?:)"                                                // STRING_LITERAL, BYTES_LITERAL_PREFIX, (start (?:))
+        R"_("""((?:.|\n)*?)""")_"                                       // TRIPLE_DOUBLE_QUOTED_CONTENTS
+        R"_(|'''((?:.|\n)*?)''')_"                                      // TRIPLE_SINGLE_QUOTED_CONTENTS
+        R"_(|((?:"""|''').*\n))_"                                       // CONTINUOUS_TRIPLE_QUOTE
+        R"_(|"([^"\n]*)"|'([^'\n]*)')_"                                 // DOUBLE_QUOTED_CONTENTS, SINGLE_QUOTED_CONTENTS
+        "))"                                                            // (end (?:)), (end STRING_LITERAL)
+        ""                                                              //
+        "|(0[bB](?:_?[0-1])+)"                                          // BIN_INTEGER_LITERAL
+        "|(0[oO](?:_?[0-7])+)"                                          // OCT_INTEGER_LITERAL
+        "|(0[xX](?:_?[0-9a-fA-F])+)"                                    // HEX_INTEGER_LITERAL
+        "|([1-9](?:_?[0-9])*|0+(?:_?0)*)"                               // DEC_INTEGER_LITERAL
+        ""                                                              //
+        R"(|([(\[{]))"                                                  // OPENING_BRACKET
+        R"(|([)\]}]))"                                                  // CLOSING_BRACKET
+        R"(|(\\\n))"                                                    // EXPLICIT_LINE_CONTINUATION
+        R"(|(#.*\n))"                                                   // COMMENT
+        R"(|(\n))"                                                      // NEWLINE
+        R"(|([+\-*/%&|~^@]=|(?:\*\*|//|<<|>>)=)"                        // DELIMITER
+        R"_(|<=|>=|==|!=|\*\*|//|<<|>>|->|\.\.\.|[+\-*/%&|~^@,=:.;]))_" // DELIMITER (cont.)
+        R"(|([^[:space:]+\-*/%&|~^@<>=!,:.;(){}[\]$?`\n\\]+))"          // IDENTIFIER
+        R"(|(\S+))"                                                     // INVALID_TOKEN
     };
     struct sub_match_index
     {
