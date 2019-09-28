@@ -186,24 +186,32 @@ struct SliceExpr
 };
 
 struct ExprVariant : std::variant<
+                         // literals
                          StringLiteralExpr,
                          IntegerLiteralExpr,
+                         //
                          IdentifierExpr,
+                         BuiltinObjectExpr,
+                         // enclosures
                          TupleExpr,
                          ListExpr,
                          DictExpr,
                          SetExpr,
+                         // unary and binary
                          UnaryExpr,
                          BinaryExpr,
+                         // cond
                          ConditionalExpr,
-                         LambdaExpr,
-                         StarExpr,
+                         // 
                          AtomExpr,
-                         YieldExpr,
+                         // comprehensions
                          GeneratorExpr,
                          ListComprehensionExpr,
                          DictComprehensionExpr,
-                         BuiltinObjectExpr,
+                         // etc
+                         LambdaExpr,
+                         StarExpr,
+                         YieldExpr,
                          SliceExpr,
                          DictKeyValueExpr>
 {
