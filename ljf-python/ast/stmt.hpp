@@ -63,8 +63,22 @@ struct ImportStmt
     using is_stmt_impl = void;
 };
 
+struct ExprStmt
+{
+    Expr expr_;
+
+    using is_stmt_impl = void;
+    explicit ExprStmt(Expr expr) : expr_(std::move(expr)) {}
+    ExprStmt(const ExprStmt&) = default;
+    ExprStmt(ExprStmt&&) = default;
+    ExprStmt& operator=(const ExprStmt&) = default;
+    ExprStmt& operator=(ExprStmt&&) = default;
+};
+
 struct AssignStmt
 {
+    std::vector<Expr> lhs_list_;
+    Expr rhs_;
     using is_stmt_impl = void;
 };
 
@@ -73,6 +87,7 @@ struct StmtVariant : std::variant<IfStmt,
                                   DefStmt,
                                   ClassStmt,
                                   ImportStmt,
+                                  ExprStmt,
                                   AssignStmt>
 {
     using variant::variant;
