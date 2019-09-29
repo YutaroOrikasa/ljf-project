@@ -44,9 +44,9 @@ $(BUILD_DIR)/ljf-python/%.cpp.o: ljf-python/%.cpp
 # 										$(BUILD_DIR)/ljf-python/grammar/expr.o \
 # 										ljf-python/rppl.cpp -o $@
 
-$(BUILD_DIR)/ljf-python/bin/rppl: $(BUILD_DIR)/ljf-python/rppl.cpp.o
+$(BUILD_DIR)/ljf-python/bin/rppl: $(BUILD_DIR)/ljf-python/rppl.cpp.o $(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o
 	mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -fno-exceptions $(BUILD_DIR)/ljf-python/rppl.cpp.o -o $@
+	$(CXX) $(CXXFLAGS) -fno-exceptions $(BUILD_DIR)/ljf-python/rppl.cpp.o $(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o -o $@
 
 .PHONY: run-rtpl
 run-rtpl: $(BUILD_DIR)/ljf-python/bin/rtpl
@@ -60,10 +60,12 @@ $(BUILD_DIR)/ljf-python/unittests/%.cpp.o: ljf-python/unittests/%.cpp
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c -fno-exceptions $< -o $@
 
-$(UNITTEST_EXECUTABLE): $(UNITTEST_OBJECT_FILES)
+$(UNITTEST_EXECUTABLE): $(UNITTEST_OBJECT_FILES) $(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o
 	mkdir -p $(@D)
 	$(MAKE) $(BUILD_DIR)/libgtest.a
-	$(CXX) $(CXXFLAGS) -fno-exceptions $(BUILD_DIR)/libgtest.a $(UNITTEST_OBJECT_FILES) -o $@
+	$(CXX) $(CXXFLAGS) -fno-exceptions $(BUILD_DIR)/libgtest.a \
+										$(UNITTEST_OBJECT_FILES) \
+										$(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o -o $@
 
 .PHONY: run-unittest
 run-unittest: $(UNITTEST_EXECUTABLE)
