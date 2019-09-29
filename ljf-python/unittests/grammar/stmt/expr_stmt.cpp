@@ -34,3 +34,11 @@ TEST(ExprStmt, TargetListAssign)
     ASSERT_TRUE(result) << result.error();
 
 }
+
+TEST(ExprStmt, ParenthTargetListAssign)
+{
+    ASSERT_TRUE(sg.expr_stmt.has_parser());
+    auto result = parse_until_end(sg.expr_stmt, "(a, b, c) = (1, 2, 3)");
+    ASSERT_TRUE(result) << result.error();
+
+}
