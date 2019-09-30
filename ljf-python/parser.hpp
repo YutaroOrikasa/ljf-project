@@ -71,17 +71,6 @@ auto to_empty_optional_result(Result<T> &&result)
     return Result<std::optional<T>>(std::optional<T>());
 }
 
-inline constexpr auto option_str = [](auto str) {
-    return Parser(
-        [=](auto &&token_stream) {
-            if (token_stream.peek().str() == str)
-            {
-                return make_optional_result(token_stream.read());
-            }
-            return make_optional_result<decltype(token_stream.read())>();
-        });
-};
-
 inline constexpr auto option = [](auto parser) {
     return Parser(
         [=](auto &&token_stream) {
@@ -128,6 +117,12 @@ inline constexpr auto string = [](auto &&str) {
     },
                    "expected ", str, " but not given");
 };
+
+
+inline constexpr auto option_str = [](auto&& str) {
+    return option(string(std::forward<decltype(str)>(str)));
+};
+
 
 inline constexpr auto separator = [](auto &&parser) {
     return result_type<Separator> <<= parser;
