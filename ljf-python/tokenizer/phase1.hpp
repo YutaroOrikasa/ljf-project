@@ -201,7 +201,7 @@ private:
 
                 std::cout << "sub_match_index=" << get_first_sub_match_index(match_result) //
                           << ", match_result.str()=" << match_result.str()                 //
-                          << ", cat=" << (int)match_result_to_token_category(match_result) << "\n";
+                          << ", cat=" << match_result_to_token_category(match_result) << "\n";
                 if (match_result[sub_match_index::EMPTY_LINE].matched)
                 {
                     auto token = create_token_from_match_result(match_result);

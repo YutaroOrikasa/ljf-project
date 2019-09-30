@@ -63,6 +63,13 @@ inline constexpr const char *get_token_category_name(token_category cat)
     return "";
 }
 
+template <typename Out>
+inline Out& operator<<(Out& out, token_category cat)
+{
+    out << get_token_category_name(cat);
+    return out;
+}
+
 inline std::string operator+(const std::string &s, token_category cat)
 {
     return s + get_token_category_name(cat);
