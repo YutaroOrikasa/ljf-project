@@ -87,9 +87,6 @@ inline constexpr auto option = [](auto parser) {
         [=](auto &&token_stream) {
             auto initial_pos = token_stream.current_position();
             auto result = parser(token_stream);
-            std::cerr << "initial_pos        = " << initial_pos << "\n";
-            std::cerr << "current_position() = " << token_stream.current_position() << "\n";
-            std::cerr << "result.failed() = " << result.failed() << "\n";
             // if result.failed() && token_stream.current_position() == initial_pos
             // it is not error because this is the part of LL1 parser.
             if (result.failed() && token_stream.current_position() == initial_pos)
