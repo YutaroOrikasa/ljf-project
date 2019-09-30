@@ -133,7 +133,7 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
         //                                       import_stmt | global_stmt | nonlocal_stmt | assert_stmt | expr_stmt);
 
         // Simplified expr_stmt definition
-        expr_stmt = converter(fold_assign) <<= E::expr + ("="_sep + E::expr) * _many;
+        expr_stmt = converter(fold_assign) <<= E::exprlist + ("="_sep + E::expr) * _many;
         // expr_stmt = testlist_star_expr + (augassign + (E::yield_expr | E::testlist) |
         //                                   ("="_p + (E::yield_expr | testlist_star_expr)) * _many);
         // augassign = ("+="_p | "-="_p | "*="_p | "@="_p | "/="_p | "%="_p | "&="_p | "|="_p | "^="_p |
