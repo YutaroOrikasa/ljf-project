@@ -769,7 +769,7 @@ struct BraceInitArgs
     template <typename T>
     /*implicit*/ operator T() &&
     {
-        return std::move(std::apply(make_from_variant<BraceInitialized<T>>, arg_tuple).value);
+        return std::move(make_from_variant<BraceInitialized<T>>(arg_tuple).value);
     }
 };
 
