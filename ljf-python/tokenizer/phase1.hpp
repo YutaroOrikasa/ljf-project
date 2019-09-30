@@ -212,7 +212,7 @@ private:
                 if (match_result[sub_match_index::WHITESPACE_LINE].matched)
                 {
                     // ignore it
-                    continue;
+                    break;
                 }
                 if (match_result[sub_match_index::EXPLICIT_LINE_CONTINUATION].matched)
                 {
@@ -223,12 +223,14 @@ private:
                 if (match_result[sub_match_index::CONTINUOUS_TRIPLE_QUOTE].matched)
                 {
                     has_continuous_line = true;
-                    continue;
+                    break;
                 }
 
                 auto token = create_token_from_match_result(match_result);
                 tokens.push_back(token);
             } // end for
+
+            assert(it == end || ++it == end); // ++it == end when after break for loop
 
             if (has_continuous_line)
             {
