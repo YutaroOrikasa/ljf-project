@@ -168,7 +168,8 @@ constexpr auto token(token_category cat)
 {
     return read_if([=](const Token &token) {
         return token.category() == cat;
-    }, "expected ", cat, " but not given");
+    },
+                   "expected ", cat, " but not given");
 };
 
 inline constexpr Parser eof = token(token_category::EOF_TOKEN);
