@@ -223,6 +223,8 @@ private:
                 if (match_result[sub_match_index::CONTINUOUS_TRIPLE_QUOTE].matched)
                 {
                     has_continuous_line = true;
+                    enqueue_all(std::move(tokens));
+                    lines = lines.substr(match_result.position());
                     break;
                 }
 
