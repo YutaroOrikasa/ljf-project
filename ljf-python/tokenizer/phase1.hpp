@@ -85,6 +85,7 @@ private:
         };
     };
 
+    std::string current_line_;
     const std::string source_file_name_ = "<input>";
     // row and col of current input position.
     // index is start from 0.
@@ -180,6 +181,7 @@ private:
 
             {
                 std::string s = stream_.getline();
+                current_line_ = s;
                 if (s.empty() && stream_.eof())
                 {
                     enqueue(create_eof_token());
