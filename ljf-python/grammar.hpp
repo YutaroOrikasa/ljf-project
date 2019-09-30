@@ -104,6 +104,27 @@ inline auto prompter(const std::string &str)
 namespace ljf::python::grammar
 {
 
+namespace detail
+{
+
+static constexpr auto fold_left_to_vec = [](auto &&first, auto &&vec) {
+    using T = std::decay_t<decltype(first)>;
+    std::vector<T> vec_ret;
+    vec_ret.reserve(1 + vec.size());
+
+    vec_ret.push_back(first);
+    // This forward is exists for move elements.
+    // If vec is vector<T>& , copy and move.
+    // If vec is vector<T>&&, move and move.
+    auto vec2 = std::forward<decltype(vec)>(vec);
+    for (auto &&elem : vec2)
+    {
+        vec_ret.push_back(std::move(elem));
+    }
+    return vec_ret;
+};
+} // namespace detail
+
 namespace impl
 {
 using namespace parser;
@@ -123,7 +144,7 @@ struct Opt
     }
 };
 
-template <size_t>
+template <size_t, bool unify = false>
 struct Many
 {
 };
@@ -135,15 +156,22 @@ constexpr auto operator*(Parser &&p, Many<0>)
 }
 
 template <typename Parser>
-constexpr auto operator*(Parser &&p, Many<1>)
+constexpr auto operator*(Parser &&p, Many<1, false>)
 {
     return p + many(p);
+}
+
+template <typename Parser>
+constexpr auto operator*(Parser &&p, Many<1, true>)
+{
+    return converter(detail::fold_left_to_vec) <<= p + many(p);
 }
 
 inline constexpr Opt opt;
 
 inline constexpr Many<0> _many;
 inline constexpr Many<1> _many1;
+inline constexpr Many<1, true> _many1_unify;
 
 static constexpr auto sep = [](auto &&parser) {
     return separator(std::forward<decltype(parser)>(parser));

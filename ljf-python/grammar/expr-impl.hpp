@@ -33,23 +33,6 @@ static constexpr auto fold_left_opt = [](auto &&first, auto &&opt) -> Expr {
     return e0;
 };
 
-static constexpr auto fold_left_to_vec = [](auto &&first, auto &&vec) {
-    using T = std::decay_t<decltype(first)>;
-    std::vector<T> vec_ret;
-    vec_ret.reserve(1 + vec.size());
-
-    vec_ret.push_back(first);
-    // This forward is exists for move elements.
-    // If vec is vector<T>& , copy and move.
-    // If vec is vector<T>&&, move and move.
-    auto vec2 = std::forward<decltype(vec)>(vec);
-    for (auto &&elem : vec2)
-    {
-        vec_ret.push_back(std::move(elem));
-    }
-    return vec_ret;
-};
-
 template <typename Comp = Comprehension, typename T>
 static std::variant<std::vector<T>, Comp>
 fold_to_vector_or_comprehension(T t,
