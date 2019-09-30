@@ -92,7 +92,7 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
     ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(with_stmt);
     ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(with_item);
     ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(except_clause);
-    ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(suite);
+    ParserPlaceHolder<MultiStmt> INIT_PLACE_HOLDER(suite);
     ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(classdef);
 
     StmtGrammars()
@@ -121,12 +121,18 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
         // tfpdef = NAME + opt[":"_p + E::test];
         // varargslist = (vfpdef + opt["="_p + E::test] + (","_p + vfpdef + opt["="_p + E::test]) * _many + opt[","_p + opt["*"_p + opt[vfpdef] + (","_p + vfpdef + opt["="_p + E::test]) * _many + opt[","_p + "**"_p + vfpdef] | "**"_p + vfpdef]] | "*"_p + opt[vfpdef] + (","_p + vfpdef + opt["="_p + E::test]) * _many + opt[","_p + "**"_p + vfpdef] | "**"_p + vfpdef);
         // vfpdef = NAME;
-        // stmt = simple_stmt | compound_stmt;
+        stmt = simple_stmt | compound_stmt;
+
+        // Simplified small_stmt definition
+        simple_stmt = small_stmt + sep(NEWLINE);
         // simple_stmt = printer("simple_stmt") + small_stmt + (";"_p + small_stmt) * _many + opt[";"] + NEWLINE;
+
+        // Simplified small_stmt definition
+        small_stmt = expr_stmt;
         // small_stmt = printer("small_stmt") + (del_stmt | pass_stmt | flow_stmt |
         //                                       import_stmt | global_stmt | nonlocal_stmt | assert_stmt | expr_stmt);
 
-        // simplified expr_stmt definition
+        // Simplified expr_stmt definition
         expr_stmt = converter(fold_assign) <<= E::expr + ("="_sep + E::expr) * _many;
         // expr_stmt = testlist_star_expr + (augassign + (E::yield_expr | E::testlist) |
         //                                   ("="_p + (E::yield_expr | testlist_star_expr)) * _many);
@@ -154,9 +160,13 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
         // nonlocal_stmt = "nonlocal"_p + NAME + (","_p + NAME) * _many;
         // assert_stmt = "assert"_p + E::test + opt[","_p + E::test];
 
+        // Simplified expr_stmt definition
+        compound_stmt = if_stmt;
         // compound_stmt = printer("compound_stmt") + if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated | async_stmt;
         // async_stmt = "async"_p + (funcdef | with_stmt | for_stmt);
-        // if_stmt = "if"_p + E::test + ":"_p + suite + ("elif"_p + E::test + ":"_p + suite) * _many + opt["else"_p + ":"_p + suite];
+        if_stmt = result_type<IfStmt> <<= brace_init <<= "if"_sep + printer("IF:: ") + E::test + ":"_sep + suite +
+                                                         (result_type<ast::Elif> <<= brace_init <<= "elif"_sep + printer("ELIF:: ") + E::test + ":"_sep + suite) * _many +
+                                                         opt[printer("ELIF?:: ") + "else"_sep + ":"_sep + suite];
         // while_stmt = "while"_p + E::test + ":"_p + suite + opt["else"_p + ":"_p + suite];
         // for_stmt = "for"_p + E::exprlist + "in"_p + E::testlist + ":"_p + suite + opt["else"_p + ":"_p + suite];
         // try_stmt = ("try"_p + ":"_p + suite + ((except_clause + ":"_p + suite) * _many1 + opt["else"_p + ":"_p + suite] + opt["finally"_p + ":"_p + suite] | "finally"_p + ":"_p + suite));
@@ -164,7 +174,11 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
         // with_item = E::test + opt["as"_p + E::expr];
         // // # NB compile.c makes sure that the default except clause is last
         // except_clause = "except"_p + opt[E::test + opt["as"_p + NAME]];
-        // suite = simple_stmt | NEWLINE + (prompter("(please indent)> ") + INDENT) + (stmt + prompter("(in indent)> ")) * _many1 + DEDENT + printer("<DEDENT>");
+
+        suite = simple_stmt | sep(NEWLINE) + prompter("(please indent)> ") +
+                                  sep(INDENT) +
+                                  (stmt + prompter("(in indent)> ")) * _many1_unify +
+                                  sep(DEDENT);
 
         // classdef = "class"_p + NAME + opt["("_p + opt[E::arglist] + ")"] + ":"_p + suite;
     }

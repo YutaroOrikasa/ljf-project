@@ -18,11 +18,31 @@ namespace ljf::python::ast
 
 using StmtList = std::vector<Stmt>;
 
+struct MultiStmt
+{
+    StmtList stmt_list_;
+    using is_stmt_impl = void;
+    explicit MultiStmt(Stmt s) : stmt_list_{std::move(s)} {}
+    explicit MultiStmt(StmtList s) : stmt_list_(std::move(s)) {}
+    MultiStmt() = default;
+    MultiStmt(const MultiStmt &) = default;
+    MultiStmt(MultiStmt &&) = default;
+    MultiStmt &operator=(const MultiStmt &) = default;
+    MultiStmt &operator=(MultiStmt &&) = default;
+};
+
+struct Elif
+{
+    Expr cond_;
+    MultiStmt then_;
+};
+
 struct IfStmt
 {
     Expr cond_;
-    StmtList if_;
-    std::optional<StmtList> else_;
+    MultiStmt then_;
+    std::vector<Elif> elif_;
+    std::optional<MultiStmt> else_;
 
     using is_stmt_impl = void;
 };
@@ -69,10 +89,10 @@ struct ExprStmt
 
     using is_stmt_impl = void;
     explicit ExprStmt(Expr expr) : expr_(std::move(expr)) {}
-    ExprStmt(const ExprStmt&) = default;
-    ExprStmt(ExprStmt&&) = default;
-    ExprStmt& operator=(const ExprStmt&) = default;
-    ExprStmt& operator=(ExprStmt&&) = default;
+    ExprStmt(const ExprStmt &) = default;
+    ExprStmt(ExprStmt &&) = default;
+    ExprStmt &operator=(const ExprStmt &) = default;
+    ExprStmt &operator=(ExprStmt &&) = default;
 };
 
 struct AssignStmt
@@ -88,7 +108,8 @@ struct StmtVariant : std::variant<IfStmt,
                                   ClassStmt,
                                   ImportStmt,
                                   ExprStmt,
-                                  AssignStmt>
+                                  AssignStmt,
+                                  MultiStmt>
 {
     using variant::variant;
 };
