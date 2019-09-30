@@ -5,7 +5,7 @@
 #include "tokenizer.hpp"
 #include "parser-combinator.hpp"
 
-#include "ast.hpp"
+#include "ast/expr.hpp"
 
 // TODO
 // - add binary +-*/ parser
