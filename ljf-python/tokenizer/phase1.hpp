@@ -224,7 +224,8 @@ private:
                 {
                     has_continuous_line = true;
                     enqueue_all(std::move(tokens));
-                    lines = lines.substr(match_result.position());
+                    auto triple_quote_start_pos = match_result.position();
+                    lines = lines.substr(triple_quote_start_pos);
                     break;
                 }
 
