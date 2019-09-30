@@ -42,3 +42,11 @@ TEST(ExprStmt, ParenthTargetListAssign)
     ASSERT_TRUE(result) << result.error();
 
 }
+
+TEST(ExprStmt, InvalidStmtAssignToKeyword)
+{
+    ASSERT_TRUE(sg.expr_stmt.has_parser());
+    auto result = parse_until_end(sg.expr_stmt, "if = 0");
+    ASSERT_FALSE(result);
+
+}
