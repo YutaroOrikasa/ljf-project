@@ -208,10 +208,6 @@ static constexpr auto combine_tokens = [](Token token1, Token token2) -> Token {
     return Token::create_token<token_category::ANY_OTHER>(combined_str, token1.source_location());
 };
 
-static constexpr auto sep = [](auto &&parser) {
-    return separator(std::forward<decltype(parser)>(parser));
-};
-
 } // namespace detail
 
 

@@ -145,6 +145,9 @@ inline constexpr Opt opt;
 inline constexpr Many<0> _many;
 inline constexpr Many<1> _many1;
 
+static constexpr auto sep = [](auto &&parser) {
+    return separator(std::forward<decltype(parser)>(parser));
+};
 } // namespace impl
 
 const parser::Parser NEWLINE = parser::newline;
