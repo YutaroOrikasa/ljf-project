@@ -230,13 +230,16 @@ private:
                 tokens.push_back(token);
             } // end for
 
-            assert(it == end || ++it == end); // ++it == end when after break for loop
-
             if (has_continuous_line)
             {
+                // ++it is still not end
+
                 // continue while(true) until raw string closing quote (corespondind """ or ''') found
                 continue;
             }
+
+            assert(it == end || ++it == end); // ++it == end when after break for loop
+
             if (tokens.empty())
             {
                 // continue while(true) until get non empty line
