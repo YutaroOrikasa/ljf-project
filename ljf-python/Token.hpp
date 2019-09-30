@@ -29,6 +29,45 @@ enum class token_category
     INVALID, // representing tokenizeing error
 };
 
+inline constexpr const char *get_token_category_name(token_category cat)
+{
+    switch (cat)
+    {
+    case token_category::EOF_TOKEN:
+        return "EOF_TOKEN";
+    case token_category::WHITESPACE_AT_BIGGINING_OF_LINE:
+        return "WHITESPACE_AT_BIGGINING_OF_LINE";
+    case token_category::INDENT:
+        return "INDENT";
+    case token_category::DEDENT:
+        return "DEDENT";
+    case token_category::NEWLINE:
+        return "NEWLINE";
+    case token_category::OPENING_BRACKET:
+        return "OPENING_BRACKET";
+    case token_category::CLOSING_BRACKET:
+        return "CLOSING_BRACKET";
+    case token_category::IDENTIFIER:
+        return "IDENTIFIER";
+    case token_category::ANY_OTHER:
+        return "ANY_OTHER";
+
+    case token_category::STRING_LITERAL:
+        return "STRING_LITERAL";
+    case token_category::INTEGER_LITERAL:
+        return "INTEGER_LITERAL";
+    case token_category::INVALID:
+        return "INVALID"; 
+    }
+    assert(false && "never come here");
+    return "";
+}
+
+inline std::string operator+(const std::string &s, token_category cat)
+{
+    return s + get_token_category_name(cat);
+}
+
 class Token
 {
 private:

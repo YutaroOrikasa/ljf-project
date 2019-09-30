@@ -201,9 +201,15 @@ private:
 
 public:
     // token: The token that caused parsing error.
-    Error(const Token &token, const std::string &&msg)
+    Error(const Token &token, const std::string &msg)
         : token_(token),
           msg_(msg) {}
+    
+    // token: The token that caused parsing error.
+    template <typename...Msgs>
+    Error(const Token &token, const std::string &msg, Msgs&&...msgs)
+        : token_(token),
+          msg_((msg + ... + msgs)) {}
 
     // token: The token that caused parsing error.
     explicit Error(const Token &token) : Error(token, ""){};

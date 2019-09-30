@@ -87,6 +87,9 @@ inline constexpr auto option = [](auto parser) {
         [=](auto &&token_stream) {
             auto initial_pos = token_stream.current_position();
             auto result = parser(token_stream);
+            std::cerr << "initial_pos        = " << initial_pos << "\n";
+            std::cerr << "current_position() = " << token_stream.current_position() << "\n";
+            std::cerr << "result.failed() = " << result.failed() << "\n";
             // if result.failed() && token_stream.current_position() == initial_pos
             // it is not error because this is the part of LL1 parser.
             if (result.failed() && token_stream.current_position() == initial_pos)
@@ -107,7 +110,7 @@ inline constexpr auto read_if = [](auto &&pred, auto &&... error_args) {
             }
 
             return make_error_result<result_content_type>(token_stream.peek(),
-                                                          std::forward<decltype(error_args)>(error_args)...);
+                                                          error_args...);
         });
 };
 
@@ -125,7 +128,8 @@ inline constexpr auto read_if = [](auto &&pred, auto &&... error_args) {
 inline constexpr auto string = [](auto &&str) {
     return read_if([=](const Token &token) {
         return token.str() == str;
-    });
+    },
+                   "expected ", str, " but not given");
 };
 
 inline constexpr auto separator = [](auto &&parser) {
@@ -167,7 +171,7 @@ constexpr auto token(token_category cat)
 {
     return read_if([=](const Token &token) {
         return token.category() == cat;
-    });
+    }, "expected ", cat, " but not given");
 };
 
 inline constexpr Parser eof = token(token_category::EOF_TOKEN);
