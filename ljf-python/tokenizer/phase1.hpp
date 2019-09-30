@@ -228,7 +228,8 @@ private:
 
                 auto token = create_token_from_match_result(match_result);
                 tokens.push_back(token);
-            }
+            } // end for
+
             if (has_continuous_line)
             {
                 // continue while(true) until raw string closing quote (corespondind """ or ''') found
@@ -245,7 +246,7 @@ private:
             enqueue_all(std::move(tokens));
             // break while(true) loop
             return;
-        }
+        } // end while
     }
 
     Token create_token_from_match_result(const std::smatch &match_result)
