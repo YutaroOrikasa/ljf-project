@@ -45,7 +45,7 @@ public:
           row_(row + 1),
           col_(col + 1) {}
 
-    const std::string &source_file_name() const noexcept
+    const std::string &file_name() const noexcept
     {
         return source_file_name_;
     }
@@ -70,7 +70,7 @@ public:
     template <typename Out>
     friend Out &operator<<(Out &out, const SourceLocation &loc)
     {
-        return out << loc.source_file_name() << ":" << loc.row() << ":" << loc.column();
+        return out << loc.file_name() << ":" << loc.row() << ":" << loc.column();
     }
 };
 } // namespace ljf::python
