@@ -366,7 +366,8 @@ private:
     static size_t get_first_sub_match_index(const std::smatch &match_result)
     {
         assert(match_result[0].matched);
-        // not i = 0, match_result[0] is not a sub match.
+        // Initial value of `i' is 1, not 0
+        // because match_result[0] is an entire match, not a sub match.
         for (size_t i = 1; i < match_result.size(); ++i)
         {
             if (match_result[i].matched)
