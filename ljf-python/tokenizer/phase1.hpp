@@ -206,9 +206,6 @@ private:
             {
                 auto &match_result = *it;
 
-                std::cout << "sub_match_index=" << get_first_sub_match_index(match_result) //
-                          << ", match_result.str()=" << match_result.str()                 //
-                          << ", cat=" << match_result_to_token_category(match_result) << "\n";
                 if (match_result[sub_match_index::EMPTY_LINE].matched)
                 {
                     auto token = create_token_from_match_result(match_result, current_line_head_pos);
@@ -365,32 +362,6 @@ private:
         return match_result[I].matched;
     }
 
-    static token_category match_result_to_token_category(const std::smatch &match_result)
-    {
-        auto index = get_first_sub_match_index(match_result);
-        assert(index != 0);
-        switch (index)
-        {
-        case sub_match_index::WHITESPACE_AT_BIGGINING_OF_LINE:
-            return token_category::WHITESPACE_AT_BIGGINING_OF_LINE;
-
-        case sub_match_index::COMMENT:
-        case sub_match_index::NEWLINE:
-            return token_category::NEWLINE;
-
-        case sub_match_index::OPENING_BRACKET:
-            return token_category::OPENING_BRACKET;
-
-        case sub_match_index::CLOSING_BRACKET:
-            return token_category::CLOSING_BRACKET;
-
-        case sub_match_index::STRING_LITERAL:
-            return token_category::STRING_LITERAL;
-
-        default:
-            return token_category::INVALID;
-        }
-    }
 
     static size_t get_first_sub_match_index(const std::smatch &match_result)
     {
