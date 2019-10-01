@@ -93,7 +93,7 @@ private:
     // For example, do getline() that lineno is 1, row_++,
     // now row_ == 1 and then parse line that lineno is 1.
     size_t row_ = 0;
-    size_t col_ = 1;
+    // There is not col_ because column is derived from smatch.position().
 
 public:
     template <typename S>
@@ -182,6 +182,8 @@ private:
                 prompt("... ");
             }
 
+            size_t current_line_head_pos = lines.size();
+
             {
                 std::string s = stream_.getline();
                 current_line_ = s;
@@ -209,7 +211,7 @@ private:
                           << ", cat=" << match_result_to_token_category(match_result) << "\n";
                 if (match_result[sub_match_index::EMPTY_LINE].matched)
                 {
-                    auto token = create_token_from_match_result(match_result);
+                    auto token = create_token_from_match_result(match_result, current_line_head_pos);
                     assert(token.is_newline());
                     tokens.push_back(token);
                     continue;
@@ -234,7 +236,7 @@ private:
                     break;
                 }
 
-                auto token = create_token_from_match_result(match_result);
+                auto token = create_token_from_match_result(match_result, current_line_head_pos);
                 tokens.push_back(token);
             } // end for
 
@@ -262,18 +264,19 @@ private:
         } // end while
     }
 
-    Token create_token_from_match_result(const std::smatch &match_result)
+    Token create_token_from_match_result(const std::smatch &match_result, size_t current_line_head_pos)
     {
 
         if (has_sub_match<sub_match_index::STRING_LITERAL>(match_result))
         {
             auto prefix = match_result[sub_match_index::BYTES_LITERAL_PREFIX].str();
             auto contents = get_string_literal_contents(match_result);
+            auto colmun_of_last_char = match_result.position() - current_line_head_pos;
             return Token::create_string_literal_token(
                 match_result.str(),
                 prefix,
                 contents,
-                get_current_source_location());
+                get_current_source_location(colmun_of_last_char));
         }
 
         {
@@ -317,7 +320,7 @@ private:
             case sub_match_index::INVALID_TOKEN:
             default:
                 return Token::create_invalid_token(match_result.str(),
-                                                   get_current_source_location(),
+                                                   make_current_source_location(match_result),
                                                    "invalid token (phase 1 lexer)");
             }
         }
@@ -326,12 +329,12 @@ private:
     template <token_category C>
     Token create_token(const std::smatch &match_result) const
     {
-        return Token::create_token<C>(match_result.str(), get_current_source_location());
+        return Token::create_token<C>(match_result.str(), make_current_source_location(match_result));
     }
 
     Token create_integer_literal_token(size_t radix, const std::smatch &match_result) const
     {
-        return Token::create_integer_literal_token(radix, match_result.str(), get_current_source_location());
+        return Token::create_integer_literal_token(radix, match_result.str(), make_current_source_location(match_result));
     }
 
     static std::string get_string_literal_contents(const std::smatch &match_result)
@@ -405,14 +408,20 @@ private:
         assert(false && "never come here, invalid match_result given");
     }
 
-    SourceLocation get_current_source_location() const
+    SourceLocation make_current_source_location(const std::smatch &match_result) const
     {
-        return SourceLocation(source_file_name_, current_line_, one_based_index, row_, col_);
+        return get_current_source_location(match_result.position());
+    }
+
+    /// zcolumn: zero based column position
+    SourceLocation get_current_source_location(size_t zcolumn) const
+    {
+        return SourceLocation(source_file_name_, current_line_, one_based_index, row_, zcolumn + 1);
     }
 
     Token create_eof_token()
     {
-        return Token::create_eof_token(get_current_source_location());
+        return Token::create_eof_token(get_current_source_location(current_line_.size()));
     }
 };
 
