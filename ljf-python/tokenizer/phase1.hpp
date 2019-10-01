@@ -195,6 +195,7 @@ private:
 
             {
                 std::string s = stream_.getline();
+                ++row_;
                 current_line_ = s;
                 if (s.empty() && stream_.eof())
                 {
