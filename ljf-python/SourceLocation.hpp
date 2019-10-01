@@ -68,7 +68,7 @@ public:
     }
 
     template <typename Out>
-    friend Out &operator<<(Out &out, const SourceLocation &loc)
+    friend decltype(auto) operator<<(Out &out, const SourceLocation &loc)
     {
         return out << loc.file_name() << ":" << loc.row() << ":" << loc.column();
     }
