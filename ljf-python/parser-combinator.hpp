@@ -266,7 +266,7 @@ Out &operator<<(Out &out, const Error &e)
     out << "\n";
 
     auto &loc = token.source_location();
-    out << loc.file_name() << ":" << loc.row() << ":" << loc.column() << "\n";
+    out << loc << "\n";
     out << loc.line() << "\n";
     for (size_t i = 0; i < loc.column(); i++)
     {
