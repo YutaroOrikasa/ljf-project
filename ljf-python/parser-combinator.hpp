@@ -204,10 +204,10 @@ public:
     Error(const Token &token, const std::string &msg)
         : token_(token),
           msg_(msg) {}
-    
+
     // token: The token that caused parsing error.
-    template <typename...Msgs>
-    Error(const Token &token, const std::string &msg, Msgs&&...msgs)
+    template <typename... Msgs>
+    Error(const Token &token, const std::string &msg, Msgs &&... msgs)
         : token_(token),
           msg_((msg + ... + msgs)) {}
 
@@ -263,6 +263,16 @@ Out &operator<<(Out &out, const Error &e)
     {
         out << "error token = `" << token.str() << "`";
     }
+    out << "\n";
+
+    auto &loc = token.source_location();
+    out << loc.source_file_name() << ":" << loc.row() << ":" << loc.column() << "\n";
+    out << loc.line() << "\n";
+    for (size_t i = 0; i < loc.column(); i++)
+    {
+        out << " ";
+    }
+    out << "^";
 
     return out;
 }
