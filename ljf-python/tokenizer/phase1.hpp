@@ -27,7 +27,16 @@ private:
         R"((^\n))"                                                      // EMPTY_LINE
         R"(|(^[ \t]*\n))"                                               // WHITESPACE_LINE
         R"(|(^[ \t]*))"                                                 // WHITESPACE_AT_BIGGINING_OF_LINE
-        R"(|(def|class))"                                               // PYTHON_KEYWORD
+        ""                                                              //
+        "|("                                                            // PYTHON_KEYWORD
+        "False|await|else|import|pass"                                  // PYTHON_KEYWORD (cont.)
+        "|None|break|except|in|raise"                                   // PYTHON_KEYWORD (cont.)
+        "|True|class|finally|is|return"                                 // PYTHON_KEYWORD (cont.)
+        "|and|continue|for|lambda|try"                                  // PYTHON_KEYWORD (cont.)
+        "|as|def|from|nonlocal|while"                                   // PYTHON_KEYWORD (cont.)
+        "|assert|del|global|not|with"                                   // PYTHON_KEYWORD (cont.)
+        "|async|elif|if|or|yield"                                       // PYTHON_KEYWORD (cont.)
+        ")"                                                             // PYTHON_KEYWORD (end)
         ""                                                              //
         R"(|((b|B)?(?:)"                                                // STRING_LITERAL, BYTES_LITERAL_PREFIX, (start (?:))
         R"_("""((?:.|\n)*?)""")_"                                       // TRIPLE_DOUBLE_QUOTED_CONTENTS
@@ -361,7 +370,6 @@ private:
     {
         return match_result[I].matched;
     }
-
 
     static size_t get_first_sub_match_index(const std::smatch &match_result)
     {
