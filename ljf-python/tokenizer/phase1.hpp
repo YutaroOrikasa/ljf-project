@@ -88,9 +88,12 @@ private:
     std::string current_line_;
     const std::string source_file_name_ = "<input>";
     // row and col of current input position.
-    // index is start from 0.
+    // Indexes is one based.
+    // row_ is incremented after getline().
+    // For example, do getline() that lineno is 1, row_++,
+    // now row_ == 1 and then parse line that lineno is 1.
     size_t row_ = 0;
-    size_t col_ = 0;
+    size_t col_ = 1;
 
 public:
     template <typename S>
@@ -404,12 +407,12 @@ private:
 
     SourceLocation get_current_source_location() const
     {
-        return SourceLocation(zero_based_index, source_file_name_, row_, col_);
+        return SourceLocation(source_file_name_, current_line_, one_based_index, row_, col_);
     }
 
     Token create_eof_token()
     {
-        return Token::create_eof_token(SourceLocation(zero_based_index, source_file_name_, 0, 0));
+        return Token::create_eof_token(get_current_source_location());
     }
 };
 
