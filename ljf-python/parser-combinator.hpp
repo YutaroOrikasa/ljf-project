@@ -268,7 +268,7 @@ Out &operator<<(Out &out, const Error &e)
     auto &loc = token.source_location();
     out << loc << "\n";
     out << loc.line() << "\n";
-    for (size_t i = 0; i < loc.column(); i++)
+    for (size_t i = 0; i < loc.column() - 1; i++)
     {
         out << " ";
     }
