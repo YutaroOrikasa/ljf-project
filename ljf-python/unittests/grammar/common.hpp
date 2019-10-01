@@ -28,11 +28,11 @@ static auto parse_if(bool cond, const Parser &p, TokenStream &stream, ErrArgs &&
     }
 }
 
-
 template <typename Parser, typename TokenStream>
 static auto parse_until_eof(const Parser &p, TokenStream &stream)
 {
-    return parse_if(p.has_parser(), p + separator(many(newline)) + separator(eof), stream, "parser not initialized");
+    auto parser = separator(many(newline)) + p + separator(many(newline)) + separator(eof);
+    return parse_if(p.has_parser(), parser, stream, "parser not initialized");
 }
 
 template <typename Parser>
