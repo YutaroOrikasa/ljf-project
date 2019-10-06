@@ -17,7 +17,7 @@
 namespace ljf::python
 {
 
-template <typename IStream>
+template <typename IStream, bool discard_empty_line>
 class Phase1TokenStream
 {
 private:
@@ -218,6 +218,11 @@ private:
 
                 if (match_result[sub_match_index::EMPTY_LINE].matched)
                 {
+                    if (discard_empty_line)
+                    {
+                        continue;
+                    }
+
                     auto token = create_token_from_match_result(match_result, current_line_head_pos);
                     assert(token.is_newline());
                     tokens.push_back(token);
@@ -406,19 +411,19 @@ private:
     }
 };
 
-template <>
-class Phase1TokenStream<std::istream> : public Phase1TokenStream<detail::StdIStreamWrapper>
+template <bool discard_empty_line>
+class Phase1TokenStream<std::istream, discard_empty_line> : public Phase1TokenStream<detail::StdIStreamWrapper, discard_empty_line>
 {
-    using base_type = Phase1TokenStream<detail::StdIStreamWrapper>;
+    using base_type = Phase1TokenStream<detail::StdIStreamWrapper, discard_empty_line>;
 
 public:
     using base_type::base_type;
 };
 
-template <>
-class Phase1TokenStream<std::fstream> : public Phase1TokenStream<detail::StdFStreamWrapper>
+template <bool discard_empty_line>
+class Phase1TokenStream<std::fstream, discard_empty_line> : public Phase1TokenStream<detail::StdFStreamWrapper, discard_empty_line>
 {
-    using base_type = Phase1TokenStream<detail::StdFStreamWrapper>;
+    using base_type = Phase1TokenStream<detail::StdFStreamWrapper, discard_empty_line>;
 
 public:
     template <
@@ -432,10 +437,10 @@ public:
     }
 };
 
-template <>
-class Phase1TokenStream<std::stringstream> : public Phase1TokenStream<detail::StdStringStreamWrapper>
+template <bool discard_empty_line>
+class Phase1TokenStream<std::stringstream, discard_empty_line> : public Phase1TokenStream<detail::StdStringStreamWrapper, discard_empty_line>
 {
-    using base_type = Phase1TokenStream<detail::StdStringStreamWrapper>;
+    using base_type = Phase1TokenStream<detail::StdStringStreamWrapper, discard_empty_line>;
 
 public:
     using base_type::base_type;

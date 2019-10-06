@@ -15,7 +15,7 @@ namespace ljf::python::parser
 {
 
 template <typename TResult = std::any>
-using ParserPlaceHolder = PlaceHolder<TResult, TokenStream<std::istream>>;
+using ParserPlaceHolder = PlaceHolder<TResult, IStreamTokenStream>;
 // inline constexpr Parser XXX = [](auto &&token_stream) {
 
 // };

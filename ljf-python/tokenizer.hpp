@@ -70,11 +70,11 @@ public:
 namespace ljf::python
 {
 
-template <typename IStream>
+template <typename IStream, bool discard_empty_line>
 class TokenStream
 {
 private:
-    Phase1TokenStream<IStream> stream_;
+    Phase1TokenStream<IStream, discard_empty_line> stream_;
     // std::optional<Token> last_token_;
     std::queue<Token> token_buffer_;
     std::size_t current_position_ = 0;
@@ -266,8 +266,8 @@ private:
     }
 };
 
-using IStreamTokenStream = TokenStream<std::istream>;
-using FStreamTokenStream = TokenStream<std::fstream>;
-using SStreamTokenStream = TokenStream<std::stringstream>;
+using IStreamTokenStream = TokenStream<std::istream, /*discard_empty_line=*/false>;
+using FStreamTokenStream = TokenStream<std::fstream, /*discard_empty_line=*/true>;
+using SStreamTokenStream = TokenStream<std::stringstream, /*discard_empty_line=*/true>;
 
 } // namespace ljf::python

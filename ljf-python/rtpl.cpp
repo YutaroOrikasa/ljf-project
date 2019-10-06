@@ -102,7 +102,7 @@ int main(int argc, const char **argv)
 
     std::cout << "Read Tokenize Print Loop" << std::endl;
 
-    ljf::python::TokenStream<std::istream> tokenizer{std::cin};
+    ljf::python::IStreamTokenStream tokenizer{std::cin};
     // ljf::python::TokenStream<std::fstream> tokenizer{"pycode/tarai.py"};
 
     bool eof = false;
