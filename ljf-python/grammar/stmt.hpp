@@ -168,7 +168,11 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
                                                          (result_type<ast::Elif> <<= brace_init <<= "elif"_sep + printer("ELIF:: ") + E::test + ":"_sep + suite) * _many +
                                                          opt[printer("ELIF?:: ") + "else"_sep + ":"_sep + suite];
         // while_stmt = "while"_p + E::test + ":"_p + suite + opt["else"_p + ":"_p + suite];
-        // for_stmt = "for"_p + E::exprlist + "in"_p + E::testlist + ":"_p + suite + opt["else"_p + ":"_p + suite];
+
+        // Simplified for_stmt definition, omit else caluse
+        for_stmt = result_type<ForStmt> <<= brace_init <<= "for"_sep + E::exprlist + "in"_sep + E::testlist + ":"_sep + suite;
+        // for_stmt = "for"_sep + E::exprlist + "in"_sep + E::testlist + ":"_sep + suite + opt["else"_sep + ":"_p + suite];
+
         // try_stmt = ("try"_p + ":"_p + suite + ((except_clause + ":"_p + suite) * _many1 + opt["else"_p + ":"_p + suite] + opt["finally"_p + ":"_p + suite] | "finally"_p + ":"_p + suite));
         // with_stmt = "with"_p + with_item + (","_p + with_item) * _many + ":"_p + suite;
         // with_item = E::test + opt["as"_p + E::expr];

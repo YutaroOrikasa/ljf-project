@@ -51,7 +51,7 @@ struct ForStmt
 {
     Expr target_;
     Expr expr_to_iterate_;
-    StmtList stmt_list_;
+    MultiStmt body_;
     using is_stmt_impl = void;
 };
 
