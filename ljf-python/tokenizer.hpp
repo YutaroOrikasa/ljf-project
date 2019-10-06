@@ -29,25 +29,6 @@ public:
     }
 };
 
-// // usage: BracketNester nester('{', '}');
-// class BracketNester
-// {
-//     char start_;
-//     char end_;
-
-// public:
-//     BracketNester(char start, char end) : start_(start), end_(end) {}
-
-//     bool is_coresponding_closer(const std::string &str) const noexcept
-//     {
-//         if (str.size() != 1)
-//         {
-//             return false;
-//         }
-
-//         return end_ == str[0];
-//     }
-// };
 class BracketNester
 {
 };
@@ -108,49 +89,6 @@ public:
     template <typename S>
     TokenStream(S &&stream) : stream_(std::forward<S>(stream)) {}
 
-    // /// returns a Token and advances Phase1TokenStream's current position.
-    // /// tokenizing is executed one line at a time.
-    // Token read()
-    // {
-    //     // if (last_token_)
-    //     // {
-    //     //     auto token = last_token_.value();
-    //     //     last_token_.reset();
-    //     //     return token;
-    //     // }
-
-    //     // auto token = get_token();
-    //     // if (token.is_eof())
-    //     // {
-    //     //     token = dedent_on_eof(token);
-    //     // }
-    //     // std::cout << "nest depth: " << nester_stack_.size() - 1 << "\n";
-
-    //     auto token = peek();
-    //     last_token_.reset();
-
-    //     return token;
-    // }
-
-    // /// returns a Token.
-    // /// tokenizing is executed one line at a time.
-    // /// This function is same as read() excapt not advancing TokenStream's current position.
-    // Token peek()
-    // {
-    //     if (last_token_)
-    //     {
-    //         return last_token_.value();
-    //     }
-
-    //     auto token = get_token();
-    //     if (token.is_eof())
-    //     {
-    //         token = dedent_on_eof(token);
-    //     }
-    //     std::cout << "nest depth: " << nester_stack_.size() - 1 << "\n";
-    //     last_token_ = token;
-    //     return token;
-    // }
     /// returns a Token and advances Phase1TokenStream's current position.
     /// tokenizing is executed one line at a time.
     Token read()
@@ -167,10 +105,6 @@ public:
     Token peek()
     {
         fill_token_buffer();
-        // if (token_buffer_.empty())
-        // {
-        //     return create_eof_token();
-        // }
 
         return token_buffer_.front();
     }
@@ -201,15 +135,6 @@ private:
         token_buffer_.pop();
         return token;
     }
-
-    // void enqueue_all(std::vector<Token> &&tokens)
-    // {
-    //     for (auto &&token : tokens)
-    //     {
-    //         enqueue(std::move(token));
-    //     }
-    //     tokens.clear();
-    // }
 
     bool is_prev_token_newline() const noexcept
     {
@@ -258,52 +183,7 @@ private:
             }
             enqueue(std::move(token));
         }
-        // auto token = get_token();
-        // if (token.is_eof())
-        // {
-        //     token = dedent_on_eof(token);
-        // }
     }
-
-    // Token get_token()
-    // {
-    //     using namespace detail::tokenizer::phase2;
-
-    //     while (true)
-    //     {
-    //         auto token = stream_.read();
-    //         if (token.category() == token_category::WHITESPACE_AT_BIGGINING_OF_LINE)
-    //         {
-    //             if (auto token_optional = proccess_indentation(token))
-    //             {
-    //                 return *token_optional;
-    //             }
-    //             else
-    //             {
-    //                 continue;
-    //             }
-    //         }
-    //         if (token.category() == token_category::OPENING_BRACKET)
-    //         {
-    //             nester_stack_.push_back(BracketNester());
-    //         }
-    //         if (token.category() == token_category::CLOSING_BRACKET)
-    //         {
-    //             proccess_closing_bracket();
-    //         }
-    //         if (token.category() == token_category::NEWLINE)
-    //         {
-    //             if (nester_stack_.back().is_bracket_nester())
-    //             {
-    //                 // skip newline in bracket
-    //                 prompt("(in bracket) ");
-    //                 continue;
-    //             }
-    //         }
-
-    //         return token;
-    //     }
-    // }
 
     void proccess_closing_bracket()
     {
@@ -369,15 +249,6 @@ private:
                 return;
             }
         }
-
-        // nester_stack_.pop_back();
-        // auto back = nester_stack_.back();
-        // if (!(back.is_indent_nester() &&
-        //       back.get_indent_nester().indent_width() == nester.indent_width()))
-        // {
-        //     return Token::create_invalid_token(token, "invalid dedent");
-        // }
-        // return Token::create_dedent_token(token);
     }
 
     void push_dedent_from_newline(Token &&token)
@@ -393,25 +264,6 @@ private:
         nester_stack_.pop_back();
         enqueue(Token::create_dedent_token(token));
     }
-
-    // Token dedent_on_eof(const Token &eof_token)
-    // {
-    //     if (nester_stack_.size() > 1)
-    //     {
-    //         auto back = nester_stack_.back();
-    //         nester_stack_.pop_back();
-
-    //         if (!back.is_indent_nester())
-    //         {
-    //             return Token::create_invalid_token(eof_token, "invlid EOF: bracket not closed");
-    //         }
-    //         return Token::create_dedent_token(eof_token);
-    //     }
-    //     else
-    //     {
-    //         return eof_token;
-    //     }
-    // }
 };
 
 using IStreamTokenStream = TokenStream<std::istream>;
