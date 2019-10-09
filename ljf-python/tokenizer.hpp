@@ -198,7 +198,6 @@ private:
 
         using namespace detail::tokenizer::phase2;
 
-        std::cout << "WHITESPACE_AT_BIGGINING_OF_LINE\n";
         auto back = nester_stack_.back();
         if (!back.is_indent_nester())
         {
@@ -216,7 +215,6 @@ private:
         }
         else if (top_nester.indent_width() == nester.indent_width())
         {
-            std::cout << "indent level not changed\n";
             return;
         }
         else
