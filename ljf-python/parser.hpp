@@ -159,6 +159,81 @@ constexpr auto operator|(Parser &&parser, const charT *str)
     return std::forward<Parser>(parser) | string(str);
 }
 
+namespace detail
+{
+/// (T first, std::vector<U>) -> std::vector<T>
+inline constexpr auto fold_left_to_vec = [](auto &&first, auto &&vec) {
+    using T = std::decay_t<decltype(first)>;
+    std::vector<T> vec_ret;
+    vec_ret.reserve(1 + vec.size());
+
+    vec_ret.push_back(first);
+    // This forward is exists for move elements.
+    // If vec is vector<T>& , copy and move.
+    // If vec is vector<T>&&, move and move.
+    auto vec2 = std::forward<decltype(vec)>(vec);
+    for (auto &&elem : vec2)
+    {
+        vec_ret.push_back(std::move(elem));
+    }
+    return vec_ret;
+};
+} // namespace detail
+
+namespace abbrev
+{
+
+struct Opt
+{
+    template <typename Parser>
+    constexpr auto operator[](Parser &&p) const noexcept
+    {
+        return option(std::forward<Parser>(p));
+    }
+
+    template <size_t N>
+    constexpr auto operator[](const char (&str)[N]) const noexcept
+    {
+        return option_str(str);
+    }
+};
+
+template <size_t, bool unify = false>
+struct Many
+{
+};
+
+template <typename Parser>
+constexpr auto operator*(Parser &&p, Many<0>)
+{
+    return many(std::forward<Parser>(p));
+}
+
+template <typename Parser>
+constexpr auto operator*(Parser &&p, Many<1, false>)
+{
+    return p + many(p);
+}
+
+// unify = true
+template <typename Parser>
+constexpr auto operator*(Parser &&p, Many<1, true>)
+{
+    return converter(detail::fold_left_to_vec) <<= p + many(p);
+}
+
+inline constexpr Opt opt;
+
+inline constexpr Many<0> _many;
+inline constexpr Many<1> _many1;
+inline constexpr Many<1, true> _many1_unify;
+
+static constexpr auto sep = [](auto &&parser) {
+    return separator(std::forward<decltype(parser)>(parser));
+};
+} // namespace abbrev
+
+
 constexpr auto token(token_category cat)
 {
     return read_if([=](const Token &token) {

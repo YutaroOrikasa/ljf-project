@@ -8,6 +8,8 @@ namespace ljf::python::grammar
 namespace detail
 {
 
+using parser::detail::fold_left_to_vec;
+
 using namespace ast;
 using namespace parser;
 static constexpr auto fold_left = [](auto &&first, auto &&vec) -> Expr {
@@ -197,7 +199,7 @@ static constexpr auto combine_tokens = [](Token token1, Token token2) -> Token {
 template <class TokenStream>
 inline ExprGrammars<TokenStream>::ExprGrammars()
 {
-    using namespace impl;
+    using namespace abbrev;
     using namespace detail;
     using ast::Expr;
 

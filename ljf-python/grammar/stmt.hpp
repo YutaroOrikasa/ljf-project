@@ -98,7 +98,7 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
     StmtGrammars()
     {
         using namespace detail;
-        using namespace impl;
+        using namespace abbrev;
 
         using E = ExprGrammars<TokenStream>;
 
