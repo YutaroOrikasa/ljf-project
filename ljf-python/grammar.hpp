@@ -2,7 +2,7 @@
 
 #pragma once
 
-// copyid from https://github.com/python/cpython/blob/3.5/Grammar/Grammar
+// copied from https://github.com/python/cpython/blob/3.5/Grammar/Grammar
 
 // This file is C++ port of python grammer file.
 
