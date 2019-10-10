@@ -55,17 +55,74 @@ struct ForStmt
     using is_stmt_impl = void;
 };
 
-struct Parameter
+// Parameter that can take default value.
+struct DefParameter
 {
     IdentifierExpr name;
-    std::optional<Expr> default_value;
+    std::optional<Expr> opt_default_value;
+};
+
+// Parameter such like (*a)
+struct StarredParameter
+{
+    IdentifierExpr name;
+};
+
+// Parameter such like (**a)
+struct DoubleStarredParameter
+{
+    IdentifierExpr name;
+};
+
+// struct Parameter : public std::variant<DefParameter, StarredParameter, DoubleStarredParameter>
+// {
+//     using variant::variant;
+// };
+
+using StarredParams = std::tuple<std::optional<StarredParameter>, std::optional<DoubleStarredParameter>>;
+
+/// Parameters that appear function def statement.
+struct FuncParams
+{
+    std::vector<DefParameter> def_params_;
+    std::optional<StarredParameter> opt_starred_param_;
+    std::optional<DoubleStarredParameter> opt_double_starred_param_;
+
+    FuncParams() = default;
+
+    explicit FuncParams(DefParameter defparam, std::vector<DefParameter> defparam_vec, std::optional<StarredParams> opt_stars)
+    {
+        def_params_.push_back(defparam);
+
+        for (auto &&param : defparam_vec)
+        {
+            def_params_.push_back(std::move(param));
+        }
+
+        if (opt_stars)
+        {
+            auto [opt_starred, opt_double_starred] = std::move(*opt_stars);
+            opt_starred_param_ = std::move(opt_starred);
+            opt_double_starred_param_ = std::move(opt_double_starred);
+        }
+    }
+    explicit FuncParams(std::optional<StarredParameter> sp, std::optional<DoubleStarredParameter> dsp)
+        : opt_starred_param_(std::move(sp)),
+          opt_double_starred_param_(std::move(dsp))
+    {
+    }
+
+    explicit FuncParams(std::optional<DoubleStarredParameter> dsp)
+        : opt_double_starred_param_(std::move(dsp))
+    {
+    }
 };
 
 struct DefStmt
 {
     IdentifierExpr funcname_;
-    std::vector<Parameter> params_;
-    StmtList stmt_list_;
+    FuncParams params_;
+    MultiStmt body_;
 
     using is_stmt_impl = void;
 };
@@ -73,7 +130,7 @@ struct DefStmt
 struct ClassStmt
 {
     IdentifierExpr classname_;
-    std::vector<Parameter> inheritance_list_;
+    std::vector<DefParameter> inheritance_list_;
     StmtList stmt_list_;
     using is_stmt_impl = void;
 };

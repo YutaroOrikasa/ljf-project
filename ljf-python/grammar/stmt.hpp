@@ -32,6 +32,52 @@ static constexpr auto fold_assign = [](auto &&first, auto &&right_list) -> Stmt 
         std::move(left_hand_side_list),
         std::move(right_hand_side)};
 };
+
+template <typename T, typename P>
+auto parser_result_type(P &&parser)
+{
+    return result_type<T> <<= parser;
+}
+
+template <typename T, typename P>
+auto parser_result_brace(P &&parser)
+{
+    return result_type<T> <<= brace_init <<= parser;
+}
+
+namespace impl
+{
+
+template <typename T>
+std::optional<T> flatten(std::optional<T> opt)
+{
+    return opt;
+}
+
+template <typename T>
+std::optional<T> flatten(std::optional<std::optional<T>> opt_opt)
+{
+    if (!opt_opt)
+    {
+        return std::optional<T>();
+    }
+
+    return flatten(std::move(*opt_opt));
+}
+
+} // namespace impl
+
+/// Flatten nested std::optional
+inline constexpr auto flatten = [](auto &&data) {
+    return impl::flatten(data);
+};
+
+inline constexpr auto flatten_conv = converter_no_strip(flatten);
+
+inline constexpr auto flatten_parser = [](const auto &parser) {
+    return flatten_conv <<= parser;
+};
+
 } // namespace detail
 
 namespace StmtGrammars_
@@ -52,10 +98,10 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(decorators);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(decorated);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(async_funcdef);
-    // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(funcdef);
-    // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(parameters);
-    // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(typedargslist);
-    // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(tfpdef);
+    ParserPlaceHolder<DefStmt> INIT_PLACE_HOLDER(funcdef);
+    ParserPlaceHolder<FuncParams> INIT_PLACE_HOLDER(parameters);
+    ParserPlaceHolder<FuncParams> INIT_PLACE_HOLDER(typedargslist);
+    ParserPlaceHolder<IdentifierExpr> INIT_PLACE_HOLDER(tfpdef);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(varargslist);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(vfpdef);
     ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(stmt);
@@ -114,11 +160,44 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
         // decorators = decorator * _many1;
         // decorated = decorators + (classdef | funcdef | async_funcdef);
         // async_funcdef = "async"_p + funcdef;
-        // funcdef = "def"_p + printer("funcdef") + NAME + parameters + opt["->"_p + E::test] + ":"_p + suite;
 
-        // parameters = "("_p + opt[typedargslist] + ")";
-        // typedargslist = (tfpdef + opt["="_p + E::test] + (","_p + tfpdef + opt["="_p + E::test]) * _many + opt[","_p + opt["*"_p + opt[tfpdef] + (","_p + tfpdef + opt["="_p + E::test]) * _many + opt[","_p + "**"_p + tfpdef] | "**"_p + tfpdef]] | "*"_p + opt[tfpdef] + (","_p + tfpdef + opt["="_p + E::test]) * _many + opt[","_p + "**"_p + tfpdef] | "**"_p + tfpdef);
+        // Simplified funcdef definition (return type annotation is omitted)
+        funcdef = brace_init <<= "def"_sep + NAME + parameters + ":"_sep + suite;
+        // funcdef = "def"_sep + NAME + parameters + opt["->"_sep + E::test] + ":"_sep + suite;
+
+        parameters = "("_sep + opt[typedargslist] + ")"_sep;
+        const Parser defparameter = result_type<DefParameter> <<= brace_init <<= tfpdef + opt["="_sep + E::test];
+        // int x = defparameter;
+        const Parser starred_param = result_type<StarredParameter> <<= brace_init <<= "*"_sep + tfpdef;
+
+        const Parser stars = result_type<StarredParams> <<=
+            parser_result_brace<ast::StarredParameter>("*"_sep + tfpdef) //
+            + opt[","_sep + parser_result_brace<ast::DoubleStarredParameter>("**"_sep + tfpdef)];
+
+        // Simplified typedargslist definition
+        // This parser does NOT accept such things:
+        //      def f(*,a):pass
+        //      def f(*a,b):pass
+        //      def f(*a,b, **c):pass
+        typedargslist = result_type<FuncParams> <<=
+            (defparameter + (","_sep + defparameter) * _many //
+             + flatten_parser(opt[","_sep + opt[stars]]))    //
+            | stars                                          //
+            | parser_result_brace<ast::DoubleStarredParameter>("**"_sep + tfpdef);
+        // typedargslist = (defparameter + (","_sep + defparameter) * _many              //
+        //                      + opt[","_sep + opt[("*"_sep + opt[tfpdef]               //
+        //                                           + (","_sep + defparameter) * _many  //
+        //                                           + opt[","_sep + "**"_sep + tfpdef]) //
+        //                                          | "**"_sep + tfpdef]]                //
+        //                  | "*"_sep + opt[tfpdef]                                      //
+        //                        + (","_sep + defparameter) * _many                     //
+        //                        + opt[","_sep + "**"_sep + tfpdef]                     //
+        //                  | "**"_sep + tfpdef);
+
+        // Simplified tfpdef definition (type annotation is omitted)
+        tfpdef = NAME;
         // tfpdef = NAME + opt[":"_p + E::test];
+
         // varargslist = (vfpdef + opt["="_p + E::test] + (","_p + vfpdef + opt["="_p + E::test]) * _many + opt[","_p + opt["*"_p + opt[vfpdef] + (","_p + vfpdef + opt["="_p + E::test]) * _many + opt[","_p + "**"_p + vfpdef] | "**"_p + vfpdef]] | "*"_p + opt[vfpdef] + (","_p + vfpdef + opt["="_p + E::test]) * _many + opt[","_p + "**"_p + vfpdef] | "**"_p + vfpdef);
         // vfpdef = NAME;
         stmt = simple_stmt | compound_stmt;
@@ -147,6 +226,7 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
         // return_stmt = "return"_p + opt[E::testlist];
         // yield_stmt = E::yield_expr;
         // raise_stmt = "raise"_p + opt[E::test + opt["from"_p + E::test]];
+
         // import_stmt = import_name | import_from;
         // import_name = "import"_p + dotted_as_names;
         // // # note below = the ('.' | '...') is necessary because '...' is tokenized as ELLIPSIS
