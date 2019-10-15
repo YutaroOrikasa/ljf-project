@@ -35,6 +35,13 @@ static auto parse_until_eof(const Parser &p, TokenStream &stream)
     return parse_if(p.has_parser(), parser, stream, "parser not initialized");
 }
 
+template <typename TResult, typename F, typename TokenStream>
+static auto parse_until_eof(const parser::Parser<TResult, F> &p, TokenStream &stream)
+{
+    auto parser = separator(many(newline)) + p + separator(many(newline)) + separator(eof);
+    return parser(stream);
+}
+
 template <typename Parser>
 static auto parse_until_end(const Parser &p, std::string input)
 {
