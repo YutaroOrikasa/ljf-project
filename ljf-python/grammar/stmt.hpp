@@ -168,7 +168,6 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
 
         parameters = "("_sep + opt[typedargslist] + ")"_sep;
         const Parser defparameter = result_type<DefParameter> <<= brace_init <<= tfpdef + opt["="_sep + E::test];
-        // int x = defparameter;
         const Parser starred_param = result_type<StarredParameter> <<= brace_init <<= "*"_sep + tfpdef;
 
         const Parser stars = result_type<StarredParams> <<=
