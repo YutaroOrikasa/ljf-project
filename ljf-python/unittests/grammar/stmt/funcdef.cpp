@@ -26,6 +26,20 @@ TEST(FuncParams, FuncParams)
     EXPECT_FALSE(params.opt_double_starred_param_);
 }
 
+TEST(FuncParams, FuncParamsEndsWithComma)
+{
+    constexpr auto input = "(a, b, c, )";
+    auto result = parse_until_end(sg.parameters, input);
+    ASSERT_TRUE(result) << result.error();
+    const ast::FuncParams &params = result.success();
+
+    ASSERT_EQ(3, params.def_params_.size());
+    EXPECT_EQ("a", params.def_params_[0].name.name());
+    EXPECT_FALSE(params.def_params_[0].opt_default_value);
+    EXPECT_FALSE(params.opt_starred_param_);
+    EXPECT_FALSE(params.opt_double_starred_param_);
+}
+
 TEST(FuncParams, NoParameters)
 {
     constexpr auto input = "()";
