@@ -106,6 +106,21 @@ struct FuncParams
             opt_double_starred_param_ = std::move(opt_double_starred);
         }
     }
+
+    explicit FuncParams(std::vector<DefParameter> defparam_vec, std::optional<StarredParams> opt_stars)
+        : def_params_(std::move(defparam_vec))
+    {
+        if (opt_stars)
+        {
+            auto [opt_starred, opt_double_starred] = std::move(*opt_stars);
+            opt_starred_param_ = std::move(opt_starred);
+            opt_double_starred_param_ = std::move(opt_double_starred);
+        }
+    }
+
+    explicit FuncParams(std::vector<DefParameter> defparam_vec)
+        : def_params_(std::move(defparam_vec)) {}
+
     explicit FuncParams(std::optional<StarredParameter> sp, std::optional<DoubleStarredParameter> dsp)
         : opt_starred_param_(std::move(sp)),
           opt_double_starred_param_(std::move(dsp))

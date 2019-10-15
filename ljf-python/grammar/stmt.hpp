@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "../grammar.hpp"
 #include "expr.hpp"
 
@@ -78,6 +77,19 @@ inline constexpr auto flatten_conv = converter_no_strip(flatten);
 inline constexpr auto flatten_parser = [](const auto &parser) {
     return flatten_conv <<= parser;
 };
+
+/// equivalent to optional(p + many(sep + p) + optional(sep))
+/// result type: vector<result of p>
+template <typename Parser, typename SepParser>
+constexpr auto many_sep_end_by(Parser p, SepParser sep)
+{
+    // discard pair[1]
+    auto conv = converter([](auto pair) {
+        auto [vec, ends_with_sep] = std::move(pair);
+        return vec;
+    });
+    return conv <<= sep_many_opt(p, sep);
+}
 
 } // namespace detail
 
@@ -180,10 +192,9 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
         //      def f(*a,b):pass
         //      def f(*a,b, **c):pass
         typedargslist = result_type<FuncParams> <<=
-            (defparameter + (","_sep + defparameter) * _many //
-             + flatten_parser(opt[","_sep + opt[stars]]))    //
-            | stars                                          //
-            | parser_result_brace<ast::DoubleStarredParameter>("**"_sep + tfpdef);
+            (many(defparameter + ","_sep) //
+             + stars)                     //
+            | many_sep_end_by(defparameter, ","_sep);
         // typedargslist = (defparameter + (","_sep + defparameter) * _many              //
         //                      + opt[","_sep + opt[("*"_sep + opt[tfpdef]               //
         //                                           + (","_sep + defparameter) * _many  //
