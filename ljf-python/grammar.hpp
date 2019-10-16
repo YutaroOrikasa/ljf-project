@@ -22,6 +22,8 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <optional>
+#include <tuple>
 
 #include "parser.hpp"
 
@@ -166,6 +168,74 @@ constexpr auto sep_many_optsep(Parser p, SepParser sep)
 
                 ends_with_sep = true;
             }
+        });
+}
+
+/// parse `p sep ... sep p [sep [end]]`
+/// equivalent to many(p + sep) + [p | end]
+/// result type: std::tuple{vector<result of p>, bool:ends_with_sep, std::optional<result of end>}
+template <typename Parser, typename SepParser, typename EndParser>
+constexpr auto sep_many_optsep_optend(Parser p, SepParser sep, EndParser end)
+{
+
+    return parser::Parser(
+        [=](auto &&token_stream) {
+            using namespace parser;
+
+            using vec_value_ty = result_content_t<Parser, decltype(token_stream)>;
+            using end_result_ty = result_content_t<EndParser, decltype(token_stream)>;
+            using vec_ty = std::vector<vec_value_ty>;
+            using tuple_ty = std::tuple<vec_ty, bool, std::optional<end_result_ty>>;
+            using ResultTy = Result<tuple_ty>;
+
+            vec_ty vec;
+
+            bool ends_with_sep = false;
+            while (true)
+            {
+                // parser DFA:
+                // =>(0)-> p(1)/end(f)/(f) =>(1)-> sep(0)/(f)
+
+                // try to parse p|end
+                auto result = option(p | end)(token_stream);
+                if (result.failed())
+                {
+                    return ResultTy(result.extract_error_ptr());
+                }
+
+                if (!result.success().has_value())
+                {
+                    break;
+                }
+
+                auto var = result.extract_success().value();
+                if (var.index() == 1)
+                {
+                    // `end' matched
+                    return ResultTy({std::move(vec), ends_with_sep, std::get<1>(var)});
+                }
+
+                // `p' matched
+                vec.push_back(std::get<0>(var));
+
+                ends_with_sep = false;
+
+                // try to parse sep
+
+                auto sep_result = option(sep)(token_stream);
+                if (!sep_result)
+                {
+                    return ResultTy(sep_result.extract_error_ptr());
+                }
+
+                if (!sep_result.success().has_value())
+                {
+                    break;
+                }
+
+                ends_with_sep = true;
+            }
+            return ResultTy({std::move(vec), ends_with_sep, std::nullopt});
         });
 }
 } // namespace detail
