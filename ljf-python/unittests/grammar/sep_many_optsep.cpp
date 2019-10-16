@@ -2,12 +2,12 @@
 
 #include "ljf-python/grammar/stmt.hpp"
 
-using grammar::detail::sep_many_opt;
+using grammar::detail::sep_many_optsep;
 
-TEST(SepManyOpt, ZeroElement)
+TEST(SepManyOptsep, ZeroElement)
 {
     constexpr auto input = "";
-    auto result = parse_until_end(sep_many_opt(parser::identifier, ","_sep), input);
+    auto result = parse_until_end(sep_many_optsep(parser::identifier, ","_sep), input);
     ASSERT_TRUE(result) << result.error();
 
     auto [vec, ends_with_sep] = result.extract_success();
@@ -15,10 +15,10 @@ TEST(SepManyOpt, ZeroElement)
     ASSERT_FALSE(ends_with_sep);
 }
 
-TEST(SepManyOpt, OneElement)
+TEST(SepManyOptsep, OneElement)
 {
     constexpr auto input = "a";
-    auto result = parse_until_end(sep_many_opt(parser::identifier, ","_sep), input);
+    auto result = parse_until_end(sep_many_optsep(parser::identifier, ","_sep), input);
     ASSERT_TRUE(result) << result.error();
 
     auto [vec, ends_with_sep] = result.extract_success();
@@ -26,10 +26,10 @@ TEST(SepManyOpt, OneElement)
     ASSERT_FALSE(ends_with_sep);
 }
 
-TEST(SepManyOpt, OneElementEndsWithSep)
+TEST(SepManyOptsep, OneElementEndsWithSep)
 {
     constexpr auto input = "a,";
-    auto result = parse_until_end(sep_many_opt(parser::identifier, ","_sep), input);
+    auto result = parse_until_end(sep_many_optsep(parser::identifier, ","_sep), input);
     ASSERT_TRUE(result) << result.error();
 
     auto [vec, ends_with_sep] = result.extract_success();
@@ -37,10 +37,10 @@ TEST(SepManyOpt, OneElementEndsWithSep)
     ASSERT_TRUE(ends_with_sep);
 }
 
-TEST(SepManyOpt, TwoElements)
+TEST(SepManyOptsep, TwoElements)
 {
     constexpr auto input = "a, b";
-    auto result = parse_until_end(sep_many_opt(parser::identifier, ","_sep), input);
+    auto result = parse_until_end(sep_many_optsep(parser::identifier, ","_sep), input);
     ASSERT_TRUE(result) << result.error();
 
     auto [vec, ends_with_sep] = result.extract_success();
@@ -48,10 +48,10 @@ TEST(SepManyOpt, TwoElements)
     ASSERT_FALSE(ends_with_sep);
 }
 
-TEST(SepManyOpt, TwoElementsEndsWithSep)
+TEST(SepManyOptsep, TwoElementsEndsWithSep)
 {
     constexpr auto input = "a, b,";
-    auto result = parse_until_end(sep_many_opt(parser::identifier, ","_sep), input);
+    auto result = parse_until_end(sep_many_optsep(parser::identifier, ","_sep), input);
     ASSERT_TRUE(result) << result.error();
 
     auto [vec, ends_with_sep] = result.extract_success();
@@ -59,9 +59,9 @@ TEST(SepManyOpt, TwoElementsEndsWithSep)
     ASSERT_TRUE(ends_with_sep);
 }
 
-TEST(SepManyOpt, Invalid)
+TEST(SepManyOptsep, Invalid)
 {
     constexpr auto input = "a b";
-    auto result = parse_until_end(sep_many_opt(parser::identifier, ","_sep), input);
+    auto result = parse_until_end(sep_many_optsep(parser::identifier, ","_sep), input);
     ASSERT_FALSE(result) << result.error();
 }

@@ -118,7 +118,7 @@ namespace detail
 /// equivalent to optional(p + many(sep + p) + optional(sep))
 /// result type: std::pair{vector<result of p>, bool:ends_with_sep}
 template <typename Parser, typename SepParser>
-constexpr auto sep_many_opt(Parser p, SepParser sep)
+constexpr auto sep_many_optsep(Parser p, SepParser sep)
 {
     using parser::option;
     auto parser = p + option(sep);
@@ -149,7 +149,7 @@ constexpr auto sep_many_opt(Parser p, SepParser sep)
                 // (p sep) (p sep) ... (p sep); ends_with_sep=true were parsed
                 // or
                 // nothing; ends_with_sep=false  were parsed.
-                // finish sep_many_opt()
+                // finish sep_many_optsep()
                 if (result.failed())
                 {
                     return ResultTy({std::move(vec), ends_with_sep});

@@ -88,7 +88,7 @@ constexpr auto many_sep_end_by(Parser p, SepParser sep)
         auto [vec, ends_with_sep] = std::move(pair);
         return vec;
     });
-    return conv <<= sep_many_opt(p, sep);
+    return conv <<= sep_many_optsep(p, sep);
 }
 
 } // namespace detail
