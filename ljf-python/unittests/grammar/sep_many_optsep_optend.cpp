@@ -60,48 +60,49 @@ constexpr auto sep_many_optsep_optend(Parser p, SepParser sep, EndParser end)
             bool ends_with_sep = false;
             while (true)
             {
-                // try to parse p
-                auto LL1res = LL1_parse(p, token_stream);
-                if (LL1res.fatally_failed())
-                {
-                    return ResultTy(LL1res.result.extract_error_ptr());
-                }
-                auto result = std::move(LL1res.result);
-                if (!result)
-                {
-                    // try to parse end
-                    auto LL1res = LL1_parse(end, token_stream);
-                    if (LL1res.fatally_failed())
-                    {
-                        return ResultTy(LL1res.result.extract_error_ptr());
-                    }
-                    auto result = std::move(LL1res.result);
-                    if (!result)
-                    {
-                        return ResultTy({std::move(vec), ends_with_sep, std::nullopt});
-                    }
+                // parser DFA:
+                // =>(0)-> p(1)/end(f)/(f) =>(1)-> sep(0)/(f)
 
-                    return ResultTy({std::move(vec), ends_with_sep, result.extract_success()});
+                // try to parse p|end
+                auto result = option(p | end)(token_stream);
+                if (result.failed())
+                {
+                    return ResultTy(result.extract_error_ptr());
                 }
+
+                if (!result.success().has_value())
+                {
+                    break;
+                }
+
+                auto var = result.extract_success().value();
+                if (var.index() == 1)
+                {
+                    // `end' matched
+                    return ResultTy({std::move(vec), ends_with_sep, std::get<1>(var)});
+                }
+
+                // `p' matched
+                vec.push_back(std::get<0>(var));
 
                 ends_with_sep = false;
 
-                vec.push_back(result.extract_success());
                 // try to parse sep
+
+                auto sep_result = option(sep)(token_stream);
+                if (!sep_result)
                 {
-                    auto LL1res = LL1_parse(sep, token_stream);
-                    if (LL1res.fatally_failed())
-                    {
-                        return ResultTy(LL1res.result.extract_error_ptr());
-                    }
-                    auto result = std::move(LL1res.result);
-                    if (!result)
-                    {
-                        return ResultTy({std::move(vec), ends_with_sep, std::nullopt});
-                    }
+                    return ResultTy(sep_result.extract_error_ptr());
                 }
+
+                if (!sep_result.success().has_value())
+                {
+                    break;
+                }
+
                 ends_with_sep = true;
             }
+            return ResultTy({std::move(vec), ends_with_sep, std::nullopt});
         });
 }
 } // namespace detail
