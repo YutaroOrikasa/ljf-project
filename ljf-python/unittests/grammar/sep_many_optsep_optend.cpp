@@ -21,11 +21,6 @@ public:
         : result(std::move(res)),
           fatally_failed_(fatally_failed) {}
 
-    // template <typename U>
-    // explicit LL1Result(LL1Result<U> &&res)
-    //     : result(std::move(res.result)),
-    //       fatally_failed_(res.fatally_failed()) {}
-
     bool fatally_failed() const noexcept
     {
         return fatally_failed_;
@@ -43,17 +38,12 @@ auto LL1_parse(const Parser &p, TokenStream &token_stream)
     return LL1Result(std::move(result), fatally_failed);
 }
 
-template <typename ResultTy, typename Parser, class TokenStream>
-auto LL1_parse_to(const Parser &p, TokenStream &token_stream)
-{
-}
 /// parse `p sep ... sep p [sep [end]]`
 /// equivalent to many(p + sep) + [p | end]
 /// result type: std::tuple{vector<result of p>, bool:ends_with_sep, std::optional<result of end>}
 template <typename Parser, typename SepParser, typename EndParser>
 constexpr auto sep_many_optsep_optend(Parser p, SepParser sep, EndParser end)
 {
-    // using parser::option;
 
     return parser::Parser(
         [=](auto &&token_stream) {
