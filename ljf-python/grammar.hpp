@@ -140,7 +140,7 @@ constexpr auto sep_many_optsep(Parser p, SepParser sep)
                 auto init_pos = token_stream.current_position();
 
                 auto result = parser(token_stream);
-                if (LL1_parser_failed(result, init_pos, token_stream))
+                if (LL1_parser_fatally_failed(result, init_pos, token_stream))
                 {
                     return ResultTy(result.extract_error_ptr());
                 }

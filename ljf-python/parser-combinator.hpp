@@ -645,7 +645,7 @@ using result_content_t = std::decay_t<
             .success())>;
 
 template <typename Result, typename Pos, typename TokenStream>
-bool LL1_parser_failed(const Result &result, const Pos &initial_position, const TokenStream &stream)
+bool LL1_parser_fatally_failed(const Result &result, const Pos &initial_position, const TokenStream &stream)
 {
     return result.failed() && (initial_position != stream.current_position());
 }
@@ -675,7 +675,7 @@ auto LL1_parse(const Parser &p, TokenStream &token_stream)
     auto init_pos = token_stream.current_position();
 
     auto result = p(token_stream);
-    bool fatally_failed = LL1_parser_failed(result, init_pos, token_stream);
+    bool fatally_failed = LL1_parser_fatally_failed(result, init_pos, token_stream);
 
     return LL1Result(std::move(result), fatally_failed);
 }
@@ -694,7 +694,7 @@ constexpr auto many(P &&parser)
                 auto init_pos = token_stream.current_position();
 
                 auto result = parser(token_stream);
-                if (LL1_parser_failed(result, init_pos, token_stream))
+                if (LL1_parser_fatally_failed(result, init_pos, token_stream))
                 {
                     return Result<vec_ty>(result.extract_error_ptr());
                 }
