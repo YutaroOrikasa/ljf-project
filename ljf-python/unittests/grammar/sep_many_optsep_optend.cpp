@@ -7,37 +7,6 @@ namespace ljf::python::grammar
 {
 namespace detail
 {
-
-template <typename T>
-struct LL1Result
-{
-    Result<T> result;
-
-private:
-    bool fatally_failed_ = false;
-
-public:
-    explicit LL1Result(Result<T> &&res, bool fatally_failed)
-        : result(std::move(res)),
-          fatally_failed_(fatally_failed) {}
-
-    bool fatally_failed() const noexcept
-    {
-        return fatally_failed_;
-    }
-};
-
-template <typename Parser, class TokenStream>
-auto LL1_parse(const Parser &p, TokenStream &token_stream)
-{
-    auto init_pos = token_stream.current_position();
-
-    auto result = p(token_stream);
-    bool fatally_failed = LL1_parser_failed(result, init_pos, token_stream);
-
-    return LL1Result(std::move(result), fatally_failed);
-}
-
 /// parse `p sep ... sep p [sep [end]]`
 /// equivalent to many(p + sep) + [p | end]
 /// result type: std::tuple{vector<result of p>, bool:ends_with_sep, std::optional<result of end>}
