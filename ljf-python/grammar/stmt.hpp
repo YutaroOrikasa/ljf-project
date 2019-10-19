@@ -192,9 +192,7 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
         //      def f(*a,b):pass
         //      def f(*a,b, **c):pass
         typedargslist = result_type<FuncParams> <<=
-            (many(defparameter + ","_sep) //
-             + stars)                     //
-            | many_sep_end_by(defparameter, ","_sep);
+            detail::sep_many_optsep_optend(defparameter, ","_sep, stars);
         // typedargslist = (defparameter + (","_sep + defparameter) * _many              //
         //                      + opt[","_sep + opt[("*"_sep + opt[tfpdef]               //
         //                                           + (","_sep + defparameter) * _many  //
