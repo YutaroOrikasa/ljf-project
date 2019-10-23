@@ -19,6 +19,14 @@ TEST(ExprStmt, Assign)
 
 }
 
+TEST(ExprStmt, AssignBuiltinConstant)
+{
+    ASSERT_TRUE(sg.expr_stmt.has_parser());
+    auto result = parse_until_end(sg.expr_stmt, "a = None");
+    ASSERT_TRUE(result) << result.error();
+
+}
+
 TEST(ExprStmt, MultiAssign)
 {
     ASSERT_TRUE(sg.expr_stmt.has_parser());
