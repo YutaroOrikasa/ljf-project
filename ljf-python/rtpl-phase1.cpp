@@ -15,7 +15,7 @@ auto /*std::vector*/ tokenize_line(Tokenizer &tokenizer, bool &eof)
 
         tokens.push_back(token);
 
-        if (token == "\n")
+        if (token.is_newline())
         {
             break;
         }
