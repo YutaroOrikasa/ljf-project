@@ -58,3 +58,17 @@ TEST(ExprStmt, InvalidStmtAssignToKeyword)
     ASSERT_FALSE(result);
 
 }
+
+
+TEST(ExprStmt, InvalidStmtAssignToBuiltinConstant)
+{
+    ASSERT_TRUE(sg.expr_stmt.has_parser());
+    auto result = parse_until_end(sg.expr_stmt, "None = 0");
+    // The parser accsept statements assigning to builtin constant,
+    // but that's okey because CPython's grammer definitions for pgen parser generator
+    // are so.
+    // Such statements should be checked by a varidator or a compiler.
+    ASSERT_TRUE(result) << result.error();
+    // ASSERT_FALSE(result);
+
+}
