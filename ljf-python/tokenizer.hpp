@@ -178,6 +178,7 @@ private:
                 }
                 if (is_prev_token_newline())
                 {
+                    assert(!discard_empty_line && "consecutive newline tokens must not exist when discard_empty_line=true");
                     push_dedent_from_newline(std::move(token));
                 }
             }
