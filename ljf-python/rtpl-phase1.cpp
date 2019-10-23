@@ -40,7 +40,7 @@ void tokenize_line_and_print_it(Tokenizer &tokenizer, bool &eof, bool verbose)
     {
         if (verbose)
         {
-            std::cout << token.source_location() << ":";
+            std::cout << token.source_location() << ":" << token.category() << ":";
         }
 
         std::cout << "`" << token.str() << "`"
