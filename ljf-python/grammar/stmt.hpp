@@ -125,10 +125,10 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(augassign);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(del_stmt);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(pass_stmt);
-    // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(flow_stmt);
+    ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(flow_stmt);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(break_stmt);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(continue_stmt);
-    // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(return_stmt);
+    ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(return_stmt);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(yield_stmt);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(raise_stmt);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(import_stmt);
@@ -216,7 +216,7 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
         // simple_stmt = printer("simple_stmt") + small_stmt + (";"_p + small_stmt) * _many + opt[";"] + NEWLINE;
 
         // Simplified small_stmt definition
-        small_stmt = expr_stmt;
+        small_stmt = flow_stmt | expr_stmt;
         // small_stmt = printer("small_stmt") + (del_stmt | pass_stmt | flow_stmt |
         //                                       import_stmt | global_stmt | nonlocal_stmt | assert_stmt | expr_stmt);
 
@@ -229,10 +229,13 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
         // // # For normal assignments, additional restrictions enforced by the interpreter
         // del_stmt = "del"_p + E::exprlist;
         // pass_stmt = "pass"_p;
+
+        // Simplified flow_stmt definition
+        flow_stmt = return_stmt;
         // flow_stmt = break_stmt | continue_stmt | return_stmt | raise_stmt | yield_stmt;
         // break_stmt = "break"_p;
         // continue_stmt = "continue"_p;
-        // return_stmt = "return"_p + opt[E::testlist];
+        return_stmt = result_type<ReturnStmt> <<= "return"_sep + opt[E::testlist];
         // yield_stmt = E::yield_expr;
         // raise_stmt = "raise"_p + opt[E::test + opt["from"_p + E::test]];
 

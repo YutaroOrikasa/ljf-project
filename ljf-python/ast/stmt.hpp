@@ -185,6 +185,16 @@ struct AssignStmt
     using is_stmt_impl = void;
 };
 
+struct ReturnStmt
+{
+    std::optional<Expr> opt_expr_;
+    using is_stmt_impl = void;
+
+    ReturnStmt() = default;
+    explicit ReturnStmt(Expr e) : opt_expr_(std::move(e)) {}
+
+};
+
 struct StmtVariant : std::variant<IfStmt,
                                   ForStmt,
                                   DefStmt,
@@ -192,7 +202,8 @@ struct StmtVariant : std::variant<IfStmt,
                                   ImportStmt,
                                   ExprStmt,
                                   AssignStmt,
-                                  MultiStmt>
+                                  MultiStmt,
+                                  ReturnStmt>
 {
     using variant::variant;
 };
