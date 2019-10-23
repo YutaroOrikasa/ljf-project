@@ -13,6 +13,27 @@ def f(a):
     ASSERT_TRUE(result) << result.error();
 }
 
+TEST(FuncDef, EmptyReturn)
+{
+    constexpr auto input = R"(
+def f(a):
+    a = a
+    return
+)";
+    auto result = parse_until_end(sg.funcdef, input);
+    ASSERT_TRUE(result) << result.error();
+}
+
+TEST(FuncDef, NoReturn)
+{
+    constexpr auto input = R"(
+def f(a):
+    a = a
+)";
+    auto result = parse_until_end(sg.funcdef, input);
+    ASSERT_TRUE(result) << result.error();
+}
+
 TEST(FuncParams, FuncParams)
 {
     constexpr auto input = "(a, b, c)";
