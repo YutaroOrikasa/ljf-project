@@ -5,8 +5,9 @@
 TEST(FuncDef, FuncDef)
 {
     constexpr auto input = R"(
-def f():
-    None
+def f(a):
+    a = a
+    return a
 )";
     auto result = parse_until_end(sg.funcdef, input);
     ASSERT_TRUE(result) << result.error();
