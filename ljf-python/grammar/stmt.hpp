@@ -33,6 +33,17 @@ static constexpr auto fold_assign = [](auto &&first, auto &&right_list) -> Stmt 
         std::move(right_hand_side)};
 };
 
+/// return type: std::vector<decltype(first)>
+static constexpr auto unify_many1 = [](auto first, auto vec) {
+    std::vector<decltype(first)> ret_vec{std::move(first)};
+
+    for (auto &&elem : vec)
+    {
+        ret_vec.push_back(std::move(elem));
+    }
+    return ret_vec;
+};
+
 template <typename T, typename P>
 auto parser_result_type(P &&parser)
 {
@@ -131,13 +142,13 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
     ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(return_stmt);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(yield_stmt);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(raise_stmt);
-    // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(import_stmt);
-    // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(import_name);
-    // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(import_from);
-    // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(import_as_name);
-    // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(dotted_as_name);
+    ParserPlaceHolder<ImportStmt> INIT_PLACE_HOLDER(import_stmt);
+    ParserPlaceHolder<ImportStmt> INIT_PLACE_HOLDER(import_name);
+    ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(import_from);
+    // ParserPlaceHolder<ImportStmt> INIT_PLACE_HOLDER(import_as_name);
+    ParserPlaceHolder<DottedAsName> INIT_PLACE_HOLDER(dotted_as_name);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(import_as_names);
-    // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(dotted_as_names);
+    // ParserPlaceHolder<ImportStmt> INIT_PLACE_HOLDER(dotted_as_names);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(dotted_name);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(global_stmt);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(nonlocal_stmt);
@@ -239,15 +250,17 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
         // yield_stmt = E::yield_expr;
         // raise_stmt = "raise"_p + opt[E::test + opt["from"_p + E::test]];
 
-        // import_stmt = import_name | import_from;
-        // import_name = "import"_p + dotted_as_names;
-        // // # note below = the ('.' | '...') is necessary because '...' is tokenized as ELLIPSIS
-        // import_from = ("from"_p + (("."_p | "...") * _many + dotted_name | ("."_p | "...") * _many1) + "import"_p + ("*"_p | "("_p + import_as_names + ")"_p | import_as_names));
-        // import_as_name = NAME + opt["as"_p + NAME];
-        // dotted_as_name = dotted_name + opt["as"_p + NAME];
-        // import_as_names = import_as_name + (","_p + import_as_name) * _many + opt[","];
-        // dotted_as_names = dotted_as_name + (","_p + dotted_as_name) * _many;
-        // dotted_name = NAME + ("."_p + NAME) * _many;
+        auto dotted_name = converter(unify_many1) <<= NAME + ("."_sep + NAME) * _many;
+        auto dotted_as_names = converter(unify_many1) <<= dotted_as_name + (","_sep + dotted_as_name) * _many;
+        import_stmt = import_name /* | import_from */;
+        import_name = brace_init <<= "import"_sep + dotted_as_names;
+        // # note below = the ('.' | '...') is necessary because '...' is tokenized as ELLIPSIS
+        // import_from = ("from"_sep + (("."_p | "..."_p) * _many + dotted_name | ("."_p | "..."_p) * _many1) //
+        //                + "import"_sep + ("*"_p | "("_sep + import_as_names + ")"_sep | import_as_names));
+        // import_as_name = brace_init <<= NAME + opt["as"_sep + NAME];
+        dotted_as_name = brace_init <<= dotted_name + opt["as"_sep + NAME];
+        // import_as_names = import_as_name + (","_sep + import_as_name) * _many + opt[","];
+
         // global_stmt = "global"_p + NAME + (","_p + NAME) * _many;
         // nonlocal_stmt = "nonlocal"_p + NAME + (","_p + NAME) * _many;
         // assert_stmt = "assert"_p + E::test + opt[","_p + E::test];

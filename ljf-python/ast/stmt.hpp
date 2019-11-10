@@ -161,8 +161,15 @@ struct ClassStmt
     using is_stmt_impl = void;
 };
 
+struct DottedAsName
+{
+    std::vector<IdentifierExpr> names;
+    std::optional<IdentifierExpr> opt_as_name;
+};
+
 struct ImportStmt
 {
+    std::vector<DottedAsName> import_as_names;
     using is_stmt_impl = void;
 };
 
