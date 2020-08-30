@@ -133,28 +133,14 @@ auto tuple_cat_and_strip(Tuples &&... t)
 
     if constexpr (std::tuple_size<result_tuple_ty>::value == 1)
     {
-        struct Dummy
-        {
-        };
-        // workaround for template constructor that accept 1 argument.
-        // Making tuple size of the restult of std::tuple_cat >= 2
-        // by adding Dummy object.
-        // In std::tuple_cat, codes that has same semantics executed:
-        //   std::tuple<T&&> t0 =...;
-        //   std::tuple<T> t = std::move(t0); // (A)
-        // Normally statement (A) calles T(T&&) constructor
-        // in template<class _Tuple> tuple(_Tuple&&) constructor,
-        // but if std::is_constructible_v<T, std::tuple<T&&> > is true,
-        // no constructor of tuple selected.
-        // This behavior does not occur tuple size of std::tuple_cat(...) >= 2.
-        auto tpl = std::tuple_cat(std::tuple<Dummy>(), std::forward<Tuples>(t)...);
+        auto tpl = std::tuple_cat(std::forward<Tuples>(t)...);
 
-        using tpl_elem1_ty = std::tuple_element_t<1, decltype(tpl)>;
+        using tpl_elem0_ty = std::tuple_element_t<0, decltype(tpl)>;
 
         // Return type is not tuple, just T.
         // tuple_cat_and_strip() strips tuple that size is 1.
         // tuple_cat_and_strip() returns T instead of std::tuple<T>.
-        return std::forward<tpl_elem1_ty>(std::get<1>(tpl));
+        return std::forward<tpl_elem0_ty>(std::get<0>(tpl));
     }
     else
     {
