@@ -163,6 +163,14 @@ decltype(auto) tuple_cat_and_strip(Tuples &&... t)
     }
 }
 
+static_assert(std::is_same_v<int, decltype(tuple_cat_and_strip(std::declval<std::tuple<int>>()))>);
+static_assert(std::is_same_v<int &, decltype(tuple_cat_and_strip(std::declval<std::tuple<int &>>()))>);
+static_assert(std::is_same_v<int &&, decltype(tuple_cat_and_strip(std::declval<std::tuple<int &&>>()))>);
+static_assert(std::is_same_v<std::tuple<int, int &, int &&>, decltype(tuple_cat_and_strip(std::declval<std::tuple<int, int &, int &&>>()))>);
+static_assert(std::is_same_v<std::tuple<int, int &, int &&>, decltype(tuple_cat_and_strip(std::declval<std::tuple<int>>(),
+                                                                                          std::declval<std::tuple<int &>>(),
+                                                                                          std::declval<std::tuple<int &&>>()))>);
+
 } // namespace impl
 
 // wrap T with std::tuple
