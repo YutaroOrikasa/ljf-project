@@ -126,8 +126,23 @@ namespace detail
 {
 namespace impl
 {
+
+// Returns tuple's content.
+// If T is reference (eg. Type&, Type&&),
+// return type is also reference.
+// Reference qualification is saved at return type.
+template <typename T>
+T tuple_strip(std::tuple<T> &&tuple)
+{
+    return std::get<0>(std::move(tuple));
+}
+
+static_assert(std::is_same_v<int, decltype(tuple_strip(std::declval<std::tuple<int>>()))>);
+static_assert(std::is_same_v<int &, decltype(tuple_strip(std::declval<std::tuple<int &>>()))>);
+static_assert(std::is_same_v<int &&, decltype(tuple_strip(std::declval<std::tuple<int &&>>()))>);
+
 template <typename... Tuples>
-auto tuple_cat_and_strip(Tuples &&... t)
+decltype(auto) tuple_cat_and_strip(Tuples &&... t)
 {
     using result_tuple_ty = decltype(std::tuple_cat(std::forward<Tuples>(t)...));
 
@@ -135,12 +150,12 @@ auto tuple_cat_and_strip(Tuples &&... t)
     {
         auto tpl = std::tuple_cat(std::forward<Tuples>(t)...);
 
-        using tpl_elem0_ty = std::tuple_element_t<0, decltype(tpl)>;
-
         // Return type is not tuple, just T.
         // tuple_cat_and_strip() strips tuple that size is 1.
         // tuple_cat_and_strip() returns T instead of std::tuple<T>.
-        return std::forward<tpl_elem0_ty>(std::get<0>(tpl));
+        // And save reference qualification of tpl[0],
+        // we use tuple_strip() instead of std::get<0>(tpl)
+        return tuple_strip(std::move(tpl));
     }
     else
     {
