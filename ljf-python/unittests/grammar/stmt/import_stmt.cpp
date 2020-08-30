@@ -60,4 +60,3 @@ import a.b as c, x.y as z
 
     ASSERT_EQ("z", result.success().import_as_names.at(1).opt_as_name.value().name());
 }
-

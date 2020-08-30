@@ -118,11 +118,9 @@ inline constexpr auto string = [](auto &&str) {
                    "expected ", str, " but not given");
 };
 
-
-inline constexpr auto option_str = [](auto&& str) {
+inline constexpr auto option_str = [](auto &&str) {
     return option(string(std::forward<decltype(str)>(str)));
 };
-
 
 inline constexpr auto separator = [](auto &&parser) {
     return result_type<Separator> <<= parser;
@@ -232,7 +230,6 @@ static constexpr auto sep = [](auto &&parser) {
     return separator(std::forward<decltype(parser)>(parser));
 };
 } // namespace abbrev
-
 
 constexpr auto token(token_category cat)
 {

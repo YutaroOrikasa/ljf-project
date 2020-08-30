@@ -2,7 +2,6 @@
 
 #include "ljf-python/grammar/stmt.hpp"
 
-
 using grammar::detail::sep_many_optsep_optend;
 
 TEST(SepManyOptsepOptend, ZeroElement)

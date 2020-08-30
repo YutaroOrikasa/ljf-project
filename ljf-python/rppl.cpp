@@ -63,7 +63,6 @@ private:
         {
             std::cout << "<trailers>";
         }
-    
     }
 
     auto impl(const StringLiteralExpr &expr) const

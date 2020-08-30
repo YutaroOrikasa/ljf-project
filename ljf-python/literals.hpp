@@ -56,7 +56,7 @@ public:
     }
 
     /// The result does not contain prefix such like '0x'.
-    const std::string& integer_str() const noexcept
+    const std::string &integer_str() const noexcept
     {
         return integer_str_;
     }

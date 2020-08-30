@@ -199,7 +199,6 @@ struct ReturnStmt
 
     ReturnStmt() = default;
     explicit ReturnStmt(Expr e) : opt_expr_(std::move(e)) {}
-
 };
 
 struct StmtVariant : std::variant<IfStmt,

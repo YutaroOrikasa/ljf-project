@@ -118,4 +118,3 @@ TEST(FuncParams, DefParamStarredAndDoubleStarred)
     EXPECT_TRUE(params.opt_starred_param_);
     EXPECT_TRUE(params.opt_double_starred_param_);
 }
-

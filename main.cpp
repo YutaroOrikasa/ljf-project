@@ -56,7 +56,7 @@ int main(int argc, const char **argv)
     auto ljf_runtime_path = "build/runtime.so"s;
     auto input_ll_file = arg[1];
 
-    ljf::CompilerMap compiler_map {
+    ljf::CompilerMap compiler_map{
         {"llvm asm", std::make_shared<LLVMAsmCompiler>()},
     };
 

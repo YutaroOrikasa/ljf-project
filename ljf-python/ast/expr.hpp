@@ -202,7 +202,7 @@ struct ExprVariant : std::variant<
                          BinaryExpr,
                          // cond
                          ConditionalExpr,
-                         // 
+                         //
                          AtomExpr,
                          // comprehensions
                          GeneratorExpr,

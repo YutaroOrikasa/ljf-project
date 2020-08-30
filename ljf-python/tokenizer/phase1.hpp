@@ -25,7 +25,7 @@ private:
     std::queue<Token> token_buffer_;
     std::regex re{
         R"((^\n))"                                                      // EMPTY_LINE
-        R"(|(^[ \t]*\n|#.*\n))"                                               // WHITESPACE_LINE
+        R"(|(^[ \t]*\n|#.*\n))"                                         // WHITESPACE_LINE
         R"(|(^[ \t]*))"                                                 // WHITESPACE_AT_BIGGINING_OF_LINE
         ""                                                              //
         "|("                                                            // PYTHON_KEYWORD

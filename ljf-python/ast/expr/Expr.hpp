@@ -42,7 +42,6 @@ public:
 
 static_assert(std::is_copy_constructible_v<Expr>);
 
-
 namespace detail
 {
 class SingleTokenExpr
@@ -58,7 +57,6 @@ public:
         return token_;
     }
 };
-
 
 } // namespace detail
 } // namespace ljf::python::ast

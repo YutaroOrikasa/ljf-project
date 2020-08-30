@@ -2,29 +2,30 @@
 
 namespace ljf
 {
-struct InitMsg {
-    InitMsg(const char * msg) {
+struct InitMsg
+{
+    InitMsg(const char *msg)
+    {
         std::cout << msg << std::endl;
     }
 };
 
 struct DoneMsg
 {
-    const char * const msg;
+    const char *const msg;
 
     // DoneMsg(const char * msg) : msg_(msg) {}
-    ~DoneMsg() {
+    ~DoneMsg()
+    {
         try
         {
             std::cout << msg << std::endl;
         }
-        catch(...)
+        catch (...)
         {
             // nop
         }
-        
     }
 };
 
 } // namespace ljf
-

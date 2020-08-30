@@ -20,5 +20,4 @@ TEST(ObjectHolder, NotEqual)
 
     ASSERT_EQ(obj1, obj1);
     ASSERT_NE(obj1, obj2);
-
 }

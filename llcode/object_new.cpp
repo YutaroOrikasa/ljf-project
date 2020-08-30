@@ -11,7 +11,6 @@ void object_new(uint64_t n)
     {
         ljf_new_object();
     }
-    
 }
 
 extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)

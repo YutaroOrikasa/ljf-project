@@ -371,7 +371,7 @@ extern "C" LJFObject *module_main(LJFObject *env, LJFObject *module_func_table)
     bench_ljf("direct_call_index_access_inline_args_struct_stack_nolock_refactor_same_V_cheating_unwrap_object_method_nolock_refcount_noObjectHolder_ljf_object_layout",
               env, n, direct_call_index_access_inline_args_struct_stack_nolock_refactor_same_V_cheating_unwrap_object_method_nolock_refcount_noObjectHolder_ljf_object_layout::getter_setter_bench_ljf);
     std::cout << std::endl;
-    
+
     bench_ljf("direct_call_index_access_inline_args_struct_stack_nolock_refactor_same_V_cheating_unwrap_object_method_nolock_refcount_noObjectHolder_big_object",
               env, n, direct_call_index_access_inline_args_struct_stack_nolock_refactor_same_V_cheating_unwrap_object_method_nolock_refcount_noObjectHolder_big_object::getter_setter_bench_ljf);
     bench_ljf("direct_call_index_access_inline_args_struct_stack_nolock_refactor_unwrap_object_method_nolock_refcount_noObjectHolder_big_object",

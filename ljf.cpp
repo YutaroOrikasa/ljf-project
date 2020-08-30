@@ -73,12 +73,10 @@ int start_entry_point_of_source(const std::string &language, const std::string &
     return ljf_internal_start_entry_point(nullptr, language, source_path, argc, argv);
 }
 
-
 int start_entry_point_of_function_ptr(ljf_main_t ljf_main, int argc, const char **argv)
 {
     return ljf_internal_start_entry_point(ljf_main, "", "", argc, argv);
 }
-
 
 int start_entry_point_of_native_dynamic_library(std::string dynamic_library_path, int argc, const char **argv)
 {

@@ -46,7 +46,6 @@ public:
 
 static_assert(std::is_copy_constructible_v<Stmt>);
 
-
 namespace detail
 {
 

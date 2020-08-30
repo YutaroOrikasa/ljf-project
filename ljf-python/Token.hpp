@@ -57,14 +57,14 @@ inline constexpr const char *get_token_category_name(token_category cat)
     case token_category::INTEGER_LITERAL:
         return "INTEGER_LITERAL";
     case token_category::INVALID:
-        return "INVALID"; 
+        return "INVALID";
     }
     assert(false && "never come here");
     return "";
 }
 
 template <typename Out>
-inline Out& operator<<(Out& out, token_category cat)
+inline Out &operator<<(Out &out, token_category cat)
 {
     out << get_token_category_name(cat);
     return out;

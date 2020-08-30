@@ -2,7 +2,6 @@
 
 #include "expr.hpp"
 
-
 namespace ljf::python::grammar
 {
 namespace detail
@@ -194,7 +193,6 @@ static constexpr auto combine_tokens = [](Token token1, Token token2) -> Token {
 };
 
 } // namespace detail
-
 
 template <class TokenStream>
 inline ExprGrammars<TokenStream>::ExprGrammars()
