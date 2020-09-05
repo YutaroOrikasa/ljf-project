@@ -8,6 +8,18 @@
 #include "ljf/ljf.hpp"
 #include "runtime/runtime-internal.hpp"
 
+// runtime.so must be loaded with dlopen().
+// runtime.so must not be statically linked to main executable.
+// runtime.so must not be dynamically linked to main executable.
+//
+// The reason why runtime.so must not be statically linked
+// is JIT compiled code (.so) can not be linked to ljf runtime functoins.
+//
+// The reason why runtime.so must not be dynamically linked
+// is there are no portable methods that we know the path
+// to the dynamic link library (this case, the path to runtime.so)
+// that is linked to running process itself.
+
 using namespace std::literals::string_literals;
 
 namespace
