@@ -6,7 +6,7 @@ BUILD_DIR ?= build
 INCLUDE_PATHS = ./include ./googletest/googletest/include ./
 INCLUDE_FLAGS := $(INCLUDE_PATHS:%=-I%)
 
-EXE_SOURCE_FILES = ljf-python/rtpl.cpp ljf-python/rtpl-phase1.cpp ljf-python/rppl.cpp 
+EXE_SOURCE_FILES = ljf-python/rtpl.cpp ljf-python/rtpl-phase1.cpp ljf-python/rppl.cpp
 
 GRAMMAR_SOURCE_FILES = $(shell find ljf-python/grammar -name '*.cpp')
 
