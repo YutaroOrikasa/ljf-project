@@ -23,7 +23,8 @@ DEPENDENCY_FILES := $(SOURCE_FILES:%=$(BUILD_DIR)/%.d)
 
 
 _DEP_FLAGS := -MMD -MP
-override CXXFLAGS += -Wall -std=c++17 $(_DEP_FLAGS) $(INCLUDE_FLAGS)
+override CXXFLAGS += -Wall -std=c++17 $(_DEP_FLAGS) $(INCLUDE_FLAGS) \
+						-I$(BUILD_DIR) -include ljf-python/grammar/expr.hpp
 
 all: $(EXECUTABLE_FILES) $(UNITTEST_EXECUTABLE)
 
@@ -44,9 +45,14 @@ $(BUILD_DIR)/ljf-python/%.cpp.o: ljf-python/%.cpp
 # 										$(BUILD_DIR)/ljf-python/grammar/expr.o \
 # 										ljf-python/rppl.cpp -o $@
 
-$(BUILD_DIR)/ljf-python/bin/rppl: $(BUILD_DIR)/ljf-python/rppl.cpp.o $(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o
+$(BUILD_DIR)/ljf-python/grammar/expr.hpp.pch:
 	mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -fno-exceptions $(BUILD_DIR)/ljf-python/rppl.cpp.o $(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o -o $@
+	$(CXX) -Wall -std=c++17 $(_DEP_FLAGS) $(INCLUDE_FLAGS)\
+		-fno-exceptions ljf-python/grammar/expr.hpp -xc++-header -o $@
+
+$(BUILD_DIR)/ljf-python/bin/rppl: $(BUILD_DIR)/ljf-python/rppl.cpp.o $(BUILD_DIR)/ljf-python/grammar/expr.hpp.pch
+	mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -fno-exceptions $(BUILD_DIR)/ljf-python/rppl.cpp.o -o $@
 
 .PHONY: run-rtpl
 run-rtpl: $(BUILD_DIR)/ljf-python/bin/rtpl
@@ -60,12 +66,12 @@ $(BUILD_DIR)/ljf-python/unittests/%.cpp.o: ljf-python/unittests/%.cpp
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c -fno-exceptions $< -o $@
 
-$(UNITTEST_EXECUTABLE): $(UNITTEST_OBJECT_FILES) $(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o
+$(UNITTEST_EXECUTABLE): $(UNITTEST_OBJECT_FILES) $(BUILD_DIR)/ljf-python/grammar/expr.hpp.pch
 	mkdir -p $(@D)
 	$(MAKE) $(BUILD_DIR)/libgtest.a
 	$(CXX) $(CXXFLAGS) -fno-exceptions $(BUILD_DIR)/libgtest.a \
 										$(UNITTEST_OBJECT_FILES) \
-										$(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o -o $@
+										-o $@
 
 .PHONY: run-unittest
 run-unittest: $(UNITTEST_EXECUTABLE)
