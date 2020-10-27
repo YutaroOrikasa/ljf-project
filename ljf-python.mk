@@ -35,14 +35,6 @@ $(BUILD_DIR)/ljf-python/%.cpp.o: ljf-python/%.cpp
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c -fno-exceptions $< -o $@
 
-# $(BUILD_DIR)/ljf-python/rppl: \
-# 							$(BUILD_DIR)/ljf-python/grammar/grammar.o \
-# 							$(BUILD_DIR)/ljf-python/grammar/expr.o \
-# 							ljf-python/rppl.cpp
-# 	mkdir -p $(BUILD_DIR)/ljf-python
-# 	$(CXX) $(CXXFLAGS) -fno-exceptions $(BUILD_DIR)/ljf-python/grammar/grammar.o \
-# 										$(BUILD_DIR)/ljf-python/grammar/expr.o \
-# 										ljf-python/rppl.cpp -o $@
 
 $(BUILD_DIR)/ljf-python/bin/rppl: $(BUILD_DIR)/ljf-python/rppl.cpp.o $(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o
 	mkdir -p $(@D)
