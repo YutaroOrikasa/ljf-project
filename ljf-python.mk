@@ -7,7 +7,7 @@ INCLUDE_PATHS = ./include ./googletest/googletest/include ./
 INCLUDE_FLAGS := $(INCLUDE_PATHS:%=-I%)
 
 _DEP_FLAGS := -MMD -MP
-override CXXFLAGS += -Wall -std=c++17 $(_DEP_FLAGS) $(INCLUDE_FLAGS)
+override CXXFLAGS += -Wall -std=c++17 $(_DEP_FLAGS) $(INCLUDE_FLAGS) -fno-exceptions
 
 
 ### first rule ###
@@ -22,16 +22,16 @@ EXECUTABLE_FILES = $(EXE_SOURCE_FILES:ljf-python/%.cpp=$(BUILD_DIR)/ljf-python/b
 
 $(BUILD_DIR)/ljf-python/bin/%: $(BUILD_DIR)/ljf-python/%.cpp.o
 	mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -fno-exceptions $< -o $@
+	$(CXX) $(CXXFLAGS) $< -o $@
 
 $(BUILD_DIR)/ljf-python/%.cpp.o: ljf-python/%.cpp
 	mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -c -fno-exceptions $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 
 $(BUILD_DIR)/ljf-python/bin/rppl: $(BUILD_DIR)/ljf-python/rppl.cpp.o $(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o
 	mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -fno-exceptions $(BUILD_DIR)/ljf-python/rppl.cpp.o $(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o -o $@
+	$(CXX) $(CXXFLAGS) $(BUILD_DIR)/ljf-python/rppl.cpp.o $(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o -o $@
 
 
 ### run executable ###
@@ -53,12 +53,12 @@ UNITTEST_EXECUTABLE = $(BUILD_DIR)/ljf-python/unittest
 
 $(BUILD_DIR)/ljf-python/unittests/%.cpp.o: ljf-python/unittests/%.cpp
 	mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -c -fno-exceptions $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(UNITTEST_EXECUTABLE): $(UNITTEST_OBJECT_FILES) $(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o
 	mkdir -p $(@D)
 	$(MAKE) $(BUILD_DIR)/libgtest.a
-	$(CXX) $(CXXFLAGS) -fno-exceptions $(BUILD_DIR)/libgtest.a \
+	$(CXX) $(CXXFLAGS) $(BUILD_DIR)/libgtest.a \
 										$(UNITTEST_OBJECT_FILES) \
 										$(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o -o $@
 
