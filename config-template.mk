@@ -1,4 +1,6 @@
-# Please uncomment you want to overwrite.
+# Please copy this file to config.mk like
+# 		cp config-template.mk config.mk
+# , uncomment lines and overwrite configuation.
 
 # BUILD_DIR = 
 
