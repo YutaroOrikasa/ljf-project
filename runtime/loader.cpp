@@ -59,7 +59,7 @@ void check_context_initialized()
 }
 
 bool verbose = false;
-auto &verbs()
+llvm::raw_ostream &verbs()
 {
     if (verbose)
     {
