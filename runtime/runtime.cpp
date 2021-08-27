@@ -87,12 +87,6 @@ struct TypeCalcData
 std::shared_ptr<TypeObject> calculate_type(Object &obj);
 std::shared_ptr<TypeObject> calculate_type(Object &obj, TypeCalcData &);
 
-enum TableVisiblity
-{
-    visible,
-    hidden
-};
-
 class Object
 {
 private:
@@ -1187,6 +1181,13 @@ create_callee_environment(Environment *parent, Object *arg)
 //     decrement_ref_count(old_value);
 // }
 } // namespace
+
+Object *ljf_get(Object *obj, const char *key)
+{
+    check_not_null(obj);
+
+    return obj->get(key);
+}
 
 Object *ljf_get_object_from_table(Object *obj, const char *key)
 {

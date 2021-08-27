@@ -11,6 +11,12 @@ namespace ljf
 class Object;
 using Environment = Object;
 
+enum TableVisiblity
+{
+    visible,
+    hidden
+};
+
 class runtime_error : public std::runtime_error
 {
 public:
@@ -29,6 +35,8 @@ constexpr std::nullptr_t ljf_undefined = nullptr;
 
 extern "C"
 {
+    LJFObject *ljf_get(ljf::Object *obj, const char *key, ljf::TableVisiblity visiblity);
+
     LJFObject *ljf_get_object_from_table(ljf::Object *obj, const char *key);
     void ljf_set_object_to_table(LJFObject *obj, const char *key, LJFObject *value);
 
