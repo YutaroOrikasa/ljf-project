@@ -37,7 +37,6 @@ extern "C"
 {
     LJFObject *ljf_get(ljf::Object *obj, const char *key, ljf::TableVisiblity visiblity);
 
-    LJFObject *ljf_get_object_from_table(ljf::Object *obj, const char *key);
     void ljf_set_object_to_table(LJFObject *obj, const char *key, LJFObject *value);
 
     LJFObject *ljf_get_object_from_hidden_table(LJFObject *obj, const char *key);

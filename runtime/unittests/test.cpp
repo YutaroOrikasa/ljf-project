@@ -4,16 +4,8 @@
 
 using namespace ljf;
 
-TEST(test_ljf, test_ljf_set_object_to_table)
-{
-    ObjectHolder obj = ljf_new_object();
-    ObjectHolder elem = ljf_new_object();
-    ljf_set_object_to_table(obj.get(), "elem", elem.get());
 
-    ASSERT_EQ(elem.get(), ljf_get_object_from_table(obj.get(), "elem"));
-}
-
-TEST(LJFGet, GetVisible)
+TEST(LJFSetGet, SetGetVisible)
 {
     ObjectHolder obj = ljf_new_object();
     ObjectHolder elem = ljf_new_object();
@@ -23,7 +15,7 @@ TEST(LJFGet, GetVisible)
     ASSERT_NE(elem.get(), ljf_get(obj.get(), "elem", ljf::hidden));
 }
 
-TEST(LJFGet, GetHidden)
+TEST(LJFSetGet, SetGetHidden)
 {
     ObjectHolder obj = ljf_new_object();
     ObjectHolder elem = ljf_new_object();

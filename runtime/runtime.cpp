@@ -925,17 +925,17 @@ struct CallStack : Object
 
     Environment *env()
     {
-        return ljf_get_object_from_table(this, "env");
+        return ljf_get(this, "env", ljf::visible);
     }
 
     TemporaryStorage *tmp()
     {
-        return ljf_get_object_from_table(this, "tmp");
+        return ljf_get(this, "tmp", ljf::visible);
     }
 
     CallStack *next()
     {
-        return static_cast<CallStack *>(ljf_get_object_from_table(this, "next"));
+        return static_cast<CallStack *>(ljf_get(this, "next", ljf::visible));
     }
 };
 
@@ -1189,13 +1189,6 @@ Object *ljf_get(ljf::Object *obj, const char *key, ljf::TableVisiblity visiblity
     return obj->get(key);
 }
 
-Object *ljf_get_object_from_table(Object *obj, const char *key)
-{
-    check_not_null(obj);
-
-    return obj->get(key);
-}
-
 void ljf_set_object_to_table(Object *obj, const char *key, Object *value)
 {
     check_not_null(obj);
@@ -1327,7 +1320,7 @@ uint64_t ljf_get_native_data(const Object *obj)
     return obj->get_native_data();
 }
 
-Object *ljf_get_object_from_environment(Environment *env, const char *key)
+Object *ljf_get_object_from_environment(Environment *env, const char *key, ljf::TableVisiblity vis)
 {
     check_not_null(env);
 
@@ -1342,7 +1335,7 @@ Object *ljf_get_object_from_environment(Environment *env, const char *key)
     for (size_t i = 0; i < maps->array_size(); i++)
     {
         auto obj = maps->array_at(i);
-        auto value = ljf_get_object_from_table(obj, key);
+        auto value = ljf_get(obj, key, vis);
         if (value)
         {
             return value;
