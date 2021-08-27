@@ -1334,6 +1334,8 @@ Object *ljf_get_object_from_environment(Environment *env, const char *key, ljf::
 
     for (size_t i = 0; i < maps->array_size(); i++)
     {
+        // env object is nested.
+        // maps->array_at(0) is most inner environment.
         auto obj = maps->array_at(i);
         auto value = ljf_get(obj, key, vis);
         if (value)
