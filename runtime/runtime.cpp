@@ -1182,7 +1182,7 @@ create_callee_environment(Environment *parent, Object *arg)
 // }
 } // namespace
 
-Object *ljf_get(Object *obj, const char *key)
+Object *ljf_get(ljf::Object *obj, const char *key, ljf::TableVisiblity visiblity)
 {
     check_not_null(obj);
 
