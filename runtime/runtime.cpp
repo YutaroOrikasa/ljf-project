@@ -123,7 +123,7 @@ private:
     std::unordered_map<std::thread::id, ThreadLocalRoot *> threads;
 
 public:
-    void set_thread(std::thread::id id, ThreadLocalRoot *thread)
+    void add_thread(std::thread::id id, ThreadLocalRoot *thread)
     {
 
         std::lock_guard lk{mutex};
@@ -285,7 +285,7 @@ FunctionTable function_table;
 GlobalRoot global_root;
 thread_local ThreadLocalRoot *thread_local_root = []() {
     auto th = new ThreadLocalRoot;
-    global_root.set_thread(std::this_thread::get_id(), th);
+    global_root.add_thread(std::this_thread::get_id(), th);
     return th;
 }();
 struct ThreadLocalRootEraser
