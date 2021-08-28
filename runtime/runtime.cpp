@@ -856,7 +856,7 @@ create_callee_environment(Environment *parent, Object *arg)
 // }
 } // namespace
 
-Object *ljf_get(ljf::Object *obj, const char *key, ljf::TableVisiblity visiblity)
+Object *ljf_get(Object *obj, const char *key, ljf::TableVisiblity visiblity)
 {
     check_not_null(obj);
 
@@ -911,7 +911,7 @@ void ljf_push_object_to_array(Object *obj, Object *value)
     obj->array_push(value);
 }
 
-size_t ljf_array_size(LJFObject *obj)
+size_t ljf_array_size(Object *obj)
 {
     check_not_null(obj);
     return obj->array_size();
@@ -1041,7 +1041,7 @@ FunctionId ljf_register_native_function(Object *(*fn)(Environment *, TemporarySt
     return function_table.add_native(fn);
 }
 
-LJFObject *ljf_wrap_c_str(const char *str)
+Object *ljf_wrap_c_str(const char *str)
 {
     static_assert(sizeof(str) <= sizeof(uint64_t));
     ObjectHolder wrapper = ljf_new_object_with_native_data(reinterpret_cast<uint64_t>(str));
@@ -1055,7 +1055,7 @@ LJFObject *ljf_wrap_c_str(const char *str)
 
 /// return: returned object of module_main()
 /// out: env: environment of module
-static LJFObject *load_source_code(const char *language, const char *source_path, LJFObject *&env, bool create_module_local_env)
+static Object *load_source_code(const char *language, const char *source_path, Object *&env, bool create_module_local_env)
 {
     ObjectHolder env_holder = env;
     if (create_module_local_env)
@@ -1070,7 +1070,7 @@ static LJFObject *load_source_code(const char *language, const char *source_path
     return ret.get();
 }
 
-LJFObject *ljf_load_source_code(const char *language, const char *source_path, LJFObject *env, bool create_module_local_env)
+Object *ljf_load_source_code(const char *language, const char *source_path, Object *env, bool create_module_local_env)
 {
     load_source_code(language, source_path, /* reference of */ env, create_module_local_env);
     // now env is updated.
@@ -1079,27 +1079,27 @@ LJFObject *ljf_load_source_code(const char *language, const char *source_path, L
 
 // ----- internal -----
 
-LJFFunctionId ljf_internal_register_llvm_function(llvm::Function *f)
+FunctionId ljf_internal_register_llvm_function(llvm::Function *f)
 {
     return ljf::register_llvm_function(f);
 }
 
-LJFObject *ljf_internal_get_object_by_index(LJFObject *obj, uint64_t index)
+Object *ljf_internal_get_object_by_index(Object *obj, uint64_t index)
 {
     return obj->array_table_get_index(index);
 }
 
-void ljf_internal_set_object_by_index(LJFObject *obj, uint64_t index, LJFObject *value)
+void ljf_internal_set_object_by_index(Object *obj, uint64_t index, Object *value)
 {
     obj->array_table_set_index(index, value);
 }
 
-void ljf_internal_reserve_object_array_table_size(LJFObject *obj, uint64_t size)
+void ljf_internal_reserve_object_array_table_size(Object *obj, uint64_t size)
 {
     obj->array_table_reserve(size);
 }
 
-void ljf_internal_resize_object_array_table_size(LJFObject *obj, uint64_t size)
+void ljf_internal_resize_object_array_table_size(Object *obj, uint64_t size)
 {
     obj->array_table_resize(size);
 }

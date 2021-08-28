@@ -97,7 +97,7 @@ ObjectHolder load_source_code(const std::string &language, const std::string &so
     }
 
     ObjectHolder module_func_table = ljf_new_object();
-    std::map<LJFFunctionId, llvm::Function *> func_to_register;
+    std::map<FunctionId, llvm::Function *> func_to_register;
 
     for (auto &func : module->functions())
     {
@@ -139,7 +139,7 @@ ObjectHolder load_source_code(const std::string &language, const std::string &so
         auto void_ty = llvm::Type::getVoidTy(llvm_context);
         auto i8_ty = llvm::Type::getInt8Ty(llvm_context);
         auto i8_ptr_ty = llvm::PointerType::get(i8_ty, 0);
-        // auto ljf_object_ty = llvm::StructType::create(llvm_context, "LJFObject");
+        // auto ljf_object_ty = llvm::StructType::create(llvm_context, "ljf::Object");
         // auto ljf_object_ptr_ty = llvm::PointerType::get(ljf_object_ty, 0);
         auto ljf_module_init_fn_ty = llvm::FunctionType::get(void_ty, {});
         auto ljf_module_init_fn = llvm::Function::Create(ljf_module_init_fn_ty, llvm::Function::ExternalLinkage, "ljf_module_init", *module);
@@ -230,7 +230,7 @@ ObjectHolder load_source_code(const std::string &language, const std::string &so
     auto ljf_module_init = reinterpret_cast<void (*)()>(ljf_module_init_addr);
     ljf_module_init();
 
-    auto module_main = reinterpret_cast<LJFObject *(*)(LJFObject *, LJFObject *)>(module_main_addr);
+    auto module_main = reinterpret_cast<Object *(*)(Object *, Object *)>(module_main_addr);
 
     ObjectHolder ret = module_main(env, module_func_table.get());
     return ret;

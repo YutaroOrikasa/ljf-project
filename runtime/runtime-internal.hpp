@@ -74,12 +74,12 @@ ObjectHolder load_source_code(const std::string &language, const std::string &so
 
 extern "C"
 {
-    LJFFunctionId ljf_internal_register_llvm_function(llvm::Function *f);
+    ljf::FunctionId ljf_internal_register_llvm_function(llvm::Function *f);
 
-    LJFObject *ljf_internal_get_object_by_index(LJFObject *obj, uint64_t index);
-    void ljf_internal_set_object_by_index(LJFObject *obj, uint64_t index, LJFObject *value);
-    void ljf_internal_reserve_object_array_table_size(LJFObject *obj, uint64_t size);
-    void ljf_internal_resize_object_array_table_size(LJFObject *obj, uint64_t size);
+    ljf::Object *ljf_internal_get_object_by_index(ljf::Object *obj, uint64_t index);
+    void ljf_internal_set_object_by_index(ljf::Object *obj, uint64_t index, ljf::Object *value);
+    void ljf_internal_reserve_object_array_table_size(ljf::Object *obj, uint64_t size);
+    void ljf_internal_resize_object_array_table_size(ljf::Object *obj, uint64_t size);
 }
 
 namespace ljf

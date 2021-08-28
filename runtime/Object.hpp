@@ -20,8 +20,6 @@ namespace ljf
 class Object;
 using ObjectPtr = Object *;
 
-using FunctionId = LJFFunctionId;
-
 class TypeObject;
 
 namespace
