@@ -362,6 +362,12 @@ public:
     }
 };
 
+inline
+void set_object_to_table(Object *obj, const char *key, Object *value)
+{
+    ::ljf_set(obj, key, value, ljf::visible);
+}
+
 void increment_ref_count(Object *obj)
 {
     if (obj)
@@ -631,7 +637,7 @@ TEST(ObjectIterator, HashTable)
 {
     ObjectHolder obj = ljf_new_object();
     ObjectHolder elem = ljf_new_object();
-    ljf_set_object_to_table(obj.get(), "elem", elem.get());
+    set_object_to_table(obj.get(), "elem", elem.get());
 
     auto iter = obj->iter_hash_table();
     EXPECT_EQ(iter.get().key, "elem");
@@ -644,14 +650,14 @@ TEST(ObjectIterator, BrokenIter)
 {
     ObjectHolder obj = ljf_new_object();
     ObjectHolder elem = ljf_new_object();
-    ljf_set_object_to_table(obj.get(), "elem", elem.get());
+    set_object_to_table(obj.get(), "elem", elem.get());
 
     auto iter = obj->iter_hash_table();
     EXPECT_NO_THROW(iter.get());
     EXPECT_NO_THROW(iter.next());
 
     auto iter2 = obj->iter_hash_table();
-    ljf_set_object_to_table(obj.get(), "elem2", elem.get());
+    set_object_to_table(obj.get(), "elem2", elem.get());
 
     EXPECT_THROW(iter2.get(), BrokenIteratorError);
     EXPECT_THROW(iter2.next(), BrokenIteratorError);
@@ -802,9 +808,9 @@ TEST(calculate_type, Test)
         ObjectHolder a1 = ljf_new_object();
         ObjectHolder a2 = ljf_new_object();
         ObjectHolder b = ljf_new_object();
-        ljf_set_object_to_table(obj.get(), "a1", a1.get());
-        ljf_set_object_to_table(obj.get(), "a2", a2.get());
-        ljf_set_object_to_table(a1.get(), "b", b.get());
+        set_object_to_table(obj.get(), "a1", a1.get());
+        set_object_to_table(obj.get(), "a2", a2.get());
+        set_object_to_table(a1.get(), "b", b.get());
         return obj;
     };
 
@@ -822,9 +828,9 @@ TEST(calculate_type, TestCircularReference)
     ObjectHolder a = ljf_new_object();
     ObjectHolder b = ljf_new_object();
 
-    ljf_set_object_to_table(obj.get(), "a", a.get());
-    ljf_set_object_to_table(a.get(), "b", b.get());
-    ljf_set_object_to_table(b.get(), "obj", obj.get());
+    set_object_to_table(obj.get(), "a", a.get());
+    set_object_to_table(a.get(), "b", b.get());
+    set_object_to_table(b.get(), "obj", obj.get());
 
     obj->calculate_type();
 
@@ -918,9 +924,9 @@ struct CallStack : Object
 {
     explicit CallStack(Environment *env, TemporaryStorage *tmp, CallStack *next)
     {
-        ljf_set_object_to_table(this, "env", env);
-        ljf_set_object_to_table(this, "tmp", tmp);
-        ljf_set_object_to_table(this, "next", next);
+        ljf::set_object_to_table(this, "env", env);
+        ljf::set_object_to_table(this, "tmp", tmp);
+        ljf::set_object_to_table(this, "next", next);
     }
 
     Environment *env()
@@ -1189,10 +1195,10 @@ Object *ljf_get(ljf::Object *obj, const char *key, ljf::TableVisiblity visiblity
     return obj->get(key);
 }
 
-void ljf_set_object_to_table(Object *obj, const char *key, Object *value)
+void ljf_set(Object *obj, const char *key, Object *value, ljf::TableVisiblity visiblity)
 {
     check_not_null(obj);
-    obj->set_object_to_table(visible, key, value);
+    obj->set_object_to_table(visiblity, key, value);
 }
 
 Object *ljf_get_object_from_hidden_table(Object *obj, const char *key)
@@ -1359,7 +1365,7 @@ void ljf_set_object_to_environment(Environment *env, const char *key, Object *va
     }
 
     auto map0 = maps->array_at(0);
-    ljf_set_object_to_table(map0, key, value);
+    set_object_to_table(map0, key, value);
 }
 
 FunctionId ljf_register_native_function(Object *(*fn)(Environment *, TemporaryStorage *))
@@ -1373,7 +1379,7 @@ LJFObject *ljf_wrap_c_str(const char *str)
     ObjectHolder wrapper = ljf_new_object_with_native_data(reinterpret_cast<uint64_t>(str));
 
     // TODO: set attribute = constant
-    ljf_set_object_to_table(wrapper.get(), "length", ljf_new_object_with_native_data(strlen(str)));
+    set_object_to_table(wrapper.get(), "length", ljf_new_object_with_native_data(strlen(str)));
 
     thread_local_root->hold_returned_object(wrapper.get());
     return wrapper.get();
@@ -1449,7 +1455,7 @@ extern "C" int ljf_internal_start_entry_point(ljf_main_t ljf_main,
             ljf_push_object_to_array(args, wrap);
         }
         ObjectHolder arg = ljf_new_object();
-        ljf_set_object_to_table(arg.get(), "args", args);
+        set_object_to_table(arg.get(), "args", args);
         ObjectHolder env_holder = create_callee_environment(nullptr, arg.get());
 
         Object *env = env_holder.get();
