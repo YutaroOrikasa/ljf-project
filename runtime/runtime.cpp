@@ -162,6 +162,7 @@ struct ThreadLocalRootEraser
     ~ThreadLocalRootEraser()
     {
         global_root.erase_thread(std::this_thread::get_id());
+        delete thread_local_root;
     }
 };
 thread_local ThreadLocalRootEraser eraser;
