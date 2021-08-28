@@ -15,14 +15,10 @@ class Object;
 using ObjectPtr = Object *;
 
 class TypeObject;
-
-namespace
-{
 struct TypeCalcData
 {
     std::unordered_set<Object *> objects_in_calculation;
 };
-} // namespace
 
 std::shared_ptr<TypeObject> calculate_type(Object &obj);
 std::shared_ptr<TypeObject> calculate_type(Object &obj, TypeCalcData &);
@@ -308,6 +304,7 @@ void set_object_to_table(Object *obj, const char *key, Object *value)
     ::ljf_set(obj, key, value, ljf::visible);
 }
 
+inline
 void increment_ref_count(Object *obj)
 {
     if (obj)
@@ -317,6 +314,7 @@ void increment_ref_count(Object *obj)
     }
 }
 
+inline
 void decrement_ref_count(Object *obj)
 {
     // std::cerr << "decrement_ref_count() obj: " << obj << std::endl;
