@@ -14,6 +14,7 @@
 #include "Object.hpp"
 #include "ObjectIterator.hpp"
 #include "TypeObject.hpp"
+#include "Roots.hpp"
 
 namespace ljf
 {
@@ -83,124 +84,6 @@ struct FunctionData
     std::unordered_map<TypeObject, DataForArgType> data_for_arg_type;
 };
 
-// class Root : public Object
-// {
-// private:
-//     std::mutex mutex;
-//     std::unordered_map<std::thread::id, Object*> threads;
-// public:
-//     void set_thread(std::thread::id id, Object* obj) {
-//         std::lock_guard lk {mutex};
-//         threads[id] = obj;
-//     }
-
-//     void erase_thread(std::thread::id id) {
-//         std::lock_guard lk {mutex};
-//         threads.erase(id);
-//     }
-
-//     std::vector<Object*> get_all_threads() {
-//         std::lock_guard lk {mutex};
-//         std::vector<Object*> ret;
-//         for (auto&& [id, obj] : threads)
-//         {
-//             ret.push_back(obj);
-//         }
-//         return ret;
-//     }
-// };
-
-class ThreadLocalRoot;
-
-class GlobalRoot
-{
-private:
-    std::mutex mutex;
-    std::unordered_map<std::thread::id, ThreadLocalRoot *> threads;
-
-public:
-    void add_thread(std::thread::id id, ThreadLocalRoot *thread)
-    {
-
-        std::lock_guard lk{mutex};
-        threads[id] = thread;
-    }
-
-    void erase_thread(std::thread::id id)
-    {
-        std::lock_guard lk{mutex};
-        threads.erase(id);
-    }
-
-    template <typename Function>
-    void foreach_thread(Function &&f)
-    {
-        std::lock_guard lk{mutex};
-        for (auto &&[id, thread] : threads)
-        {
-            (void)id;
-            f(thread);
-        }
-    }
-};
-
-struct CallStack : Object
-{
-    explicit CallStack(Environment *env, TemporaryStorage *tmp, CallStack *next)
-    {
-        ljf::set_object_to_table(this, "env", env);
-        ljf::set_object_to_table(this, "tmp", tmp);
-        ljf::set_object_to_table(this, "next", next);
-    }
-
-    Environment *env()
-    {
-        return ljf_get(this, "env", ljf::visible);
-    }
-
-    TemporaryStorage *tmp()
-    {
-        return ljf_get(this, "tmp", ljf::visible);
-    }
-
-    CallStack *next()
-    {
-        return static_cast<CallStack *>(ljf_get(this, "next", ljf::visible));
-    }
-};
-
-class ThreadLocalRoot
-{
-private:
-    Object *returned_object_ = nullptr;
-    CallStack *call_stack = nullptr;
-
-public:
-    void hold_returned_object(Object *obj)
-    {
-        if (obj == returned_object_)
-        {
-            return;
-        }
-
-        decrement_ref_count(returned_object_);
-        returned_object_ = obj;
-        increment_ref_count(obj);
-    }
-
-    void push_call_stack(Environment *env, TemporaryStorage *tmp)
-    {
-        auto next = call_stack;
-        call_stack = new CallStack(env, tmp, next);
-    }
-
-    void pop_call_stack()
-    {
-        auto next = call_stack->next();
-        call_stack = next;
-    }
-};
-
 class FunctionTable
 {
 private:
@@ -257,8 +140,19 @@ public:
 namespace
 {
 FunctionTable function_table;
+
+FunctionId register_llvm_function(llvm::Function *f)
+{
+    return function_table.add_llvm(f);
+}
+} // namespace
+
+// Roots
+namespace
+{
 GlobalRoot global_root;
-thread_local ThreadLocalRoot *thread_local_root = []() {
+thread_local ThreadLocalRoot *thread_local_root = []()
+{
     auto th = new ThreadLocalRoot;
     global_root.add_thread(std::this_thread::get_id(), th);
     return th;
@@ -272,11 +166,8 @@ struct ThreadLocalRootEraser
 };
 thread_local ThreadLocalRootEraser eraser;
 
-FunctionId register_llvm_function(llvm::Function *f)
-{
-    return function_table.add_llvm(f);
-}
 } // namespace
+
 
 void check_not_null(const Object *obj)
 {
@@ -287,7 +178,6 @@ void check_not_null(const Object *obj)
 }
 
 } // namespace ljf
-
 
 using namespace ljf;
 
