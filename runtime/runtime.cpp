@@ -24,11 +24,7 @@ DoneMsg dm{"ljf runtime unloading"};
 
 namespace std
 {
-template <>
-struct hash<ljf::TypeObject>
-{
-    size_t operator()(const ljf::TypeObject &type) const;
-};
+
 } // namespace std
 
 static struct RuntimeLoadedOnceCheck
@@ -292,10 +288,6 @@ void check_not_null(const Object *obj)
 
 } // namespace ljf
 
-size_t std::hash<ljf::TypeObject>::operator()(const ljf::TypeObject &type) const
-{
-    return type.hash();
-}
 
 using namespace ljf;
 

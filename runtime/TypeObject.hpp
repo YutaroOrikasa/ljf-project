@@ -7,6 +7,8 @@
 #include "Object.hpp"
 #include "ObjectIterator.hpp"
 
+template <>
+struct std::hash<ljf::TypeObject>;
 namespace ljf
 {
 class TypeObject
@@ -184,3 +186,12 @@ TEST(calculate_type, TestCircularReference)
 }
 
 } // namespace ljf
+
+template <>
+struct std::hash<ljf::TypeObject>
+{
+    size_t operator()(const ljf::TypeObject &type) const
+    {
+        return type.hash();
+    }
+};
