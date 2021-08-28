@@ -38,7 +38,7 @@ override CXXFLAGS += $(LIBLLVM_CXXFLAGS) -include $(CONFIG_FILE)
 override LDFLAGS += $(LIBLLVM_LDFLAGS) -lLLVM
 # export doesn't work with overrided the macro
 # that is defined on command line argument or given as environment variable,
-# so we implicitly have to pass these variables to sub make by commandline argument.
+# so we explicitly have to pass these variables to sub make by commandline argument.
 
 # used by header dependency check in common.mk
 SOURCE_FILES := main.cpp ljf.cpp
