@@ -36,7 +36,6 @@ extern "C"
 
     void ljf_set(ljf::Object *obj, const char *key, ljf::Object *value, ljf::TableVisiblity visiblity);
 
-    ljf::Object *ljf_get_object_from_hidden_table(ljf::Object *obj, const char *key);
     void ljf_set_object_to_hidden_table(ljf::Object *obj, const char *key, ljf::Object *value);
 
     ljf::FunctionId ljf_get_function_id_from_function_table(ljf::Object *obj, const char *key);

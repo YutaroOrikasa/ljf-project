@@ -288,6 +288,12 @@ void set_object_to_table(Object *obj, const char *key, Object *value)
 }
 
 inline
+Object *get_object_from_hidden_table(Object *obj, const char *key)
+{
+    return ::ljf_get(obj, key, hidden);
+}
+
+inline
 void increment_ref_count(Object *obj)
 {
     if (obj)

@@ -234,14 +234,14 @@ create_callee_environment(Environment *parent, Object *arg)
 {
     // Prepare callee local env and set arguments into the local env.
     auto callee_env = internal::create_environment(arg);
-    auto callee_env_maps = ljf_get_object_from_hidden_table(callee_env.get(), "ljf.env.maps");
+    auto callee_env_maps = get_object_from_hidden_table(callee_env.get(), "ljf.env.maps");
 
     if (!parent)
     {
         return callee_env;
     }
 
-    auto parent_env_maps = ljf_get_object_from_hidden_table(parent, "ljf.env.maps");
+    auto parent_env_maps = get_object_from_hidden_table(parent, "ljf.env.maps");
 
     if (!parent_env_maps)
     {
@@ -276,12 +276,6 @@ void ljf_set(Object *obj, const char *key, Object *value, ljf::TableVisiblity vi
     obj->set(key, value, visiblity);
 }
 
-Object *ljf_get_object_from_hidden_table(Object *obj, const char *key)
-{
-    check_not_null(obj);
-
-    return obj->get(key, hidden);
-}
 
 void ljf_set_object_to_hidden_table(Object *obj, const char *key, Object *value)
 {
@@ -405,7 +399,7 @@ Object *ljf_get_object_from_environment(Environment *env, const char *key, ljf::
 {
     check_not_null(env);
 
-    auto maps = ljf_get_object_from_hidden_table(env, "ljf.env.maps");
+    auto maps = get_object_from_hidden_table(env, "ljf.env.maps");
 
     if (!maps)
     {
@@ -432,7 +426,7 @@ void ljf_set_object_to_environment(Environment *env, const char *key, Object *va
 {
     check_not_null(env);
 
-    auto maps = ljf_get_object_from_hidden_table(env, "ljf.env.maps");
+    auto maps = get_object_from_hidden_table(env, "ljf.env.maps");
 
     if (!maps)
     {
