@@ -3,3 +3,5 @@ build/
 tmp/
 config.mk
 ljf-config.h
+compile_commands.json
+.cache

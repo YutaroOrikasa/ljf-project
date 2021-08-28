@@ -69,6 +69,15 @@ $(BUILD_DIR)/runtime.so: $(BUILD_DIR)/libgtest.a
 		CXXFLAGS="$(CXXFLAGS)" \
 		LDFLAGS="$(LDFLAGS)"
 
+# compile_commands.json
+# This target have to be PHONY because make can't find header file dependency.
+# NOTEICE: Build with ccache (cache hit) will not work well,
+# 			so we  set CXX manually.
+.PHONY: compile_commands.json
+compile_commands.json: $(BUILD_DIR)/libgtest.a
+	$(MAKE) clean
+	bear -- $(MAKE) CXX=c++ $(BUILD_DIR)/runtime.so
+
 $(BUILD_DIR)/unittest-runtime: $(BUILD_DIR)/runtime.so
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(LDFLAGS) $^ -o $@
