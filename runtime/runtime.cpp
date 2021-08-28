@@ -205,27 +205,6 @@ public:
     }
 };
 
-// class CallFrameData {
-//     Object obj;
-//     Root& root_;
-
-// public:
-//     explicit
-//     CallFrameData(Root& root) : root_(root) {
-//         auto thread_id = std::this_thread::get_id();
-//         root.set_thread(thread_id, &obj);
-//     }
-
-//     ~CallFrameData() {
-//         auto thread_id = std::this_thread::get_id();
-//         root_.erase_thread(thread_id);
-//     }
-
-//     void hold_returned_object(Object* obj) {
-
-//     }
-// };
-
 class FunctionTable
 {
 private:
@@ -400,20 +379,6 @@ create_callee_environment(Environment *parent, Object *arg)
     return callee_env;
 }
 
-// void set_object_to_table(Object &obj, std::unordered_map<std::string, Object *> &table, const char *key, Object *value)
-// {
-
-//     Object *old_value;
-//     {
-//         std::lock_guard lk{obj};
-
-//         Object *&elem_ref = table[key];
-//         old_value = elem_ref;
-//         elem_ref = value;
-//     }
-
-//     decrement_ref_count(old_value);
-// }
 } // namespace
 
 Object *ljf_get(Object *obj, const char *key, ljf::TableVisiblity visiblity)
