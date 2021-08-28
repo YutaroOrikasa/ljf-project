@@ -12,7 +12,7 @@ TEST(LJFSetGet, SetGetVisible)
     ljf_set(obj.get(), "elem", elem.get(), ljf::visible);
 
     ASSERT_EQ(elem.get(), ljf_get(obj.get(), "elem", ljf::visible));
-    ASSERT_NE(elem.get(), ljf_get(obj.get(), "elem", ljf::hidden));
+    ASSERT_THROW(ljf_get(obj.get(), "elem", ljf::hidden), std::out_of_range);
 }
 
 TEST(LJFSetGet, SetGetHidden)
@@ -22,7 +22,7 @@ TEST(LJFSetGet, SetGetHidden)
     ljf_set(obj.get(), "elem", elem.get(), ljf::hidden);
 
     ASSERT_EQ(elem.get(), ljf_get(obj.get(), "elem", ljf::hidden));
-    ASSERT_NE(elem.get(), ljf_get(obj.get(), "elem", ljf::visible));
+    ASSERT_THROW(ljf_get(obj.get(), "elem", ljf::visible), std::out_of_range);
 }
 
 TEST(ObjectHolder, NotEqual)
