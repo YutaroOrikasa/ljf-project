@@ -169,7 +169,6 @@ thread_local ThreadLocalRootEraser eraser;
 
 } // namespace
 
-
 void check_not_null(const Object *obj)
 {
     if (!obj)
@@ -268,27 +267,27 @@ Object *ljf_get(Object *obj, const char *key, ljf::TableVisiblity visiblity)
 {
     check_not_null(obj);
 
-    return obj->get(key);
+    return obj->get(key, visiblity);
 }
 
 void ljf_set(Object *obj, const char *key, Object *value, ljf::TableVisiblity visiblity)
 {
     check_not_null(obj);
-    obj->set_object_to_table(visiblity, key, value);
+    obj->set(key, value, visiblity);
 }
 
 Object *ljf_get_object_from_hidden_table(Object *obj, const char *key)
 {
     check_not_null(obj);
 
-    return obj->get_object_from_table(hidden, key);
+    return obj->get(key, hidden);
 }
 
 void ljf_set_object_to_hidden_table(Object *obj, const char *key, Object *value)
 {
     check_not_null(obj);
 
-    obj->set_object_to_table(hidden, key, value);
+    obj->set(key, value, hidden);
 }
 
 /**************** array API ***************/

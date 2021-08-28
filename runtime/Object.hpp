@@ -61,24 +61,15 @@ public:
         ++other.version_;
     }
 
-    Object *get(const std::string &key)
+    Object *get(const char *key, TableVisiblity visiblity)
     {
+        auto &table = (visiblity == visible) ? hash_table_ : hidden_table_;
         std::lock_guard lk{mutex_};
 
-        if (!hash_table_.count(key))
-        {
-            // std::cerr << "ljf get(): no such key: " << key << std::endl;
-            return ljf_undefined;
-        }
-
-        return array_table_.at(hash_table_.at(key));
+        return array_table_.at(table.at(key));
     }
-    // void set(const std::string &key, ObjectPtr value)
-    // {
-    //     hash_table_.insert_or_assign(key, value);
-    // }
 
-    void set_object_to_table(TableVisiblity visiblity, const char *key, Object *value)
+    void set(const char *key, Object *value, TableVisiblity visiblity)
     {
 
         auto &table = (visiblity == visible) ? hash_table_ : hidden_table_;
@@ -101,14 +92,6 @@ public:
 
         array_table_set_index(index, value);
         ++version_;
-    }
-    Object *get_object_from_table(TableVisiblity visiblity, const char *key)
-    {
-
-        auto &table = (visiblity == visible) ? hash_table_ : hidden_table_;
-        std::lock_guard lk{mutex_};
-
-        return array_table_.at(table.at(key));
     }
 
     FunctionId get_function_id(const std::string &key)
