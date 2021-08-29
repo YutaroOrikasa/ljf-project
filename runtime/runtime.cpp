@@ -219,15 +219,7 @@ create_environment(bool prepare_0th_frame /*=true*/)
         return create_environment(nullptr);
     }
 }
-} // namespace ljf::internal
 
-extern "C" void ljf_internal_set_native_function(FunctionId id, FunctionPtr fn)
-{
-    function_table.set_native(id, fn);
-}
-
-namespace
-{
 
 ObjectHolder
 create_callee_environment(Environment *parent, Object *arg)
@@ -261,7 +253,14 @@ create_callee_environment(Environment *parent, Object *arg)
     return callee_env;
 }
 
-} // namespace
+} // namespace ljf::internal
+
+using namespace ljf::internal;
+
+extern "C" void ljf_internal_set_native_function(FunctionId id, FunctionPtr fn)
+{
+    function_table.set_native(id, fn);
+}
 
 Object *ljf_get(Object *obj, const char *key, ljf::TableVisiblity visiblity)
 {

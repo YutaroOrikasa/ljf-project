@@ -68,6 +68,7 @@ namespace ljf::internal
 {
 
 ObjectHolder create_environment(bool prepare_0th_frame = true);
+ObjectHolder create_callee_environment(Environment *parent, Object *arg);
 
 ObjectHolder load_source_code(const std::string &language, const std::string &source_path, Object *env);
 } // namespace ljf::internal
