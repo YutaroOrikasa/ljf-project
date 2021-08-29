@@ -27,15 +27,13 @@ template <typename Out>
 Out &operator<<(Out &out, const Object &);
 } // namespace ljf
 
-
-constexpr std::nullptr_t ljf_undefined = nullptr;
+constexpr ljf::Object *ljf_undefined = nullptr;
 
 extern "C"
 {
     ljf::Object *ljf_get(ljf::Object *obj, const char *key, ljf::TableVisiblity visiblity);
 
     void ljf_set(ljf::Object *obj, const char *key, ljf::Object *value, ljf::TableVisiblity visiblity);
-
 
     ljf::FunctionId ljf_get_function_id_from_function_table(ljf::Object *obj, const char *key);
     void ljf_set_function_id_to_function_table(ljf::Object *obj, const char *key, ljf::FunctionId function_id);
@@ -57,7 +55,6 @@ extern "C"
     ljf::Object *ljf_array_get(ljf::Object *obj, size_t index);
     void ljf_array_set(ljf::Object *obj, size_t index, ljf::Object *value);
     void ljf_array_push(ljf::Object *obj, ljf::Object *value);
-
 
     ljf::Object *ljf_wrap_c_str(const char *str);
 }

@@ -37,6 +37,11 @@ public:
         return obj_;
     }
 
+    /*implicit*/ operator Object *() const noexcept
+    {
+        return obj_;
+    }
+
     explicit operator bool() const noexcept
     {
         return bool(obj_);
@@ -52,15 +57,7 @@ public:
         return *obj_;
     }
 
-    bool operator==(const ObjectHolder &rhs) const
-    {
-        return get() == rhs.get();
-    }
-
-    bool operator!=(const ObjectHolder &rhs) const
-    {
-        return get() != rhs.get();
-    }
+    // operator Object *() defined so operator== and != need not be defined.
 };
 } // namespace ljf
 
