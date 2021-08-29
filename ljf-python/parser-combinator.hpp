@@ -235,7 +235,15 @@ public:
     {
         return msg_;
     }
+
+    template <typename... Msgs>
+    std::unique_ptr<Error> copy_ptr_with_new_msg(const std::string &msg, Msgs &&... msgs)
+    {
+        return std::make_unique<Error>(Error(token_, msg, msgs...));
+    }
 };
+
+
 
 template <typename Out>
 Out &operator<<(Out &out, const Error &e)
@@ -627,7 +635,7 @@ private:
         if (token_stream.current_position() != current_pos)
         {
             // return error
-            return ResultTy(std::move(result).error_ptr());
+            return ResultTy(std::move(result).error_ptr()->copy_ptr_with_new_msg("Unexpected token found"));
         }
         else
         {
@@ -640,7 +648,7 @@ private:
             {
                 // There are no parser left.
                 // Return the last result (== error)
-                return ResultTy(std::move(result).error_ptr());
+                return ResultTy(std::move(result).error_ptr()->copy_ptr_with_new_msg("Unexpected token found"));
             }
         }
     }
