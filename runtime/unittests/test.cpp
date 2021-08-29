@@ -31,10 +31,10 @@ TEST(LJFEnvironment, GetOuterValue)
     using namespace ljf::internal;
     ObjectHolder obj = ljf_new_object();
     ObjectHolder env0 = create_environment();
-    ljf_set_object_to_environment(env0.get(), "obj", obj.get());
-    ObjectHolder env = create_callee_environment(env0.get(), nullptr);
-    ASSERT_EQ(obj.get(), ljf_environment_get(env.get(), "obj", ljf::visible));
-    ASSERT_THROW(ljf_environment_get(env.get(), "not_exist", ljf::visible), std::out_of_range);
+    ljf_environment_set(env0, "obj", obj, ljf::visible);
+    ObjectHolder env = create_callee_environment(env0, nullptr);
+    ASSERT_EQ(obj, ljf_environment_get(env, "obj", ljf::visible));
+    ASSERT_THROW(ljf_environment_get(env, "not_exist", ljf::visible), std::out_of_range);
 
 }
 

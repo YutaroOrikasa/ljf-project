@@ -414,7 +414,7 @@ Object *ljf_environment_get(Environment *env, const char *key, ljf::TableVisibli
     return ljf_undefined;
 }
 
-void ljf_set_object_to_environment(Environment *env, const char *key, Object *value)
+void ljf_environment_set(Environment *env, const char *key, Object *value, TableVisiblity vis)
 {
     check_not_null(env);
 
@@ -426,7 +426,7 @@ void ljf_set_object_to_environment(Environment *env, const char *key, Object *va
     }
 
     auto map0 = maps->array_at(0);
-    set_object_to_table(map0, key, value);
+    ljf_set(map0, key, value, vis);
 }
 
 FunctionId ljf_register_native_function(Object *(*fn)(Environment *, TemporaryStorage *))
