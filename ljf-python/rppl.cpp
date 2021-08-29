@@ -109,34 +109,10 @@ private:
         std::cout << "]";
     }
 
-    auto impl(const EmptySExpr &) const
-    {
-        std::cout << "()";
-    }
-
     template <typename T>
     auto impl(const T &t) const
     {
         std::cout << "(Unknown type: " << typeid(t).name() << ")";
-    }
-
-    auto impl(const SExprList &s_expr_list) const
-    {
-        std::cout << "(";
-        bool is_first = true;
-        for (auto &&s_expr : s_expr_list)
-        {
-            if (is_first)
-            {
-                is_first = false;
-            }
-            else
-            {
-                std::cout << ", ";
-            }
-            (*this)(s_expr);
-        }
-        std::cout << ")";
     }
 
 public:
@@ -163,11 +139,6 @@ public:
     }
 
     bool operator()(const Expr &expr) const
-    {
-        return expr.accept(*this);
-    }
-
-    bool operator()(const SExpr &expr) const
     {
         return expr.accept(*this);
     }

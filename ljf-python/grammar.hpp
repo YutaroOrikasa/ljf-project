@@ -30,62 +30,6 @@
 namespace ljf::python::parser
 {
 
-struct EmptySExpr
-{
-};
-
-class SExpr
-{
-public:
-    using SExprList = std::vector<SExpr>;
-
-private:
-    std::variant<EmptySExpr, Token, SExprList, ast::Expr> variant_;
-
-public:
-    template <typename... Args, std::enable_if_t<sizeof...(Args) >= 2> * = nullptr>
-    SExpr(Args &&... args)
-        : variant_(std::in_place_type<SExprList>,
-                   {SExpr(std::forward<Args>(args))...}) {}
-
-    SExpr() = default;
-
-    SExpr(const SExpr &) = default;
-    SExpr(SExpr &&other) = default;
-    SExpr &operator=(const SExpr &) = default;
-    SExpr &operator=(SExpr &&other) = default;
-
-    explicit SExpr(Token token) : variant_(std::in_place_type<Token>, std::move(token)) {}
-
-    explicit SExpr(ast::Expr expr) : variant_(std::in_place_type<ast::Expr>, std::move(expr)) {}
-
-    template <typename T>
-    explicit SExpr(std::vector<T> vec) : variant_(SExprList(vec.begin(), vec.end())) {}
-
-    template <typename T>
-    explicit SExpr(std::optional<T> opt)
-    {
-        if (opt)
-        {
-            *this = make_from_variant<SExpr>(std::move(opt.value()));
-        }
-    }
-
-    template <typename... Ts>
-    explicit SExpr(std::variant<Ts...> var) : SExpr(make_from_variant<SExpr>(std::move(var))) {}
-
-    template <typename... Ts>
-    explicit SExpr(std::tuple<Ts...> tup) : SExpr(make_from_variant<SExpr>(std::move(tup))) {}
-
-    template <typename V>
-    auto accept(V &&visitor) const
-    {
-        return std::visit(std::forward<V>(visitor), variant_);
-    }
-};
-
-using SExprList = SExpr::SExprList;
-
 inline auto printer(const std::string &str)
 {
     return Parser([str](const auto &token_steram) {
@@ -240,7 +184,6 @@ constexpr auto sep_many_optsep_optend(Parser p, SepParser sep, EndParser end)
 }
 } // namespace detail
 
-parser::ParserPlaceHolder<parser::SExpr> make_python_grammer_parser();
 parser::ParserPlaceHolder<ast::Expr> make_python_eval_input_parser();
 
 } // namespace ljf::python::grammar
