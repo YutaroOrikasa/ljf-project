@@ -47,7 +47,7 @@ extern "C"
     ljf::Object *ljf_new_object_with_native_data(uint64_t data);
     uint64_t ljf_get_native_data(const ljf::Object *obj);
 
-    ljf::Object *ljf_get_object_from_environment(ljf::Environment *env, const char *key);
+    ljf::Object *ljf_environment_get(ljf::Environment *env, const char *key, ljf::TableVisiblity vis);
     void ljf_set_object_to_environment(ljf::Environment *env, const char *key, ljf::Object *value);
 
     ljf::FunctionId ljf_register_native_function(ljf::Object *(*fn)(ljf::Object *env, ljf::Object *tmp));

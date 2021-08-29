@@ -388,7 +388,7 @@ uint64_t ljf_get_native_data(const Object *obj)
     return obj->get_native_data();
 }
 
-Object *ljf_get_object_from_environment(Environment *env, const char *key, ljf::TableVisiblity vis)
+Object *ljf_environment_get(Environment *env, const char *key, ljf::TableVisiblity vis)
 {
     check_not_null(env);
 
