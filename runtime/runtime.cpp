@@ -253,7 +253,7 @@ create_callee_environment(Environment *parent, Object *arg)
     for (size_t i = 0; i < parent_env_maps->array_size(); i++)
     {
         // std::cout << "i: " << i << "\n";
-        Object *map = ljf_get_object_from_array(parent_env_maps, i);
+        Object *map = ljf_array_get(parent_env_maps, i);
         assert(map);
         ljf_push_object_to_array(callee_env_maps, map);
     }
@@ -279,7 +279,7 @@ void ljf_set(Object *obj, const char *key, Object *value, ljf::TableVisiblity vi
 
 /**************** array API ***************/
 
-Object *ljf_get_object_from_array(Object *obj, size_t index)
+Object *ljf_array_get(Object *obj, size_t index)
 {
     check_not_null(obj);
 

@@ -55,7 +55,7 @@ extern "C"
     ljf::FunctionId ljf_register_native_function(ljf::Object *(*fn)(ljf::Object *env, ljf::Object *tmp));
 
     size_t ljf_array_size(ljf::Object *obj);
-    ljf::Object *ljf_get_object_from_array(ljf::Object *obj, size_t index);
+    ljf::Object *ljf_array_get(ljf::Object *obj, size_t index);
 
     ljf::Object *ljf_wrap_c_str(const char *str);
 }
