@@ -112,11 +112,14 @@ public:
         return !is_end();
     }
 };
+
+inline
 Object::TableIterator Object::iter_hash_table()
 {
     return Object::TableIterator(this, TableVisiblity::visible);
 }
 
+inline
 Object::TableIterator Object::iter_hidden_table()
 {
     return Object::TableIterator(this, TableVisiblity::hidden);
@@ -193,40 +196,12 @@ public:
         return !is_end();
     }
 };
+
+inline
 Object::ArrayIterator Object::iter_array()
 {
     return Object::ArrayIterator(this);
 }
 
-// unittests for Iterator family (they are private data and methods)
-TEST(ObjectIterator, HashTable)
-{
-    ObjectHolder obj = ljf_new_object();
-    ObjectHolder elem = ljf_new_object();
-    set_object_to_table(obj.get(), "elem", elem.get());
-
-    auto iter = obj->iter_hash_table();
-    EXPECT_EQ(iter.get().key, "elem");
-    EXPECT_EQ(iter.get().value, elem);
-    auto iter_next = iter.next();
-    ASSERT_TRUE(iter_next.is_end());
-}
-
-TEST(ObjectIterator, BrokenIter)
-{
-    ObjectHolder obj = ljf_new_object();
-    ObjectHolder elem = ljf_new_object();
-    set_object_to_table(obj.get(), "elem", elem.get());
-
-    auto iter = obj->iter_hash_table();
-    EXPECT_NO_THROW(iter.get());
-    EXPECT_NO_THROW(iter.next());
-
-    auto iter2 = obj->iter_hash_table();
-    set_object_to_table(obj.get(), "elem2", elem.get());
-
-    EXPECT_THROW(iter2.get(), BrokenIteratorError);
-    EXPECT_THROW(iter2.next(), BrokenIteratorError);
-}
 } // namespace ljf
 
