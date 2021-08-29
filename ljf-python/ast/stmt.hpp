@@ -201,6 +201,30 @@ struct ReturnStmt
     explicit ReturnStmt(Expr e) : opt_expr_(std::move(e)) {}
 };
 
+enum class FlowKind
+{
+    BREAK,
+    CONTINUE,
+};
+
+struct FlowStmt
+{
+    using is_stmt_impl = void;
+    FlowKind flow_kind;
+
+    FlowStmt(Token token)
+    {
+        if (token == "break")
+        {
+            flow_kind = FlowKind::BREAK;
+        }
+        else
+        {
+            flow_kind = FlowKind::CONTINUE;
+        }
+    }
+};
+
 struct StmtVariant : std::variant<IfStmt,
                                   ForStmt,
                                   DefStmt,
@@ -209,7 +233,8 @@ struct StmtVariant : std::variant<IfStmt,
                                   ExprStmt,
                                   AssignStmt,
                                   MultiStmt,
-                                  ReturnStmt>
+                                  ReturnStmt,
+                                  FlowStmt>
 {
     using variant::variant;
 };
