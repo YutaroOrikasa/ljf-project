@@ -19,9 +19,10 @@ ObjectHolder::ObjectHolder(ObjectHolder &&other) noexcept : obj_(other.obj_)
 
 ObjectHolder &ObjectHolder::operator=(Object *o) noexcept
 {
+    // Consider case obj_ == o
+    increment_ref_count(o);
     decrement_ref_count(obj_);
     obj_ = o;
-    increment_ref_count(obj_);
     return *this;
 }
 
