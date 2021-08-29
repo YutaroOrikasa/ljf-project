@@ -40,8 +40,6 @@ extern "C"
     ljf::FunctionId ljf_get_function_id_from_function_table(ljf::Object *obj, const char *key);
     void ljf_set_function_id_to_function_table(ljf::Object *obj, const char *key, ljf::FunctionId function_id);
 
-    void ljf_push_object_to_array(ljf::Object *obj, ljf::Object *value);
-
     ljf::Object *ljf_call_function(ljf::FunctionId function_id, ljf::Object *env, ljf::Object *arg);
 
     ljf::Object *ljf_new_object();
@@ -54,8 +52,12 @@ extern "C"
 
     ljf::FunctionId ljf_register_native_function(ljf::Object *(*fn)(ljf::Object *env, ljf::Object *tmp));
 
+    /**************** array API ***************/
     size_t ljf_array_size(ljf::Object *obj);
     ljf::Object *ljf_array_get(ljf::Object *obj, size_t index);
+    void ljf_array_set(ljf::Object *obj, size_t index, ljf::Object *value);
+    void ljf_array_push(ljf::Object *obj, ljf::Object *value);
+
 
     ljf::Object *ljf_wrap_c_str(const char *str);
 }

@@ -200,7 +200,7 @@ create_environment(Object *arg)
         // arg is now empty
 
         // set maps[0]
-        ljf_push_object_to_array(env_maps, local_env);
+        ljf_array_push(env_maps, local_env);
     }
     return env;
 }
@@ -255,7 +255,7 @@ create_callee_environment(Environment *parent, Object *arg)
         // std::cout << "i: " << i << "\n";
         Object *map = ljf_array_get(parent_env_maps, i);
         assert(map);
-        ljf_push_object_to_array(callee_env_maps, map);
+        ljf_array_push(callee_env_maps, map);
     }
 
     return callee_env;
@@ -291,14 +291,14 @@ Object *ljf_array_get(Object *obj, size_t index)
     return obj->array_at(index);
 }
 
-void ljf_set_object_to_array(Object *obj, size_t index, Object *value)
+void ljf_array_set(Object *obj, size_t index, Object *value)
 {
     check_not_null(obj);
 
     obj->array_set_at(index, value);
 }
 
-void ljf_push_object_to_array(Object *obj, Object *value)
+void ljf_array_push(Object *obj, Object *value)
 {
     check_not_null(obj);
 
@@ -514,7 +514,7 @@ extern "C" int ljf_internal_start_entry_point(ljf_main_t ljf_main,
         {
             ObjectHolder wrap_holder = ljf_wrap_c_str(argv[i]);
             auto wrap = wrap_holder.get();
-            ljf_push_object_to_array(args, wrap);
+            ljf_array_push(args, wrap);
         }
         ObjectHolder arg = ljf_new_object();
         set_object_to_table(arg.get(), "args", args);
