@@ -13,8 +13,8 @@ using Environment = Object;
 using FunctionId = std::size_t;
 enum TableVisiblity
 {
-    visible,
-    hidden
+    VISIBLE,
+    HIDDEN
 };
 
 class runtime_error : public std::runtime_error

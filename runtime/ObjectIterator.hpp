@@ -61,7 +61,7 @@ public:
         std::lock_guard lk{*obj_};
         version_ = obj->version_;
         auto &table = *[&]() {
-            if (visiblity == TableVisiblity::visible)
+            if (visiblity == TableVisiblity::VISIBLE)
             {
                 return &obj_->hash_table_;
             }
@@ -116,13 +116,13 @@ public:
 inline
 Object::TableIterator Object::iter_hash_table()
 {
-    return Object::TableIterator(this, TableVisiblity::visible);
+    return Object::TableIterator(this, TableVisiblity::VISIBLE);
 }
 
 inline
 Object::TableIterator Object::iter_hidden_table()
 {
-    return Object::TableIterator(this, TableVisiblity::hidden);
+    return Object::TableIterator(this, TableVisiblity::HIDDEN);
 }
 
 class Object::ArrayIterator

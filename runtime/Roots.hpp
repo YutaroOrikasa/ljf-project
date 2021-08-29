@@ -57,17 +57,17 @@ struct CallStack : Object
 
     Environment *env()
     {
-        return ljf_get(this, "env", ljf::visible);
+        return ljf_get(this, "env", ljf::VISIBLE);
     }
 
     TemporaryStorage *tmp()
     {
-        return ljf_get(this, "tmp", ljf::visible);
+        return ljf_get(this, "tmp", ljf::VISIBLE);
     }
 
     CallStack *next()
     {
-        return static_cast<CallStack *>(ljf_get(this, "next", ljf::visible));
+        return static_cast<CallStack *>(ljf_get(this, "next", ljf::VISIBLE));
     }
 };
 

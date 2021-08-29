@@ -63,7 +63,7 @@ public:
 
     Object *get(const char *key, TableVisiblity visiblity)
     {
-        auto &table = (visiblity == visible) ? hash_table_ : hidden_table_;
+        auto &table = (visiblity == VISIBLE) ? hash_table_ : hidden_table_;
         std::lock_guard lk{mutex_};
 
         return array_table_.at(table.at(key));
@@ -72,7 +72,7 @@ public:
     void set(const char *key, Object *value, TableVisiblity visiblity)
     {
 
-        auto &table = (visiblity == visible) ? hash_table_ : hidden_table_;
+        auto &table = (visiblity == VISIBLE) ? hash_table_ : hidden_table_;
 
         size_t index;
         {
@@ -284,19 +284,19 @@ public:
 inline
 void set_object_to_table(Object *obj, const char *key, Object *value)
 {
-    ::ljf_set(obj, key, value, ljf::visible);
+    ::ljf_set(obj, key, value, ljf::VISIBLE);
 }
 
 inline
 Object *get_object_from_hidden_table(Object *obj, const char *key)
 {
-    return ::ljf_get(obj, key, hidden);
+    return ::ljf_get(obj, key, HIDDEN);
 }
 
 inline
 void set_object_to_hidden_table(Object *obj, const char *key, Object *value)
 {
-    ::ljf_set(obj, key, value, hidden);
+    ::ljf_set(obj, key, value, HIDDEN);
 }
 
 inline
