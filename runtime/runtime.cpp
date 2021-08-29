@@ -191,7 +191,7 @@ create_environment(Object *arg)
     ObjectHolder env = ljf_new_object();
 
     auto env_maps = ljf_new_object();
-    ljf_set_object_to_hidden_table(env.get(), "ljf.env.maps", env_maps);
+    set_object_to_hidden_table(env.get(), "ljf.env.maps", env_maps);
 
     if (arg)
     {
@@ -276,13 +276,6 @@ void ljf_set(Object *obj, const char *key, Object *value, ljf::TableVisiblity vi
     obj->set(key, value, visiblity);
 }
 
-
-void ljf_set_object_to_hidden_table(Object *obj, const char *key, Object *value)
-{
-    check_not_null(obj);
-
-    obj->set(key, value, hidden);
-}
 
 /**************** array API ***************/
 

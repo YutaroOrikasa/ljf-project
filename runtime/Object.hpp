@@ -294,6 +294,12 @@ Object *get_object_from_hidden_table(Object *obj, const char *key)
 }
 
 inline
+void set_object_to_hidden_table(Object *obj, const char *key, Object *value)
+{
+    ::ljf_set(obj, key, value, hidden);
+}
+
+inline
 void increment_ref_count(Object *obj)
 {
     if (obj)
