@@ -33,9 +33,9 @@ public:
 class ResultSuccessVisitor
 {
 public:
-    void operator()(const Expr &expr) const
+    void operator()(const Stmt &stmt) const
     {
-        expr.accept(Visitor());
+        stmt.accept(Visitor());
     }
 };
 
@@ -65,8 +65,7 @@ int main(int argc, const char **argv)
     // (void)program_;
     // const auto expr = make_python_eval_input_parser();
     StmtGrammars<IStreamTokenStream> S;
-    const auto expr = S.exprlist;
-    const auto program = expr + separator(newline);
+    const auto program = S.stmt;
     IStreamTokenStream ts{std::cin};
 
     // int dummy = result_content_t<decltype(program), decltype(ts)>();
