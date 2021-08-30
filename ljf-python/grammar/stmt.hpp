@@ -143,9 +143,9 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(yield_stmt);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(raise_stmt);
     ParserPlaceHolder<ImportStmt> INIT_PLACE_HOLDER(import_stmt);
-    ParserPlaceHolder<ImportStmt> INIT_PLACE_HOLDER(import_name);
-    ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(import_from);
-    // ParserPlaceHolder<ImportStmt> INIT_PLACE_HOLDER(import_as_name);
+    // ParserPlaceHolder<ImportStmt> INIT_PLACE_HOLDER(import_name);
+    ParserPlaceHolder<ImportStmt> INIT_PLACE_HOLDER(import_from);
+    ParserPlaceHolder<ImportStmt> INIT_PLACE_HOLDER(import_as_name);
     ParserPlaceHolder<DottedAsName> INIT_PLACE_HOLDER(dotted_as_name);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(import_as_names);
     // ParserPlaceHolder<ImportStmt> INIT_PLACE_HOLDER(dotted_as_names);
@@ -252,14 +252,15 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
 
         auto dotted_name = converter(unify_many1) <<= NAME + ("."_sep + NAME) * _many;
         auto dotted_as_names = converter(unify_many1) <<= dotted_as_name + (","_sep + dotted_as_name) * _many;
-        import_stmt = import_name /* | import_from */;
-        import_name = brace_init <<= "import"_sep + dotted_as_names;
+        auto import_name = "import"_sep + dotted_as_names;
+        import_stmt = brace_init <<= import_name /* | import_from */;
+
+        auto import_as_names = converter(unify_many1) <<= import_as_name + (","_sep + import_as_name) * _many + opt[","];
         // # note below = the ('.' | '...') is necessary because '...' is tokenized as ELLIPSIS
         // import_from = ("from"_sep + (("."_p | "..."_p) * _many + dotted_name | ("."_p | "..."_p) * _many1) //
         //                + "import"_sep + ("*"_p | "("_sep + import_as_names + ")"_sep | import_as_names));
         // import_as_name = brace_init <<= NAME + opt["as"_sep + NAME];
         dotted_as_name = brace_init <<= dotted_name + opt["as"_sep + NAME];
-        // import_as_names = import_as_name + (","_sep + import_as_name) * _many + opt[","];
 
         // global_stmt = "global"_p + NAME + (","_p + NAME) * _many;
         // nonlocal_stmt = "nonlocal"_p + NAME + (","_p + NAME) * _many;
