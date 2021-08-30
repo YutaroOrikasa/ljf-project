@@ -15,46 +15,27 @@ using namespace ljf::python::ast;
 using namespace ljf::python::parser;
 using namespace ljf::python::grammar;
 
-/// return: bool: is eof
 class Visitor
 {
 private:
 
 public:
-    bool operator()(const Token &token) const
-    {
-        if (token.is_eof())
-        {
-            return true;
-        }
-
-        if (token.is_newline())
-        {
-            std::cout << "<NEWLINE>";
-            return false;
-        }
-        std::cout << "Token: `" << token.str() << "`";
-        return false;
-    }
-
 
 
     template <typename T>
-    bool operator()(const T &t) const
+    void operator()(const T &t) const
     {
         std::cout << "Accept (" << typeid(t).name() << ")";
-        return false;
     }
 
 };
 
-/// return: bool: is eof
 class ResultSuccessVisitor
 {
 public:
-    bool operator()(const Expr &expr) const
+    void operator()(const Expr &expr) const
     {
-        return expr.accept(Visitor());
+        expr.accept(Visitor());
     }
 };
 
@@ -90,8 +71,7 @@ int main(int argc, const char **argv)
 
     // int dummy = result_content_t<decltype(program), decltype(ts)>();
 
-    bool eof = false;
-    while (!eof)
+    for (;;)
     {
         auto result = program(ts);
         if (result.failed())
@@ -105,8 +85,7 @@ int main(int argc, const char **argv)
             discard_until_end_of_line(ts);
             continue;
         }
-        eof = result.visit(ResultSuccessVisitor());
-        std::cout << "\nEND";
+        result.visit(ResultSuccessVisitor());
         std::cout << "\n";
     }
 }
