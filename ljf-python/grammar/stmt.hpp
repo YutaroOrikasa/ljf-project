@@ -102,6 +102,43 @@ constexpr auto many_sep_end_by(Parser p, SepParser sep)
     return conv <<= sep_many_optsep(p, sep);
 }
 
+struct ImportFromPart1
+{
+    std::vector<Token> dots_or_elipsis;
+    std::vector<IdentifierExpr> dotted_name;
+};
+
+struct ImportFromPart2
+{
+    std::vector<Token> dots_or_elipsis;
+};
+
+struct ImportFromPart3
+{
+    std::variant<Token, std::vector<ImportAsName>> wildcard_or_import_as_names;
+    ImportFromPart3(Token arg) : wildcard_or_import_as_names(arg) {}
+    ImportFromPart3(std::vector<ImportAsName> arg) : wildcard_or_import_as_names(arg) {}
+};
+
+inline constexpr auto to_import_from = [](const auto &a) -> ImportFrom
+{
+    const std::tuple<std::variant<ImportFromPart1, ImportFromPart2>, ImportFromPart3>& b = a;
+    auto [var, part3] = b;
+    std::vector<Token> dots_or_elipsis;
+    std::vector<IdentifierExpr> dotted_name;
+    if (auto part1 = std::get_if<ImportFromPart1>(&var))
+    {
+        dots_or_elipsis = part1->dots_or_elipsis;
+        dotted_name = part1->dotted_name;
+    }
+    else
+    {
+        dots_or_elipsis = std::get<ImportFromPart2>(var).dots_or_elipsis;
+    }
+
+    return ImportFrom{dots_or_elipsis, dotted_name, part3.wildcard_or_import_as_names};
+};
+
 } // namespace detail
 
 namespace StmtGrammars_
@@ -144,8 +181,8 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(raise_stmt);
     ParserPlaceHolder<ImportStmt> INIT_PLACE_HOLDER(import_stmt);
     // ParserPlaceHolder<ImportStmt> INIT_PLACE_HOLDER(import_name);
-    ParserPlaceHolder<ImportStmt> INIT_PLACE_HOLDER(import_from);
-    ParserPlaceHolder<ImportStmt> INIT_PLACE_HOLDER(import_as_name);
+    ParserPlaceHolder<ImportFrom> INIT_PLACE_HOLDER(import_from);
+    ParserPlaceHolder<ImportAsName> INIT_PLACE_HOLDER(import_as_name);
     ParserPlaceHolder<DottedAsName> INIT_PLACE_HOLDER(dotted_as_name);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(import_as_names);
     // ParserPlaceHolder<ImportStmt> INIT_PLACE_HOLDER(dotted_as_names);
@@ -250,16 +287,24 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
         // yield_stmt = E::yield_expr;
         // raise_stmt = "raise"_p + opt[E::test + opt["from"_p + E::test]];
 
-        auto dotted_name = converter(unify_many1) <<= NAME + ("."_sep + NAME) * _many;
+        auto dotted_name =  converter(unify_many1) <<= NAME + ("."_sep + NAME) * _many;
         auto dotted_as_names = converter(unify_many1) <<= dotted_as_name + (","_sep + dotted_as_name) * _many;
         auto import_name = "import"_sep + dotted_as_names;
-        import_stmt = brace_init <<= import_name /* | import_from */;
+        // ImportStmt is struct but do not use brace_init because funny compile error occurs...
+        import_stmt = /* brace_init <<= */ import_name | import_from;
 
-        auto import_as_names = converter(unify_many1) <<= import_as_name + (","_sep + import_as_name) * _many + opt[","];
+        // Simplified import_as_names definition
+        // I think trailing [,] is not necessary
+        auto import_as_names = converter(unify_many1) <<= import_as_name + (","_sep + import_as_name) * _many;
+        // auto import_as_names = converter(unify_many1) <<= import_as_name + (","_sep + import_as_name) * _many + opt[","];
+
         // # note below = the ('.' | '...') is necessary because '...' is tokenized as ELLIPSIS
-        // import_from = ("from"_sep + (("."_p | "..."_p) * _many + dotted_name | ("."_p | "..."_p) * _many1) //
-        //                + "import"_sep + ("*"_p | "("_sep + import_as_names + ")"_sep | import_as_names));
-        // import_as_name = brace_init <<= NAME + opt["as"_sep + NAME];
+        // Do not use converter() insted of converter_no_strip() because funny compile error occurs...
+        import_from = converter_no_strip(to_import_from) <<= ("from"_sep + ((result_type<ImportFromPart1> <<= brace_init <<= (result_type<Token> <<= "."_p | "..."_p) * _many + dotted_name) | //
+                                                                            (result_type<ImportFromPart2> <<= brace_init <<= (result_type<Token> <<= "."_p | "..."_p) * _many1_unify))         //
+                                                              + "import"_sep + (result_type<ImportFromPart3> <<= "*"_p | "("_sep + import_as_names + ")"_sep | import_as_names));
+
+        import_as_name = brace_init <<= NAME + opt["as"_sep + NAME];
         dotted_as_name = brace_init <<= dotted_name + opt["as"_sep + NAME];
 
         // global_stmt = "global"_p + NAME + (","_p + NAME) * _many;

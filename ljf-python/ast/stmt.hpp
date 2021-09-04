@@ -167,10 +167,31 @@ struct DottedAsName
     std::optional<IdentifierExpr> opt_as_name;
 };
 
+struct ImportAsName
+{
+    IdentifierExpr name;
+    std::optional<IdentifierExpr> opt_as_name;
+};
+
+using ImportAsNameVec = std::vector<ImportAsName>;
+
+struct ImportFrom
+{
+    // dots is "." or "..."
+    std::vector<Token> dots_or_elipsis;
+    std::vector<IdentifierExpr> from_names;
+    std::variant<Token, ImportAsNameVec> wildcard_or_import_as_names;
+};
+
+
+using DottedAsNameVec = std::vector<DottedAsName>;
+
 struct ImportStmt
 {
-    std::vector<DottedAsName> import_as_names;
+    std::variant<DottedAsNameVec, ImportFrom> import_or_import_from;
     using is_stmt_impl = void;
+    ImportStmt(DottedAsNameVec import) : import_or_import_from(import) {}
+    ImportStmt(ImportFrom import_from) : import_or_import_from(import_from) {}
 };
 
 struct ExprStmt
