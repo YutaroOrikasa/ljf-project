@@ -82,7 +82,7 @@ public:
     {
         // Consider case obj == returned_object_
         increment_ref_count(obj);
-        decrement_ref_count(returned_object_); // NOLINT
+        decrement_ref_count(returned_object_);
         returned_object_ = obj;
     }
 

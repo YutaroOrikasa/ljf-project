@@ -190,7 +190,7 @@ create_environment(Object *arg)
 
     ObjectHolder env = ljf_new_object();
 
-    auto env_maps = ljf_new_object();
+    ObjectHolder env_maps = ljf_new_object();
     set_object_to_hidden_table(env.get(), "ljf.env.maps", env_maps);
 
     if (arg)
