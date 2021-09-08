@@ -177,8 +177,9 @@ using ImportAsNameVec = std::vector<ImportAsName>;
 
 struct ImportFrom
 {
-    // dots is "." or "..."
-    std::vector<Token> dots_or_elipsis;
+    // Number of dots ".".
+    // "..." is counted as 3.
+    size_t dot_num = 0;
     std::vector<IdentifierExpr> from_names;
     std::variant<Token, ImportAsNameVec> wildcard_or_import_as_names;
 };

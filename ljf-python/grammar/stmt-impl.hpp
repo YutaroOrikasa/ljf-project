@@ -202,13 +202,28 @@ inline StmtGrammars<TokenStream>::StmtGrammars()
 
     struct ImportFromFromPart
     {
-        std::vector<Token> dots_or_elipsis;
+        size_t dot_num = 0;
         std::vector<IdentifierExpr> from_names;
     };
 
-    const auto import_from_from_part = [dotted_name](auto &&token_stream) -> Result<ImportFromFromPart>
+    const auto normalize_dot_or_elipsis = [](const std::variant<Token, Token> &dot_or_elipsis) -> size_t
     {
-        auto dot_or_elipsis_parser = result_type<Token> <<= "."_p | "..."_p;
+        if (auto dot = std::get_if<0>(&dot_or_elipsis))
+        {
+            return 1;
+        }
+        else
+        {
+            auto elipsis = std::get<1>(dot_or_elipsis);
+            assert(elipsis == "...");
+            return 3;
+        }
+    };
+
+    const auto import_from_from_part = [dotted_name, normalize_dot_or_elipsis](auto &&token_stream) -> Result<ImportFromFromPart>
+    {
+        size_t dot_num = 0;
+        auto dot_or_elipsis_parser = converter_no_strip(normalize_dot_or_elipsis) <<= "."_p | "..."_p;
         auto first_result = LL1_parse(dot_or_elipsis_parser, token_stream);
         if (first_result.fatally_failed())
         {
@@ -216,7 +231,7 @@ inline StmtGrammars<TokenStream>::StmtGrammars()
         }
         if (first_result.result)
         {
-            std::vector<Token> dot_or_elipsis_vec{first_result.result.extract_success()};
+            dot_num += first_result.result.success();
             while (true)
             {
                 auto many_dot_or_elipsis_result = LL1_parse(dot_or_elipsis_parser, token_stream);
@@ -233,13 +248,13 @@ inline StmtGrammars<TokenStream>::StmtGrammars()
                     }
                     if (dotted_name_result.result.failed())
                     {
-                        ImportFromFromPart content{dot_or_elipsis_vec, {}};
+                        ImportFromFromPart content{dot_num, {}};
                         return Result<ImportFromFromPart>(content);
                     }
-                    ImportFromFromPart content{dot_or_elipsis_vec, dotted_name_result.result.extract_success()};
+                    ImportFromFromPart content{dot_num, dotted_name_result.result.extract_success()};
                     return Result<ImportFromFromPart>(content);
                 }
-                dot_or_elipsis_vec.push_back(many_dot_or_elipsis_result.result.extract_success());
+                dot_num += many_dot_or_elipsis_result.result.success();
             }
         }
         else
@@ -249,7 +264,7 @@ inline StmtGrammars<TokenStream>::StmtGrammars()
             {
                 return move_to_another_error_result<ImportFromFromPart>(dotted_name_result);
             }
-            ImportFromFromPart content{{}, dotted_name_result.extract_success()};
+            ImportFromFromPart content{0, dotted_name_result.extract_success()};
             return Result<ImportFromFromPart>(content);
         }
     };
@@ -266,7 +281,7 @@ inline StmtGrammars<TokenStream>::StmtGrammars()
         const std::tuple<ImportFromFromPart, ImportFromImportPart> &b = a;
         auto [from, import] = b;
 
-        return ImportFrom{from.dots_or_elipsis, from.from_names, import.wildcard_or_import_as_names};
+        return ImportFrom{from.dot_num, from.from_names, import.wildcard_or_import_as_names};
     };
     // # note below = the ('.' | '...') is necessary because '...' is tokenized as ELLIPSIS
     // Do not use converter() insted of converter_no_strip() because funny compile error occurs...

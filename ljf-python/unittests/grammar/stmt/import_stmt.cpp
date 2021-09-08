@@ -81,7 +81,7 @@ from a.b import c
 
     auto import_from = std::get<ImportFrom>(result.success().import_or_import_from);
 
-    ASSERT_EQ(0, import_from.dots_or_elipsis.size());
+    ASSERT_EQ(0, import_from.dot_num);
     ASSERT_EQ("a", import_from.from_names.at(0).name());
     ASSERT_EQ("b", import_from.from_names.at(1).name());
     auto import_as_name_vec = std::get<ImportAsNameVec>(import_from.wildcard_or_import_as_names);
@@ -100,7 +100,7 @@ from .a.b import c
 
     auto import_from = std::get<ImportFrom>(result.success().import_or_import_from);
 
-    ASSERT_EQ(".", import_from.dots_or_elipsis.at(0));
+    ASSERT_EQ(1, import_from.dot_num);
     ASSERT_EQ("a", import_from.from_names.at(0).name());
     ASSERT_EQ("b", import_from.from_names.at(1).name());
     auto import_as_name_vec = std::get<ImportAsNameVec>(import_from.wildcard_or_import_as_names);
@@ -119,7 +119,7 @@ from .a.b import c, d
 
     auto import_from = std::get<ImportFrom>(result.success().import_or_import_from);
 
-    ASSERT_EQ(".", import_from.dots_or_elipsis.at(0));
+    ASSERT_EQ(1, import_from.dot_num);
     ASSERT_EQ("a", import_from.from_names.at(0).name());
     ASSERT_EQ("b", import_from.from_names.at(1).name());
 
@@ -144,7 +144,7 @@ from .a.b import c, d as c2
 
     auto import_from = std::get<ImportFrom>(result.success().import_or_import_from);
 
-    ASSERT_EQ(".", import_from.dots_or_elipsis.at(0));
+    ASSERT_EQ(1, import_from.dot_num);
     ASSERT_EQ("a", import_from.from_names.at(0).name());
     ASSERT_EQ("b", import_from.from_names.at(1).name());
 
@@ -170,7 +170,7 @@ from . import c
 
     auto import_from = std::get<ImportFrom>(result.success().import_or_import_from);
 
-    ASSERT_EQ(".", import_from.dots_or_elipsis.at(0));
+    ASSERT_EQ(1, import_from.dot_num);
     ASSERT_EQ(0, import_from.from_names.size());
     auto import_as_name_vec = std::get<ImportAsNameVec>(import_from.wildcard_or_import_as_names);
     auto import_as_name0 = import_as_name_vec.at(0);
@@ -188,7 +188,7 @@ from .. import c
 
     auto import_from = std::get<ImportFrom>(result.success().import_or_import_from);
 
-    ASSERT_EQ(".", import_from.dots_or_elipsis.at(0));
+    ASSERT_EQ(2, import_from.dot_num);
     ASSERT_EQ(0, import_from.from_names.size());
     auto import_as_name_vec = std::get<ImportAsNameVec>(import_from.wildcard_or_import_as_names);
     auto import_as_name0 = import_as_name_vec.at(0);
