@@ -195,3 +195,16 @@ from .. import c
     ASSERT_EQ("c", import_as_name0.name.name());
     ASSERT_FALSE(import_as_name0.opt_as_name);
 }
+
+TEST(ImportStmt, ImportFromDot3)
+{
+    constexpr auto input = R"(
+from ... import c
+)";
+    auto result = parse_until_end(sg.import_stmt, input);
+    ASSERT_TRUE(result) << result.error();
+
+    auto import_from = std::get<ImportFrom>(result.success().import_or_import_from);
+
+    ASSERT_EQ(3, import_from.dot_num);
+}
