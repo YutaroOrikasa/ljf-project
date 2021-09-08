@@ -183,7 +183,6 @@ struct ImportFrom
     std::variant<Token, ImportAsNameVec> wildcard_or_import_as_names;
 };
 
-
 using DottedAsNameVec = std::vector<DottedAsName>;
 
 struct ImportStmt

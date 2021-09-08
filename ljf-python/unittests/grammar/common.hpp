@@ -15,7 +15,7 @@ static ExprGrammars<SStreamTokenStream> eg;
 static StmtGrammars<SStreamTokenStream> sg;
 
 template <typename Parser, typename TokenStream, typename... ErrArgs>
-static auto parse_if(bool cond, const Parser &p, TokenStream &stream, ErrArgs &&... err_args)
+static auto parse_if(bool cond, const Parser &p, TokenStream &stream, ErrArgs &&...err_args)
 {
     using result_content_ty = result_content_t<Parser, TokenStream>;
     if (cond)

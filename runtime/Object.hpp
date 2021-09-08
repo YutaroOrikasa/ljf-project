@@ -281,26 +281,22 @@ public:
     }
 };
 
-inline
-void set_object_to_table(Object *obj, const char *key, Object *value)
+inline void set_object_to_table(Object *obj, const char *key, Object *value)
 {
     ::ljf_set(obj, key, value, ljf::VISIBLE);
 }
 
-inline
-Object *get_object_from_hidden_table(Object *obj, const char *key)
+inline Object *get_object_from_hidden_table(Object *obj, const char *key)
 {
     return ::ljf_get(obj, key, HIDDEN);
 }
 
-inline
-void set_object_to_hidden_table(Object *obj, const char *key, Object *value)
+inline void set_object_to_hidden_table(Object *obj, const char *key, Object *value)
 {
     ::ljf_set(obj, key, value, HIDDEN);
 }
 
-inline
-void increment_ref_count(Object *obj)
+inline void increment_ref_count(Object *obj)
 {
     if (obj)
     {
@@ -309,8 +305,7 @@ void increment_ref_count(Object *obj)
     }
 }
 
-inline
-void decrement_ref_count(Object *obj)
+inline void decrement_ref_count(Object *obj)
 {
     // std::cerr << "decrement_ref_count() obj: " << obj << std::endl;
 

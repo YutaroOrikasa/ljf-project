@@ -32,19 +32,21 @@ namespace ljf::python::parser
 
 inline auto printer(const std::string &str)
 {
-    return Parser([str](const auto &token_steram) {
-        (void)token_steram;
-        std::cerr << str << "\n";
-        return Separator();
-    });
+    return Parser([str](const auto &token_steram)
+                  {
+                      (void)token_steram;
+                      std::cerr << str << "\n";
+                      return Separator();
+                  });
 }
 
 inline auto prompter(const std::string &str)
 {
-    return Parser([str](auto &token_steram) {
-        token_steram.prompt(str);
-        return Separator();
-    });
+    return Parser([str](auto &token_steram)
+                  {
+                      token_steram.prompt(str);
+                      return Separator();
+                  });
 }
 } // namespace ljf::python::parser
 
@@ -70,7 +72,8 @@ constexpr auto sep_many_optsep(Parser p, SepParser sep)
     auto parser = p + option(sep);
 
     return parser::Parser(
-        [parser](auto &&token_stream) {
+        [parser](auto &&token_stream)
+        {
             using namespace parser;
 
             using vec_value_ty = result_content_t<Parser, decltype(token_stream)>;
@@ -123,7 +126,8 @@ constexpr auto sep_many_optsep_optend(Parser p, SepParser sep, EndParser end)
 {
 
     return parser::Parser(
-        [=](auto &&token_stream) {
+        [=](auto &&token_stream)
+        {
             using namespace parser;
 
             using vec_value_ty = result_content_t<Parser, decltype(token_stream)>;

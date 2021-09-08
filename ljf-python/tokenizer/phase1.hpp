@@ -431,7 +431,7 @@ public:
         std::enable_if_t<
             std::is_constructible_v<
                 std::fstream, Args...>> * = nullptr>
-    explicit Phase1TokenStream(Args &&... args)
+    explicit Phase1TokenStream(Args &&...args)
         : base_type(std::fstream(std::forward<Args>(args)...))
     {
     }

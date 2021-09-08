@@ -11,7 +11,8 @@ using parser::detail::fold_left_to_vec;
 
 using namespace ast;
 using namespace parser;
-static constexpr auto fold_left = [](auto &&first, auto &&vec) -> Expr {
+static constexpr auto fold_left = [](auto &&first, auto &&vec) -> Expr
+{
     Expr e0 = first;
 
     for (auto &&[oper, right] : vec)
@@ -22,7 +23,8 @@ static constexpr auto fold_left = [](auto &&first, auto &&vec) -> Expr {
     return e0;
 };
 
-static constexpr auto fold_left_opt = [](auto &&first, auto &&opt) -> Expr {
+static constexpr auto fold_left_opt = [](auto &&first, auto &&opt) -> Expr
+{
     Expr e0 = first;
 
     if (opt)
@@ -59,7 +61,8 @@ static constexpr auto fold_to_exprlist_or_comprehension =
 static constexpr auto make_expr_or_comprehension =
     [](Expr expr,
        std::optional<CompFor> opt_comp_for)
-    -> std::variant<Expr, Comprehension> {
+    -> std::variant<Expr, Comprehension>
+{
     if (opt_comp_for)
     {
         return Comprehension{std::move(expr), std::move(*opt_comp_for)};
@@ -70,9 +73,10 @@ static constexpr auto make_expr_or_comprehension =
 
 static constexpr auto fold_to_key_datum_list_or_comprehension =
     [](auto key_datum,
-       auto rest) {
-        return fold_to_vector_or_comprehension(std::move(key_datum), std::move(rest));
-    };
+       auto rest)
+{
+    return fold_to_vector_or_comprehension(std::move(key_datum), std::move(rest));
+};
 
 namespace
 {
@@ -121,7 +125,8 @@ static constexpr auto parenth_form_conv = converter(ParenthFormExprFactory());
 static constexpr auto list_display_conv = converter(DisplayExprFactory<ListExpr, ListComprehensionExpr>());
 
 template <typename T>
-static constexpr auto default_type = [](auto opt) {
+static constexpr auto default_type = [](auto opt)
+{
     using optional_content_type = std::decay_t<decltype(*opt)>;
 
     using return_variant_type = std::variant<T, optional_content_type>;
@@ -161,7 +166,8 @@ static constexpr auto dict_display_conv = converter(DisplayExprFactory<DictExpr,
 
 // string
 static constexpr auto concat_str_exprs =
-    [](StringLiteralExpr str_expr, std::vector<StringLiteralExpr> rest) -> Result<StringLiteralExpr> {
+    [](StringLiteralExpr str_expr, std::vector<StringLiteralExpr> rest) -> Result<StringLiteralExpr>
+{
     if (rest.size() != 0)
     {
         return make_error(rest[0].token(), "unsupported feature: string literal concatnation");
@@ -170,7 +176,8 @@ static constexpr auto concat_str_exprs =
 };
 
 // expr list
-static constexpr auto expr_list_ctor = [](Expr first, std::vector<Expr> rest, auto &&opt_comma) -> Expr {
+static constexpr auto expr_list_ctor = [](Expr first, std::vector<Expr> rest, auto &&opt_comma) -> Expr
+{
     // matches such like:
     //   a
     //   a + b
@@ -187,7 +194,8 @@ static constexpr auto expr_list_ctor = [](Expr first, std::vector<Expr> rest, au
     return TupleExpr(fold_left_to_vec(std::move(first), std::move(rest)));
 };
 
-static constexpr auto combine_tokens = [](Token token1, Token token2) -> Token {
+static constexpr auto combine_tokens = [](Token token1, Token token2) -> Token
+{
     auto combined_str = token1.str() + " " + token2.str();
     return Token::create_token<token_category::ANY_OTHER>(combined_str, token1.source_location());
 };
@@ -217,7 +225,8 @@ inline ExprGrammars<TokenStream>::ExprGrammars()
 
     test = (result_type<ConditionalExpr> <<= or_test + opt["if"_sep + or_test + "else"_sep + test]) | lambdef;
     test_nocond = or_test | lambdef_nocond;
-    auto to_lambda_dummy = [](auto &&, Expr) {
+    auto to_lambda_dummy = [](auto &&, Expr)
+    {
         return LambdaExpr();
     };
     lambdef = converter(to_lambda_dummy) <<= "lambda"_sep + opt[varargslist] + ":"_sep + test;

@@ -39,7 +39,7 @@ static_assert(is_tuple_v<std::tuple<int>>);
 static_assert(!is_tuple_v<int>);
 
 template <typename T, typename Tuple, typename... Args>
-constexpr T make_from_tuple_and_args(Tuple &&tuple, Args &&... args)
+constexpr T make_from_tuple_and_args(Tuple &&tuple, Args &&...args)
 {
     return std::make_from_tuple<T>(
         std::tuple_cat(
@@ -55,7 +55,8 @@ struct ApplyToVariantOptionalTupleVisitor
         if constexpr (is_variant_v<T>)
         {
             // mutable is necessary for forward f
-            auto visitor = [*this, f = std::forward<F>(f)](auto &&arg) mutable {
+            auto visitor = [*this, f = std::forward<F>(f)](auto &&arg) mutable
+            {
                 return (*this)(std::forward<F>(f), std::forward<decltype(arg)>(arg));
             };
             return std::visit(std::move(visitor), std::forward<T>(t));
@@ -88,14 +89,15 @@ inline constexpr ApplyToVariantOptionalTupleVisitor apply_to_variant_optional_tu
 // This wrapper function exists only for printing human readable compile error message
 // when type error occurred.
 template <typename Ret, typename... Args>
-Ret construct_impl(Args &&... args)
+Ret construct_impl(Args &&...args)
 {
     static_assert(std::is_constructible_v<Ret, Args...>);
     return Ret(std::forward<Args>(args)...);
 }
 
 template <typename Ret>
-inline constexpr auto construct = [](auto &&... args) {
+inline constexpr auto construct = [](auto &&...args)
+{
     return construct_impl<Ret>(std::forward<decltype(args)>(args)...);
 };
 
@@ -142,7 +144,7 @@ static_assert(std::is_same_v<int &, decltype(tuple_strip(std::declval<std::tuple
 static_assert(std::is_same_v<int &&, decltype(tuple_strip(std::declval<std::tuple<int &&>>()))>);
 
 template <typename... Tuples>
-decltype(auto) tuple_cat_and_strip(Tuples &&... t)
+decltype(auto) tuple_cat_and_strip(Tuples &&...t)
 {
     using result_tuple_ty = decltype(std::tuple_cat(std::forward<Tuples>(t)...));
 
@@ -192,7 +194,7 @@ auto to_tuple(T &&t)
 // return type: T0
 // This function will not return std::tuple<T0>.
 template <typename... Ts>
-auto discard_separator(Ts &&... ts)
+auto discard_separator(Ts &&...ts)
 {
     return impl::tuple_cat_and_strip(
         to_tuple(
@@ -216,7 +218,7 @@ public:
 
     // token: The token that caused parsing error.
     template <typename... Msgs>
-    Error(const Token &token, const std::string &msg, Msgs &&... msgs)
+    Error(const Token &token, const std::string &msg, Msgs &&...msgs)
         : token_(token),
           msg_((msg + ... + msgs)) {}
 
@@ -237,13 +239,11 @@ public:
     }
 
     template <typename... Msgs>
-    std::unique_ptr<Error> copy_ptr_with_new_msg(const std::string &msg, Msgs &&... msgs)
+    std::unique_ptr<Error> copy_ptr_with_new_msg(const std::string &msg, Msgs &&...msgs)
     {
         return std::make_unique<Error>(Error(token_, msg, msgs...));
     }
 };
-
-
 
 template <typename Out>
 Out &operator<<(Out &out, const Error &e)
@@ -406,13 +406,13 @@ const auto &get(const Result<T> &result)
 }
 
 template <typename... Args>
-auto make_error(Args &&... args)
+auto make_error(Args &&...args)
 {
     return std::make_unique<Error>(std::forward<Args>(args)...);
 }
 
 template <typename T, typename... Args>
-Result<T> make_error_result(Args &&... args)
+Result<T> make_error_result(Args &&...args)
 {
     return Result<T>(make_error(std::forward<Args>(args)...));
 }
@@ -425,11 +425,10 @@ Result<ToResultContent> move_to_another_error_result(FromResultType &&from_resul
 }
 
 template <typename Ret>
-inline constexpr auto make_from_variant = [](auto &&variant) {
+inline constexpr auto make_from_variant = [](auto &&variant)
+{
     return apply_variant_tuple(detail::construct<Ret>, std::forward<decltype(variant)>(variant));
 };
-
-
 
 /// F should be deduced by constructor argument, void is dummy.
 template <typename TResult = void, typename F = void, bool convert_from_variant_tuple = true>
@@ -541,7 +540,7 @@ class Sequence
     using this_type = Sequence<Ps...>;
 
 public:
-    constexpr Sequence(const Ps &... parsers) : parser_tuple_(parsers...) {}
+    constexpr Sequence(const Ps &...parsers) : parser_tuple_(parsers...) {}
 
     template <typename TokenStream>
     auto operator()(TokenStream &token_stream) const
@@ -566,7 +565,7 @@ public:
 private:
     // return type: Result<std::tuple<...>>
     template <size_t I, typename TokenStream, typename... Results>
-    auto parse(TokenStream &token_stream, Results &&... results) const
+    auto parse(TokenStream &token_stream, Results &&...results) const
     {
         if constexpr (I == tuple_size_)
         {
@@ -597,7 +596,7 @@ class Choice
     using this_type = Choice<Ps...>;
 
 public:
-    constexpr Choice(const Ps &... parsers) : parser_tuple_(parsers...) {}
+    constexpr Choice(const Ps &...parsers) : parser_tuple_(parsers...) {}
 
     template <typename TokenStream>
     auto operator()(TokenStream &token_stream) const
@@ -665,10 +664,9 @@ private:
 
 template <typename Parser, typename TokenStream>
 using result_content_t = std::decay_t<
-    decltype(
-        std::declval<Parser>()(
-            std::declval<TokenStream &>())
-            .success())>;
+    decltype(std::declval<Parser>()(
+                 std::declval<TokenStream &>())
+                 .success())>;
 
 template <typename Result, typename Pos, typename TokenStream>
 bool LL1_parser_fatally_failed(const Result &result, const Pos &initial_position, const TokenStream &stream)
@@ -711,7 +709,8 @@ template <typename P>
 constexpr auto many(P &&parser)
 {
     return Parser(
-        [parser](auto &&token_stream) {
+        [parser](auto &&token_stream)
+        {
             using vec_value_ty = result_content_t<P, decltype(token_stream)>;
             using vec_ty = std::vector<vec_value_ty>;
             vec_ty vec;
@@ -769,9 +768,8 @@ public:
     template <typename P>
     constexpr auto operator<<=(const P &parser) const
     {
-        return Parser([=, *this](auto &&token_stream) {
-            return conv_(parser(token_stream));
-        });
+        return Parser([=, *this](auto &&token_stream)
+                      { return conv_(parser(token_stream)); });
     }
 };
 
@@ -800,11 +798,13 @@ auto apply_to_result(const F &func, R &&result)
 template <typename F>
 constexpr auto converter(const F &f)
 {
-    auto conv = [f](auto &&success) {
+    auto conv = [f](auto &&success)
+    {
         return apply_variant_tuple(f, std::forward<decltype(success)>(success));
     };
     return Converter(
-        [conv = std::move(conv)](auto &&result) {
+        [conv = std::move(conv)](auto &&result)
+        {
             return apply_to_result(std::move(conv), std::forward<decltype(result)>(result));
         });
 }
@@ -815,7 +815,8 @@ template <typename F>
 constexpr auto converter_no_strip(F &&f)
 {
     return Converter(
-        [conv = std::forward<F>(f)](auto &&result) {
+        [conv = std::forward<F>(f)](auto &&result)
+        {
             using ConvertedContent = decltype(conv(result.extract_success()));
             if (result.failed())
             {
@@ -832,7 +833,7 @@ struct BraceInitialized
 {
     T value;
     template <typename... Args>
-    explicit BraceInitialized(Args &&... args) : value{std::forward<Args>(args)...} {}
+    explicit BraceInitialized(Args &&...args) : value{std::forward<Args>(args)...} {}
 };
 template <typename Tuple>
 struct BraceInitArgs
@@ -846,7 +847,8 @@ struct BraceInitArgs
     }
 };
 
-inline constexpr auto brace_init_fn = [](auto &&... args) {
+inline constexpr auto brace_init_fn = [](auto &&...args)
+{
     return BraceInitArgs(std::make_tuple(std::forward<decltype(args)>(args)...));
 };
 } // namespace detail

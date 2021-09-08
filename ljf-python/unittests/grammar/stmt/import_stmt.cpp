@@ -88,7 +88,6 @@ from a.b import c
     auto import_as_name0 = import_as_name_vec.at(0);
     ASSERT_EQ("c", import_as_name0.name.name());
     ASSERT_FALSE(import_as_name0.opt_as_name);
-
 }
 
 TEST(ImportStmt, ImportFromRelative)
@@ -108,7 +107,6 @@ from .a.b import c
     auto import_as_name0 = import_as_name_vec.at(0);
     ASSERT_EQ("c", import_as_name0.name.name());
     ASSERT_FALSE(import_as_name0.opt_as_name);
-
 }
 
 TEST(ImportStmt, ImportFromRelativeMultiple)
@@ -134,7 +132,6 @@ from .a.b import c, d
     auto import_as_name1 = import_as_name_vec.at(1);
     ASSERT_EQ("d", import_as_name1.name.name());
     ASSERT_FALSE(import_as_name1.opt_as_name);
-
 }
 
 TEST(ImportStmt, ImportFromRelativeMultipleAs)
@@ -161,7 +158,6 @@ from .a.b import c, d as c2
     ASSERT_EQ("d", import_as_name1.name.name());
     ASSERT_TRUE(import_as_name1.opt_as_name);
     ASSERT_EQ("c2", import_as_name1.opt_as_name.value().name());
-
 }
 
 TEST(ImportStmt, ImportFromDot)
@@ -180,7 +176,6 @@ from . import c
     auto import_as_name0 = import_as_name_vec.at(0);
     ASSERT_EQ("c", import_as_name0.name.name());
     ASSERT_FALSE(import_as_name0.opt_as_name);
-
 }
 
 TEST(ImportStmt, ImportFromDot2)
@@ -199,5 +194,4 @@ from .. import c
     auto import_as_name0 = import_as_name_vec.at(0);
     ASSERT_EQ("c", import_as_name0.name.name());
     ASSERT_FALSE(import_as_name0.opt_as_name);
-
 }

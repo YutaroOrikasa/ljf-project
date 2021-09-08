@@ -4,7 +4,6 @@
 #include "Object.hpp"
 #include "runtime-internal.hpp"
 
-
 namespace ljf
 {
 
@@ -60,7 +59,8 @@ public:
     {
         std::lock_guard lk{*obj_};
         version_ = obj->version_;
-        auto &table = *[&]() {
+        auto &table = *[&]()
+        {
             if (visiblity == TableVisiblity::VISIBLE)
             {
                 return &obj_->hash_table_;
@@ -113,14 +113,12 @@ public:
     }
 };
 
-inline
-Object::TableIterator Object::iter_hash_table()
+inline Object::TableIterator Object::iter_hash_table()
 {
     return Object::TableIterator(this, TableVisiblity::VISIBLE);
 }
 
-inline
-Object::TableIterator Object::iter_hidden_table()
+inline Object::TableIterator Object::iter_hidden_table()
 {
     return Object::TableIterator(this, TableVisiblity::HIDDEN);
 }
@@ -197,11 +195,9 @@ public:
     }
 };
 
-inline
-Object::ArrayIterator Object::iter_array()
+inline Object::ArrayIterator Object::iter_array()
 {
     return Object::ArrayIterator(this);
 }
 
 } // namespace ljf
-

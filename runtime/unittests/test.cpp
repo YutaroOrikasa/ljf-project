@@ -5,7 +5,6 @@
 
 using namespace ljf;
 
-
 TEST(LJFSetGet, SetGetVisible)
 {
     ObjectHolder obj = ljf_new_object();
@@ -35,7 +34,6 @@ TEST(LJFEnvironment, GetOuterValue)
     ObjectHolder env = create_callee_environment(env0, nullptr);
     ASSERT_EQ(obj, ljf_environment_get(env, "obj", ljf::VISIBLE));
     ASSERT_THROW(ljf_environment_get(env, "not_exist", ljf::VISIBLE), std::out_of_range);
-
 }
 
 TEST(ObjectHolder, NotEqual)

@@ -18,16 +18,12 @@ using namespace ljf::python::grammar;
 class Visitor
 {
 private:
-
 public:
-
-
     template <typename T>
     void operator()(const T &t) const
     {
         std::cout << "Accept (" << typeid(t).name() << ")";
     }
-
 };
 
 class ResultSuccessVisitor
@@ -44,7 +40,8 @@ int main(int argc, const char **argv)
 
     // discard tokens other than NEWLINE
     // and then, discard NEWLINE itself
-    constexpr auto discard_until_end_of_line = [](auto &&token_stream) -> void {
+    constexpr auto discard_until_end_of_line = [](auto &&token_stream) -> void
+    {
         while (!token_stream.peek().is_newline())
         {
             if (token_stream.peek().is_eof())

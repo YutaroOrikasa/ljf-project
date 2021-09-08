@@ -71,9 +71,11 @@ auto to_empty_optional_result(Result<T> &&result)
     return Result<std::optional<T>>(std::optional<T>());
 }
 
-inline constexpr auto option = [](auto parser) {
+inline constexpr auto option = [](auto parser)
+{
     return Parser(
-        [=](auto &&token_stream) {
+        [=](auto &&token_stream)
+        {
             auto initial_pos = token_stream.current_position();
             auto result = parser(token_stream);
             // if result.failed() && token_stream.current_position() == initial_pos
@@ -86,9 +88,11 @@ inline constexpr auto option = [](auto parser) {
         });
 };
 
-inline constexpr auto read_if = [](auto &&pred, auto &&... error_args) {
+inline constexpr auto read_if = [](auto &&pred, auto &&...error_args)
+{
     return Parser(
-        [=](auto &&token_stream) {
+        [=](auto &&token_stream)
+        {
             using result_content_type = std::decay_t<decltype(token_stream.read())>;
             if (pred(token_stream.peek()))
             {
@@ -111,18 +115,20 @@ inline constexpr auto read_if = [](auto &&pred, auto &&... error_args) {
 //         });
 // };
 
-inline constexpr auto string = [](auto &&str) {
-    return read_if([=](const Token &token) {
-        return token.str() == str;
-    },
+inline constexpr auto string = [](auto &&str)
+{
+    return read_if([=](const Token &token)
+                   { return token.str() == str; },
                    "expected ", str, " but not given");
 };
 
-inline constexpr auto option_str = [](auto &&str) {
+inline constexpr auto option_str = [](auto &&str)
+{
     return option(string(std::forward<decltype(str)>(str)));
 };
 
-inline constexpr auto separator = [](auto &&parser) {
+inline constexpr auto separator = [](auto &&parser)
+{
     return result_type<Separator> <<= parser;
 };
 
@@ -160,7 +166,8 @@ constexpr auto operator|(Parser &&parser, const charT *str)
 namespace detail
 {
 /// (T first, std::vector<U>) -> std::vector<T>
-inline constexpr auto fold_left_to_vec = [](auto &&first, auto &&vec) {
+inline constexpr auto fold_left_to_vec = [](auto &&first, auto &&vec)
+{
     using T = std::decay_t<decltype(first)>;
     std::vector<T> vec_ret;
     vec_ret.reserve(1 + vec.size());
@@ -226,16 +233,16 @@ inline constexpr Many<0> _many;
 inline constexpr Many<1> _many1;
 inline constexpr Many<1, true> _many1_unify;
 
-static constexpr auto sep = [](auto &&parser) {
+static constexpr auto sep = [](auto &&parser)
+{
     return separator(std::forward<decltype(parser)>(parser));
 };
 } // namespace abbrev
 
 constexpr auto token(token_category cat)
 {
-    return read_if([=](const Token &token) {
-        return token.category() == cat;
-    },
+    return read_if([=](const Token &token)
+                   { return token.category() == cat; },
                    "expected ", cat, " but not given");
 };
 
@@ -250,12 +257,14 @@ inline constexpr Parser identifier = result_type<ast::IdentifierExpr> <<= token(
 
 inline constexpr Parser string_literal =
     result_type<ast::StringLiteralExpr> <<= read_if(
-        [](const Token &token) {
+        [](const Token &token)
+        {
             return token.is_string_literal();
         });
 inline constexpr Parser integer_literal =
     result_type<ast::IntegerLiteralExpr> <<= read_if(
-        [](const Token &token) {
+        [](const Token &token)
+        {
             return token.is_integer_literal();
         });
 

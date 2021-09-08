@@ -220,7 +220,6 @@ create_environment(bool prepare_0th_frame /*=true*/)
     }
 }
 
-
 ObjectHolder
 create_callee_environment(Environment *parent, Object *arg)
 {
@@ -274,7 +273,6 @@ void ljf_set(Object *obj, const char *key, Object *value, ljf::TableVisiblity vi
     check_not_null(obj);
     obj->set(key, value, visiblity);
 }
-
 
 /**************** array API ***************/
 
