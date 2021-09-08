@@ -417,10 +417,19 @@ Result<T> make_error_result(Args &&... args)
     return Result<T>(make_error(std::forward<Args>(args)...));
 }
 
+template <typename ToResultContent, typename FromResultType>
+Result<ToResultContent> move_to_another_error_result(FromResultType &&from_result)
+{
+    assert(from_result.failed());
+    return Result<ToResultContent>(from_result.extract_error_ptr());
+}
+
 template <typename Ret>
 inline constexpr auto make_from_variant = [](auto &&variant) {
     return apply_variant_tuple(detail::construct<Ret>, std::forward<decltype(variant)>(variant));
 };
+
+
 
 /// F should be deduced by constructor argument, void is dummy.
 template <typename TResult = void, typename F = void, bool convert_from_variant_tuple = true>

@@ -96,42 +96,6 @@ constexpr auto many_sep_end_by(Parser p, SepParser sep)
     return conv <<= sep_many_optsep(p, sep);
 }
 
-struct ImportFromPart1
-{
-    std::vector<Token> dots_or_elipsis;
-    std::vector<IdentifierExpr> dotted_name;
-};
-
-struct ImportFromPart2
-{
-    std::vector<Token> dots_or_elipsis;
-};
-
-struct ImportFromPart3
-{
-    std::variant<Token, std::vector<ImportAsName>> wildcard_or_import_as_names;
-    ImportFromPart3(Token arg) : wildcard_or_import_as_names(arg) {}
-    ImportFromPart3(std::vector<ImportAsName> arg) : wildcard_or_import_as_names(arg) {}
-};
-
-inline constexpr auto to_import_from = [](const auto &a) -> ImportFrom
-{
-    const std::tuple<std::variant<ImportFromPart1, ImportFromPart2>, ImportFromPart3>& b = a;
-    auto [var, part3] = b;
-    std::vector<Token> dots_or_elipsis;
-    std::vector<IdentifierExpr> dotted_name;
-    if (auto part1 = std::get_if<ImportFromPart1>(&var))
-    {
-        dots_or_elipsis = part1->dots_or_elipsis;
-        dotted_name = part1->dotted_name;
-    }
-    else
-    {
-        dots_or_elipsis = std::get<ImportFromPart2>(var).dots_or_elipsis;
-    }
-
-    return ImportFrom{dots_or_elipsis, dotted_name, part3.wildcard_or_import_as_names};
-};
 
 } // namespace detail
 
@@ -232,11 +196,78 @@ inline StmtGrammars<TokenStream>::StmtGrammars()
         auto import_as_names = converter(unify_many1) <<= import_as_name + (","_sep + import_as_name) * _many;
         // auto import_as_names = converter(unify_many1) <<= import_as_name + (","_sep + import_as_name) * _many + opt[","];
 
+        struct ImportFromFromPart
+        {
+            std::vector<Token> dots_or_elipsis;
+            std::vector<IdentifierExpr> from_names;
+        };
+
+        const auto import_from_from_part = [&dotted_name](auto &&token_stream) -> Result<ImportFromFromPart>
+        {
+            auto dot_or_elipsis_parser = result_type<Token> <<= "."_p | "..."_p;
+            auto first_result = LL1_parse(dot_or_elipsis_parser, token_stream);
+            if (first_result.fatally_failed())
+            {
+                return move_to_another_error_result<ImportFromFromPart>(first_result.result);
+            }
+            if (first_result.result)
+            {
+                std::vector<Token> dot_or_elipsis_vec{first_result.result.extract_success()};
+                while (true)
+                {
+                    auto many_dot_or_elipsis_result = LL1_parse(dot_or_elipsis_parser, token_stream);
+                    if (many_dot_or_elipsis_result.fatally_failed())
+                    {
+                        return move_to_another_error_result<ImportFromFromPart>(many_dot_or_elipsis_result.result);
+                    }
+                    if (many_dot_or_elipsis_result.result.failed())
+                    {
+                        auto dotted_name_result = LL1_parse(dotted_name, token_stream);
+                        if (dotted_name_result.fatally_failed())
+                        {
+                            return move_to_another_error_result<ImportFromFromPart>(many_dot_or_elipsis_result.result);
+                        }
+                        if (dotted_name_result.result.failed())
+                        {
+                            ImportFromFromPart content{dot_or_elipsis_vec, {}};
+                            return Result<ImportFromFromPart>(content);
+                        }
+                        ImportFromFromPart content{dot_or_elipsis_vec, dotted_name_result.result.extract_success()};
+                        return Result<ImportFromFromPart>(content);
+                    }
+                    dot_or_elipsis_vec.push_back(many_dot_or_elipsis_result.result.extract_success());
+                }
+            }
+            else
+            {
+                auto dotted_name_result = dotted_name(token_stream);
+                if (dotted_name_result.failed())
+                {
+                    return move_to_another_error_result<ImportFromFromPart>(dotted_name_result);
+                }
+                ImportFromFromPart content{{}, dotted_name_result.extract_success()};
+                return Result<ImportFromFromPart>(content);
+            }
+        };
+
+        struct ImportFromImportPart
+        {
+            std::variant<Token, std::vector<ImportAsName>> wildcard_or_import_as_names;
+            ImportFromImportPart(Token arg) : wildcard_or_import_as_names(arg) {}
+            ImportFromImportPart(std::vector<ImportAsName> arg) : wildcard_or_import_as_names(arg) {}
+        };
+
+        const auto to_import_from = [](const auto &a) -> ImportFrom
+        {
+            const std::tuple<ImportFromFromPart, ImportFromImportPart> &b = a;
+            auto [from, import] = b;
+
+            return ImportFrom{from.dots_or_elipsis, from.from_names, import.wildcard_or_import_as_names};
+        };
         // # note below = the ('.' | '...') is necessary because '...' is tokenized as ELLIPSIS
         // Do not use converter() insted of converter_no_strip() because funny compile error occurs...
-        import_from = converter_no_strip(to_import_from) <<= ("from"_sep + ((result_type<ImportFromPart1> <<= brace_init <<= (result_type<Token> <<= "."_p | "..."_p) * _many + dotted_name) | //
-                                                                            (result_type<ImportFromPart2> <<= brace_init <<= (result_type<Token> <<= "."_p | "..."_p) * _many1_unify))         //
-                                                              + "import"_sep + (result_type<ImportFromPart3> <<= "*"_p | "("_sep + import_as_names + ")"_sep | import_as_names));
+        import_from = converter_no_strip(to_import_from) <<= ("from"_sep + import_from_from_part //
+                                                              + "import"_sep + (result_type<ImportFromImportPart> <<= "*"_p | "("_sep + import_as_names + ")"_sep | import_as_names));
 
         import_as_name = brace_init <<= NAME + opt["as"_sep + NAME];
         dotted_as_name = brace_init <<= dotted_name + opt["as"_sep + NAME];
