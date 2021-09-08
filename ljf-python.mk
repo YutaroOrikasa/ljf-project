@@ -14,6 +14,10 @@ override CXXFLAGS += -Wall -std=c++17 $(_DEP_FLAGS) $(INCLUDE_FLAGS) -fno-except
 
 all: _all
 
+### grammar impl ###
+GRAMMAR_SOURCE_FILES = $(shell find ljf-python/grammar -name '*.cpp')
+GRAMMAR_OBJECT_FILES = $(GRAMMAR_SOURCE_FILES:%=$(BUILD_DIR)/%.o)
+
 
 ### executable ###
 
@@ -29,9 +33,9 @@ $(BUILD_DIR)/ljf-python/%.cpp.o: ljf-python/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 
-$(BUILD_DIR)/ljf-python/bin/rppl: $(BUILD_DIR)/ljf-python/rppl.cpp.o $(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o
+$(BUILD_DIR)/ljf-python/bin/rppl: $(BUILD_DIR)/ljf-python/rppl.cpp.o $(GRAMMAR_OBJECT_FILES)
 	mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) $(BUILD_DIR)/ljf-python/rppl.cpp.o $(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o -o $@
+	$(CXX) $(CXXFLAGS) $(BUILD_DIR)/ljf-python/rppl.cpp.o $(GRAMMAR_OBJECT_FILES) -o $@
 
 
 ### run executable ###
@@ -55,12 +59,12 @@ $(BUILD_DIR)/ljf-python/unittests/%.cpp.o: ljf-python/unittests/%.cpp
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(UNITTEST_EXECUTABLE): $(UNITTEST_OBJECT_FILES) $(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o
+$(UNITTEST_EXECUTABLE): $(UNITTEST_OBJECT_FILES) $(GRAMMAR_OBJECT_FILES)
 	mkdir -p $(@D)
 	$(MAKE) $(BUILD_DIR)/libgtest.a
 	$(CXX) $(CXXFLAGS) $(BUILD_DIR)/libgtest.a \
 										$(UNITTEST_OBJECT_FILES) \
-										$(BUILD_DIR)/ljf-python/grammar/expr-impl.cpp.o -o $@
+										$(GRAMMAR_OBJECT_FILES) -o $@
 
 .PHONY: run-unittest
 run-unittest: $(UNITTEST_EXECUTABLE)
@@ -69,7 +73,6 @@ run-unittest: $(UNITTEST_EXECUTABLE)
 
 ### header dependency ###
 
-GRAMMAR_SOURCE_FILES = $(shell find ljf-python/grammar -name '*.cpp')
 SOURCE_FILES = $(EXE_SOURCE_FILES) $(GRAMMAR_SOURCE_FILES) $(UNITTEST_SOURCE_FILES)
 DEPENDENCY_FILES := $(SOURCE_FILES:%=$(BUILD_DIR)/%.d)
 -include $(DEPENDENCY_FILES)

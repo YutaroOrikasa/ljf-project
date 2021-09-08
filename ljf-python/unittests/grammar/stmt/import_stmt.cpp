@@ -182,3 +182,22 @@ from . import c
     ASSERT_FALSE(import_as_name0.opt_as_name);
 
 }
+
+TEST(ImportStmt, ImportFromDot2)
+{
+    constexpr auto input = R"(
+from .. import c
+)";
+    auto result = parse_until_end(sg.import_stmt, input);
+    ASSERT_TRUE(result) << result.error();
+
+    auto import_from = std::get<ImportFrom>(result.success().import_or_import_from);
+
+    ASSERT_EQ(".", import_from.dots_or_elipsis.at(0));
+    ASSERT_EQ(0, import_from.from_names.size());
+    auto import_as_name_vec = std::get<ImportAsNameVec>(import_from.wildcard_or_import_as_names);
+    auto import_as_name0 = import_as_name_vec.at(0);
+    ASSERT_EQ("c", import_as_name0.name.name());
+    ASSERT_FALSE(import_as_name0.opt_as_name);
+
+}
