@@ -250,6 +250,15 @@ struct FlowStmt
     }
 };
 
+struct PassStmt
+{
+    using is_stmt_impl = void;
+    explicit PassStmt(const Token &token)
+    {
+        assert(token == "pass");
+    }
+};
+
 struct StmtVariant : std::variant<IfStmt,
                                   ForStmt,
                                   DefStmt,
@@ -259,7 +268,8 @@ struct StmtVariant : std::variant<IfStmt,
                                   AssignStmt,
                                   MultiStmt,
                                   ReturnStmt,
-                                  FlowStmt>
+                                  FlowStmt,
+                                  PassStmt>
 {
     using variant::variant;
 };

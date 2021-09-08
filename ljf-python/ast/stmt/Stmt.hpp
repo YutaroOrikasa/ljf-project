@@ -15,6 +15,8 @@ private:
     std::unique_ptr<StmtVariant> stmt_var_ptr_;
 
 public:
+    // Check is_stmt_impl member type
+    // so that static_assert that use std::is_constructible works.
     template <typename T,
               typename = typename std::remove_reference_t<T>::is_stmt_impl>
     /*implicit*/ Stmt(T &&t)

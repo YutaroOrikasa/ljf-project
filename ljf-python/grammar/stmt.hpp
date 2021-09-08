@@ -39,7 +39,7 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(testlist_star_expr);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(augassign);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(del_stmt);
-    // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(pass_stmt);
+    ParserPlaceHolder<PassStmt> INIT_PLACE_HOLDER(pass_stmt);
     ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(flow_stmt);
     ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(break_stmt);
     ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(continue_stmt);

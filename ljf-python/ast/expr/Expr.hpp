@@ -11,6 +11,8 @@ private:
     std::unique_ptr<ExprVariant> expr_var_ptr_;
 
 public:
+    // Check is_expr_impl member type
+    // so that static_assert that use std::is_constructible works.
     template <typename T,
               typename = typename std::remove_reference_t<T>::is_expr_impl>
     /*implicit*/ Expr(T &&t)

@@ -166,7 +166,7 @@ inline StmtGrammars<TokenStream>::StmtGrammars()
     // simple_stmt = printer("simple_stmt") + small_stmt + (";"_p + small_stmt) * _many + opt[";"] + NEWLINE;
 
     // Simplified small_stmt definition
-    small_stmt = flow_stmt | expr_stmt;
+    small_stmt = pass_stmt | flow_stmt | expr_stmt;
     // small_stmt = printer("small_stmt") + (del_stmt | pass_stmt | flow_stmt |
     //                                       import_stmt | global_stmt | nonlocal_stmt | assert_stmt | expr_stmt);
 
@@ -178,7 +178,7 @@ inline StmtGrammars<TokenStream>::StmtGrammars()
     //              "<<="_p | ">>="_p | "**="_p | "//=");
     // // # For normal assignments, additional restrictions enforced by the interpreter
     // del_stmt = "del"_p + E::exprlist;
-    // pass_stmt = "pass"_p;
+    pass_stmt = result_type<PassStmt> <<= "pass"_p;
 
     // Simplified flow_stmt definition
     flow_stmt = break_stmt | continue_stmt | return_stmt;
