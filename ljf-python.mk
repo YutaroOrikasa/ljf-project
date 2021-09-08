@@ -7,7 +7,7 @@ INCLUDE_PATHS = ./include ./googletest/googletest/include ./
 INCLUDE_FLAGS := $(INCLUDE_PATHS:%=-I%)
 
 _DEP_FLAGS := -MMD -MP
-override CXXFLAGS += -Wall -std=c++17 $(_DEP_FLAGS) $(INCLUDE_FLAGS) -fno-exceptions
+override CXXFLAGS += -Wall -std=c++17 $(_DEP_FLAGS) $(INCLUDE_FLAGS)
 
 
 ### first rule ###
