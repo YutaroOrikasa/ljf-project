@@ -67,7 +67,7 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(with_item);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(except_clause);
     ParserPlaceHolder<MultiStmt> INIT_PLACE_HOLDER(suite);
-    // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(classdef);
+    ParserPlaceHolder<ClassStmt> INIT_PLACE_HOLDER(classdef);
 
     StmtGrammars();
 };

@@ -155,9 +155,9 @@ struct DefStmt
 
 struct ClassStmt
 {
-    IdentifierExpr classname_;
-    std::vector<DefParameter> inheritance_list_;
-    StmtList stmt_list_;
+    IdentifierExpr classname;
+    ArgList inheritance_list;
+    MultiStmt body;
     using is_stmt_impl = void;
 };
 

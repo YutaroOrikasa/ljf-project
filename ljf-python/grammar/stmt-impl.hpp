@@ -322,6 +322,16 @@ inline StmtGrammars<TokenStream>::StmtGrammars()
                               (stmt + prompter("(in indent)> ")) * _many1_unify +
                               sep(DEDENT);
 
-    // classdef = "class"_p + NAME + opt["("_p + opt[E::arglist] + ")"] + ":"_p + suite;
+    const auto to_class_stmt = [](const auto &arg)
+    {
+        auto &[name, opt_inheritance_list, body] = arg;
+        ArgList inheritance_list;
+        if (opt_inheritance_list.has_value())
+        {
+            inheritance_list = *opt_inheritance_list;
+        }
+        return ClassStmt{name, inheritance_list, body};
+    };
+    classdef = converter_no_strip(to_class_stmt) <<= "class"_sep + NAME + flatten_parser(opt["("_sep + opt[E::arglist] + ")"_sep]) + ":"_sep + suite;
 }
 } // namespace ljf::python::grammar

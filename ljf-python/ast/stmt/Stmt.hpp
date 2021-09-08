@@ -44,6 +44,12 @@ public:
         assert(stmt_var_ptr_);
         return std::visit(std::forward<Visitor>(visitor), *stmt_var_ptr_);
     }
+
+    const StmtVariant& stmt_variant() const
+    {
+        assert(stmt_var_ptr_);
+        return *stmt_var_ptr_;
+    }
 };
 
 static_assert(std::is_copy_constructible_v<Stmt>);

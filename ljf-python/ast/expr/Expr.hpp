@@ -40,6 +40,12 @@ public:
         assert(expr_var_ptr_);
         return std::visit(std::forward<Visitor>(visitor), *expr_var_ptr_);
     }
+
+    const ExprVariant &expr_variant() const
+    {
+        assert(expr_var_ptr_);
+        return *expr_var_ptr_;
+    }
 };
 
 static_assert(std::is_copy_constructible_v<Expr>);
