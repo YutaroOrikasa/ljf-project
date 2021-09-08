@@ -160,6 +160,20 @@ from .a.b import c, d as c2
     ASSERT_EQ("c2", import_as_name1.opt_as_name.value().name());
 }
 
+TEST(ImportStmt, ImportFromWildcard)
+{
+    constexpr auto input = R"(
+from .a.b import *
+)";
+    auto result = parse_until_end(sg.import_stmt, input);
+    ASSERT_TRUE(result) << result.error();
+
+    auto import_from = std::get<ImportFrom>(result.success().import_or_import_from);
+
+    std::get<ImportFrom::Wildcard>(import_from.wildcard_or_import_as_names);
+
+}
+
 TEST(ImportStmt, ImportFromDot)
 {
     constexpr auto input = R"(
@@ -207,4 +221,30 @@ from ... import c
     auto import_from = std::get<ImportFrom>(result.success().import_or_import_from);
 
     ASSERT_EQ(3, import_from.dot_num);
+}
+
+TEST(ImportStmt, ImportFromDot5)
+{
+    constexpr auto input = R"(
+from ..... import c
+)";
+    auto result = parse_until_end(sg.import_stmt, input);
+    ASSERT_TRUE(result) << result.error();
+
+    auto import_from = std::get<ImportFrom>(result.success().import_or_import_from);
+
+    ASSERT_EQ(5, import_from.dot_num);
+}
+
+TEST(ImportStmt, ImportFromDot6)
+{
+    constexpr auto input = R"(
+from ...... import c
+)";
+    auto result = parse_until_end(sg.import_stmt, input);
+    ASSERT_TRUE(result) << result.error();
+
+    auto import_from = std::get<ImportFrom>(result.success().import_or_import_from);
+
+    ASSERT_EQ(6, import_from.dot_num);
 }

@@ -271,8 +271,11 @@ inline StmtGrammars<TokenStream>::StmtGrammars()
 
     struct ImportFromImportPart
     {
-        std::variant<Token, std::vector<ImportAsName>> wildcard_or_import_as_names;
-        ImportFromImportPart(Token arg) : wildcard_or_import_as_names(arg) {}
+        std::variant<ImportFrom::Wildcard, std::vector<ImportAsName>> wildcard_or_import_as_names;
+        ImportFromImportPart(Token arg) : wildcard_or_import_as_names(ImportFrom::Wildcard())
+        {
+            assert(arg == "*");
+        }
         ImportFromImportPart(std::vector<ImportAsName> arg) : wildcard_or_import_as_names(arg) {}
     };
 

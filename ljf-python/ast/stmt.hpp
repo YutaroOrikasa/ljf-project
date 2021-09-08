@@ -177,11 +177,15 @@ using ImportAsNameVec = std::vector<ImportAsName>;
 
 struct ImportFrom
 {
+    struct Wildcard
+    {
+    };
+
     // Number of dots ".".
     // "..." is counted as 3.
     size_t dot_num = 0;
     std::vector<IdentifierExpr> from_names;
-    std::variant<Token, ImportAsNameVec> wildcard_or_import_as_names;
+    std::variant<Wildcard, ImportAsNameVec> wildcard_or_import_as_names;
 };
 
 using DottedAsNameVec = std::vector<DottedAsName>;
