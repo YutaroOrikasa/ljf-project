@@ -166,8 +166,8 @@ inline StmtGrammars<TokenStream>::StmtGrammars()
     // simple_stmt = printer("simple_stmt") + small_stmt + (";"_p + small_stmt) * _many + opt[";"] + NEWLINE;
 
     // Simplified small_stmt definition
-    small_stmt = pass_stmt | flow_stmt | expr_stmt;
-    // small_stmt = printer("small_stmt") + (del_stmt | pass_stmt | flow_stmt |
+    small_stmt = pass_stmt | flow_stmt | import_stmt | expr_stmt;
+    // small_stmt = (del_stmt | pass_stmt | flow_stmt |
     //                                       import_stmt | global_stmt | nonlocal_stmt | assert_stmt | expr_stmt);
 
     // Simplified expr_stmt definition
@@ -299,8 +299,8 @@ inline StmtGrammars<TokenStream>::StmtGrammars()
     // assert_stmt = "assert"_p + E::test + opt[","_p + E::test];
 
     // Simplified expr_stmt definition
-    compound_stmt = if_stmt;
-    // compound_stmt = printer("compound_stmt") + if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated | async_stmt;
+    compound_stmt = if_stmt | for_stmt | funcdef | classdef;
+    // compound_stmt = if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated | async_stmt;
     // async_stmt = "async"_p + (funcdef | with_stmt | for_stmt);
     if_stmt = result_type<IfStmt> <<= brace_init <<= "if"_sep + E::test + ":"_sep + suite +
                                                      (result_type<ast::Elif> <<= brace_init <<= "elif"_sep + E::test + ":"_sep + suite) * _many +
