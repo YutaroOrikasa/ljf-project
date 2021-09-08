@@ -206,7 +206,7 @@ inline StmtGrammars<TokenStream>::StmtGrammars()
         std::vector<IdentifierExpr> from_names;
     };
 
-    const auto import_from_from_part = [&dotted_name](auto &&token_stream) -> Result<ImportFromFromPart>
+    const auto import_from_from_part = [dotted_name](auto &&token_stream) -> Result<ImportFromFromPart>
     {
         auto dot_or_elipsis_parser = result_type<Token> <<= "."_p | "..."_p;
         auto first_result = LL1_parse(dot_or_elipsis_parser, token_stream);
