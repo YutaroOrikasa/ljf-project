@@ -13,7 +13,7 @@
 // runtime.so must not be dynamically linked to main executable.
 //
 // The reason why runtime.so must not be statically linked
-// is JIT compiled code (.so) can not be linked to ljf runtime functoins.
+// is JIT compiled code (.so) can not be linked to ljf runtime functions.
 //
 // The reason why runtime.so must not be dynamically linked
 // is there are no portable methods that we know the path
