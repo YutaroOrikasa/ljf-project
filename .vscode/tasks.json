@@ -1,0 +1,43 @@
+{
+    "tasks": [
+		{
+			"type": "shell",
+			"label": "make run-unittest-runtime",
+			"command": "make",
+			"args": [
+				"-j6",
+				"run-unittest-runtime"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"type": "shell",
+			"label": "make ljf-python",
+			"command": "make",
+			"args": [
+				"-j6",
+				"-f",
+				"ljf-python.mk",
+				"all",
+				"run-unittest"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}
+	],
+    "version": "2.0.0"
+}
