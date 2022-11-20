@@ -20,10 +20,10 @@ export BUILD_DIR
 INSTTALL_DIR ?= install
 export INSTTALL_DIR
 
-LIBLLVM_CXXFLAGS ?= 
+LIBLLVM_CXXFLAGS ?=
 export LIBLLVM_CXXFLAGS
 
-LIBLLVM_LDFLAGS ?=  
+LIBLLVM_LDFLAGS ?=
 export LIBLLVM_LDFLAGS
 
 
@@ -125,7 +125,7 @@ run: all
 	$(BUILD_DIR)/$(EXECUTABLE_FILE) "build/llcode/$(BENCH_NAME).cpp.ll" "$(CXXFLAGS) $(LDFLAGS)"
 
 all-bench: all benchmark-ll-codes
-	LL_FILES_DIR="$(BUILD_DIR)/llcode" FLAGS="$(CXXFLAGS) $(LDFLAGS)" ./all-bench.sh 
+	LL_FILES_DIR="$(BUILD_DIR)/llcode" FLAGS="$(CXXFLAGS) $(LDFLAGS)" ./all-bench.sh
 
 pprof-web:
 	# pprof --web build/main tmp/main.prof
@@ -136,7 +136,7 @@ run-unittest-runtime: $(BUILD_DIR)/runtime/unittest-runtime
 	$(BUILD_DIR)/runtime/unittest-runtime
 
 clean:
-	rm -rf build _dump.ll 
+	rm -rf build
 
 print-source-files:
 	@echo $(SOURCE_FILES)
