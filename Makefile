@@ -17,6 +17,9 @@ export INCLUDE_PATHS
 BUILD_DIR ?= build
 export BUILD_DIR
 
+INSTTALL_DIR ?= install
+export INSTTALL_DIR
+
 LIBLLVM_CXXFLAGS ?= 
 export LIBLLVM_CXXFLAGS
 
@@ -50,7 +53,13 @@ override CXXFLAGS += -Wall -std=c++17 $(INCLUDE_FLAGS) $(_DEP_FLAGS)
 
 include common.mk
 
-all:$(BUILD_DIR)/libgtest.a $(BUILD_DIR)/libljf.a $(BUILD_DIR)/main $(BUILD_DIR)/runtime/runtime.so $(BUILD_DIR)/runtime/runtime-declaration.bc
+all: $(BUILD_DIR)/libgtest.a $(BUILD_DIR)/libljf.a $(BUILD_DIR)/main $(BUILD_DIR)/runtime/runtime.so $(BUILD_DIR)/runtime/runtime-declaration.bc
+
+.PHONY: install
+install: all
+	mkdir -p $(INSTTALL_DIR)
+	cp -a $(BUILD_DIR)/libljf.a $(BUILD_DIR)/runtime/runtime.so $(BUILD_DIR)/runtime/runtime-declaration.bc $(INSTTALL_DIR)
+
 
 $(BUILD_DIR)/libljf.a: $(BUILD_DIR)/ljf.cpp.o
 	mkdir -p $(BUILD_DIR)

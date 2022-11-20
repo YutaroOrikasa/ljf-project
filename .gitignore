@@ -1,5 +1,6 @@
 _dump.ll
 build/
+install/
 tmp/
 config.mk
 ljf-config.h
