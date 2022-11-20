@@ -1,12 +1,12 @@
 #pragma once
 
-#include <tuple>
-#include <variant>
+#include <memory>
 #include <optional>
 #include <string>
-#include <vector>
-#include <memory>
+#include <tuple>
 #include <type_traits>
+#include <variant>
+#include <vector>
 
 #include <cassert>
 
@@ -14,11 +14,9 @@
 
 #include "Expr.hpp"
 
-namespace ljf::python::ast
-{
+namespace ljf::python::ast {
 
-class StringLiteralExpr
-{
+class StringLiteralExpr {
 private:
     Token token_;
 
@@ -26,14 +24,10 @@ public:
     using is_expr_impl = void;
     StringLiteralExpr(Token &&token) : token_(std::move(token)) {}
 
-    const Token &token() const noexcept
-    {
-        return token_;
-    }
+    const Token &token() const noexcept { return token_; }
 };
 
-class IntegerLiteralExpr
-{
+class IntegerLiteralExpr {
 private:
     Token token_;
 
@@ -41,10 +35,7 @@ public:
     using is_expr_impl = void;
     IntegerLiteralExpr(Token &&token) : token_(std::move(token)) {}
 
-    const Token &token() const noexcept
-    {
-        return token_;
-    }
+    const Token &token() const noexcept { return token_; }
 };
 
 } // namespace ljf::python::ast

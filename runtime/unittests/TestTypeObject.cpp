@@ -1,13 +1,10 @@
-#include "gtest/gtest.h"
 #include "../TypeObject.hpp"
+#include "gtest/gtest.h"
 
 // FRIEND_TEST (private member access test) need defining test in namespace
-namespace ljf
-{
-TEST(calculate_type, Test)
-{
-    auto create_obj = []()
-    {
+namespace ljf {
+TEST(calculate_type, Test) {
+    auto create_obj = []() {
         ObjectHolder obj = ljf_new_object();
         ObjectHolder a1 = ljf_new_object();
         ObjectHolder a2 = ljf_new_object();
@@ -26,8 +23,7 @@ TEST(calculate_type, Test)
     EXPECT_EQ(*obj1->calculate_type(), *obj2->calculate_type());
 }
 
-TEST(calculate_type, TestCircularReference)
-{
+TEST(calculate_type, TestCircularReference) {
     ObjectHolder obj = ljf_new_object();
     ObjectHolder a = ljf_new_object();
     ObjectHolder b = ljf_new_object();

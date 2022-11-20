@@ -4,8 +4,7 @@
 
 using namespace ljf::python::ast;
 
-TEST(ClassDef, Pass)
-{
+TEST(ClassDef, Pass) {
     constexpr auto input = R"(
 class A:
     pass
@@ -19,8 +18,7 @@ class A:
     std::get<PassStmt>(cls.body.stmt_list_.at(0).stmt_variant());
 }
 
-TEST(ClassDef, Inheritance)
-{
+TEST(ClassDef, Inheritance) {
     constexpr auto input = R"(
 class A(B):
     pass

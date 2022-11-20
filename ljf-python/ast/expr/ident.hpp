@@ -1,12 +1,12 @@
 #pragma once
 
-#include <tuple>
-#include <variant>
+#include <memory>
 #include <optional>
 #include <string>
-#include <vector>
-#include <memory>
+#include <tuple>
 #include <type_traits>
+#include <variant>
+#include <vector>
 
 #include <cassert>
 
@@ -14,18 +14,13 @@
 
 #include "Expr.hpp"
 
-namespace ljf::python::ast
-{
+namespace ljf::python::ast {
 
-struct IdentifierExpr : public detail::SingleTokenExpr
-{
+struct IdentifierExpr : public detail::SingleTokenExpr {
     using is_expr_impl = void;
     using SingleTokenExpr::SingleTokenExpr;
 
-    const std::string &name() const noexcept
-    {
-        return token().str();
-    }
+    const std::string &name() const noexcept { return token().str(); }
 };
 
 } // namespace ljf::python::ast

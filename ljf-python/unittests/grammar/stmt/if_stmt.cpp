@@ -2,14 +2,12 @@
 
 #include "ljf-python/grammar/stmt.hpp"
 
-TEST(IfStmt, OneLine)
-{
+TEST(IfStmt, OneLine) {
     auto result = parse_until_end(sg.if_stmt, "if True: a = 0");
     ASSERT_TRUE(result) << result.error();
 }
 
-TEST(IfStmt, IfElse)
-{
+TEST(IfStmt, IfElse) {
     constexpr auto input = R"(
 if x:
     a = 0
@@ -20,8 +18,7 @@ else:
     ASSERT_TRUE(result) << result.error();
 }
 
-TEST(IfStmt, IfElifElse)
-{
+TEST(IfStmt, IfElifElse) {
     constexpr auto input = R"(
 if x:
     a = 0
@@ -34,8 +31,7 @@ else:
     ASSERT_TRUE(result) << result.error();
 }
 
-TEST(IfStmt, IfEmptyLinesElse)
-{
+TEST(IfStmt, IfEmptyLinesElse) {
     constexpr auto input = R"(
 if x:
     a = 0
@@ -49,8 +45,7 @@ else:
     ASSERT_TRUE(result) << result.error();
 }
 
-TEST(IfStmt, IfCommentElse)
-{
+TEST(IfStmt, IfCommentElse) {
     constexpr auto input = R"(
 if x:
     a = 0

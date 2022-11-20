@@ -2,8 +2,7 @@
 
 #include "ljf-python/grammar/stmt.hpp"
 
-TEST(ForStmt, ForStmt)
-{
+TEST(ForStmt, ForStmt) {
     constexpr auto input = R"(
 for i in range(10):
     print(i)
@@ -13,8 +12,7 @@ for i in range(10):
     ASSERT_TRUE(result) << result.error();
 }
 
-TEST(ForStmt, Break)
-{
+TEST(ForStmt, Break) {
     constexpr auto input = R"(
 for i in range(10):
     break
@@ -23,8 +21,7 @@ for i in range(10):
     ASSERT_TRUE(result) << result.error();
 }
 
-TEST(ForStmt, Continue)
-{
+TEST(ForStmt, Continue) {
     constexpr auto input = R"(
 for i in range(10):
     continue
@@ -33,8 +30,7 @@ for i in range(10):
     ASSERT_TRUE(result) << result.error();
 }
 
-TEST(ForStmt, ContinueInIfStmt)
-{
+TEST(ForStmt, ContinueInIfStmt) {
     constexpr auto input = R"(
 for i in range(10):
     if i % 2 == 1:

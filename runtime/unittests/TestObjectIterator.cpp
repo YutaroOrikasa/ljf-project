@@ -1,11 +1,10 @@
-#include "gtest/gtest.h"
 #include "../ObjectIterator.hpp"
+#include "gtest/gtest.h"
 
 using namespace ljf;
 
 // unittests for Iterator family (they are private data and methods)
-TEST(ObjectIterator, HashTable)
-{
+TEST(ObjectIterator, HashTable) {
     ObjectHolder obj = ljf_new_object();
     ObjectHolder elem = ljf_new_object();
     set_object_to_table(obj.get(), "elem", elem.get());
@@ -17,8 +16,7 @@ TEST(ObjectIterator, HashTable)
     ASSERT_TRUE(iter_next.is_end());
 }
 
-TEST(ObjectIterator, BrokenIter)
-{
+TEST(ObjectIterator, BrokenIter) {
     ObjectHolder obj = ljf_new_object();
     ObjectHolder elem = ljf_new_object();
     set_object_to_table(obj.get(), "elem", elem.get());

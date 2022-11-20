@@ -2,8 +2,7 @@
 
 #include "ljf-python/grammar/stmt.hpp"
 
-TEST(FuncDef, FuncDef)
-{
+TEST(FuncDef, FuncDef) {
     constexpr auto input = R"(
 def f(a):
     a = a
@@ -13,8 +12,7 @@ def f(a):
     ASSERT_TRUE(result) << result.error();
 }
 
-TEST(FuncDef, EmptyReturn)
-{
+TEST(FuncDef, EmptyReturn) {
     constexpr auto input = R"(
 def f(a):
     a = a
@@ -24,8 +22,7 @@ def f(a):
     ASSERT_TRUE(result) << result.error();
 }
 
-TEST(FuncDef, NoReturn)
-{
+TEST(FuncDef, NoReturn) {
     constexpr auto input = R"(
 def f(a):
     a = a
@@ -34,8 +31,7 @@ def f(a):
     ASSERT_TRUE(result) << result.error();
 }
 
-TEST(FuncParams, FuncParams)
-{
+TEST(FuncParams, FuncParams) {
     constexpr auto input = "(a, b, c)";
     auto result = parse_until_end(sg.parameters, input);
     ASSERT_TRUE(result) << result.error();
@@ -48,8 +44,7 @@ TEST(FuncParams, FuncParams)
     EXPECT_FALSE(params.opt_double_starred_param_);
 }
 
-TEST(FuncParams, FuncParamsEndsWithComma)
-{
+TEST(FuncParams, FuncParamsEndsWithComma) {
     constexpr auto input = "(a, b, c, )";
     auto result = parse_until_end(sg.parameters, input);
     ASSERT_TRUE(result) << result.error();
@@ -62,8 +57,7 @@ TEST(FuncParams, FuncParamsEndsWithComma)
     EXPECT_FALSE(params.opt_double_starred_param_);
 }
 
-TEST(FuncParams, NoParameters)
-{
+TEST(FuncParams, NoParameters) {
     constexpr auto input = "()";
     auto result = parse_until_end(sg.parameters, input);
     ASSERT_TRUE(result) << result.error();
@@ -72,8 +66,7 @@ TEST(FuncParams, NoParameters)
     ASSERT_EQ(0, params.def_params_.size());
 }
 
-TEST(FuncParams, HasDefaultValue)
-{
+TEST(FuncParams, HasDefaultValue) {
     constexpr auto input = "(a, b=0)";
     auto result = parse_until_end(sg.parameters, input);
     ASSERT_TRUE(result) << result.error();
@@ -84,8 +77,7 @@ TEST(FuncParams, HasDefaultValue)
     EXPECT_TRUE(params.def_params_[1].opt_default_value);
 }
 
-TEST(FuncParams, StarredParam)
-{
+TEST(FuncParams, StarredParam) {
     constexpr auto input = "(*args)";
     auto result = parse_until_end(sg.parameters, input);
     ASSERT_TRUE(result) << result.error();
@@ -95,8 +87,7 @@ TEST(FuncParams, StarredParam)
     EXPECT_FALSE(params.opt_double_starred_param_);
 }
 
-TEST(FuncParams, StarredAndDoubleStarred)
-{
+TEST(FuncParams, StarredAndDoubleStarred) {
     constexpr auto input = "(*args, **kwargs)";
     auto result = parse_until_end(sg.parameters, input);
     ASSERT_TRUE(result) << result.error();
@@ -106,8 +97,7 @@ TEST(FuncParams, StarredAndDoubleStarred)
     EXPECT_TRUE(params.opt_double_starred_param_);
 }
 
-TEST(FuncParams, DefParamStarredAndDoubleStarred)
-{
+TEST(FuncParams, DefParamStarredAndDoubleStarred) {
     constexpr auto input = "(a=0, *args, **kwargs)";
     auto result = parse_until_end(sg.parameters, input);
     ASSERT_TRUE(result) << result.error();

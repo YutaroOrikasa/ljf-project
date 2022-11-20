@@ -4,10 +4,7 @@ BasedOnStyle:  LLVM
 UseTab: Never
 IndentWidth: 4
 TabWidth: 4
-BreakBeforeBraces: Allman
-AllowShortIfStatementsOnASingleLine: false
-IndentCaseLabels: false
-ColumnLimit: 0
+NamespaceIndentation: Inner
+InsertBraces: true
 AccessModifierOffset: -4
-NamespaceIndentation: None
-SortIncludes: false
+

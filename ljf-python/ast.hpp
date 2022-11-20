@@ -1,12 +1,12 @@
 #pragma once
 
-#include <tuple>
-#include <variant>
+#include <memory>
 #include <optional>
 #include <string>
-#include <vector>
-#include <memory>
+#include <tuple>
 #include <type_traits>
+#include <variant>
+#include <vector>
 
 #include <cassert>
 
@@ -15,7 +15,4 @@
 #include "ast/expr.hpp"
 #include "ast/stmt.hpp"
 
-namespace ljf::python::ast
-{
-
-} // namespace ljf::python::ast
+namespace ljf::python::ast {} // namespace ljf::python::ast

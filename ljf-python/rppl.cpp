@@ -1,10 +1,10 @@
 
-#include <type_traits>
 #include <iostream>
+#include <type_traits>
 
-#include "tokenizer.hpp"
-#include "parser.hpp"
 #include "ast.hpp"
+#include "parser.hpp"
+#include "tokenizer.hpp"
 
 #include "grammar.hpp"
 #include "grammar/expr.hpp"
@@ -15,37 +15,26 @@ using namespace ljf::python::ast;
 using namespace ljf::python::parser;
 using namespace ljf::python::grammar;
 
-class Visitor
-{
+class Visitor {
 private:
 public:
-    template <typename T>
-    void operator()(const T &t) const
-    {
+    template <typename T> void operator()(const T &t) const {
         std::cout << "Accept (" << typeid(t).name() << ")";
     }
 };
 
-class ResultSuccessVisitor
-{
+class ResultSuccessVisitor {
 public:
-    void operator()(const Stmt &stmt) const
-    {
-        stmt.accept(Visitor());
-    }
+    void operator()(const Stmt &stmt) const { stmt.accept(Visitor()); }
 };
 
-int main(int argc, const char **argv)
-{
+int main(int argc, const char **argv) {
 
     // discard tokens other than NEWLINE
     // and then, discard NEWLINE itself
-    constexpr auto discard_until_end_of_line = [](auto &&token_stream) -> void
-    {
-        while (!token_stream.peek().is_newline())
-        {
-            if (token_stream.peek().is_eof())
-            {
+    constexpr auto discard_until_end_of_line = [](auto &&token_stream) -> void {
+        while (!token_stream.peek().is_newline()) {
+            if (token_stream.peek().is_eof()) {
                 return;
             }
             std::cout << "discard `" << token_stream.peek().str() << "`\n";
@@ -67,13 +56,10 @@ int main(int argc, const char **argv)
 
     // int dummy = result_content_t<decltype(program), decltype(ts)>();
 
-    for (;;)
-    {
+    for (;;) {
         auto result = program(ts);
-        if (result.failed())
-        {
-            if (result.error().token().is_eof())
-            {
+        if (result.failed()) {
+            if (result.error().token().is_eof()) {
                 return 0;
             }
 
