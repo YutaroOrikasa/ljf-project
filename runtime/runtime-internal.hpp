@@ -2,64 +2,12 @@
 
 #include <ljf/ljf.hpp>
 #include <ljf/runtime.hpp>
+#include "ObjectHolder.hpp"
 
 namespace llvm
 {
 class Function;
 } // namespace llvm
-
-namespace ljf
-{
-
-class ObjectHolder
-{
-    Object *obj_ = nullptr;
-
-public:
-    ObjectHolder() = default;
-    // implicit
-    ObjectHolder(Object *o) noexcept;
-    // implicit
-    ObjectHolder(const ObjectHolder &other) noexcept;
-    // implicit
-    ObjectHolder(ObjectHolder &&other) noexcept;
-
-    ObjectHolder &operator=(Object *o) noexcept;
-    ObjectHolder &operator=(const ObjectHolder &other) noexcept;
-    ObjectHolder &operator=(ObjectHolder &&other) noexcept;
-
-    ~ObjectHolder();
-
-    // inline member functions
-
-    Object *get() const noexcept
-    {
-        return obj_;
-    }
-
-    /*implicit*/ operator Object *() const noexcept
-    {
-        return obj_;
-    }
-
-    explicit operator bool() const noexcept
-    {
-        return bool(obj_);
-    }
-
-    Object *operator->() const noexcept
-    {
-        return obj_;
-    }
-
-    Object &operator*() const noexcept
-    {
-        return *obj_;
-    }
-
-    // operator Object *() defined so operator== and != need not be defined.
-};
-} // namespace ljf
 
 namespace ljf::internal
 {
