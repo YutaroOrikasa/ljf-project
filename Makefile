@@ -50,7 +50,7 @@ override CXXFLAGS += -Wall -std=c++17 $(INCLUDE_FLAGS) $(_DEP_FLAGS)
 
 include common.mk
 
-all:$(BUILD_DIR)/libgtest.a $(BUILD_DIR)/libljf.a $(BUILD_DIR)/main $(BUILD_DIR)/runtime.so
+all:$(BUILD_DIR)/libgtest.a $(BUILD_DIR)/libljf.a $(BUILD_DIR)/main $(BUILD_DIR)/runtime/runtime.so
 
 $(BUILD_DIR)/libljf.a: $(BUILD_DIR)/ljf.cpp.o
 	mkdir -p $(BUILD_DIR)
@@ -62,9 +62,9 @@ $(BUILD_DIR)/main: $(BUILD_DIR)/libljf.a $(BUILD_DIR)/main.cpp.o
 
 # runtime.so
 # This target have to be PHONY because make can't find header file dependency.
-.PHONY: $(BUILD_DIR)/runtime.so
-$(BUILD_DIR)/runtime.so: $(BUILD_DIR)/libgtest.a
-	$(MAKE) -f runtime.mk $(BUILD_DIR)/runtime.so \
+.PHONY: $(BUILD_DIR)/runtime/runtime.so
+$(BUILD_DIR)/runtime/runtime.so: $(BUILD_DIR)/libgtest.a
+	$(MAKE) -f runtime.mk $(BUILD_DIR)/runtime/runtime.so \
 		CFLAGS="$(CFLAGS)" \
 		CXXFLAGS="$(CXXFLAGS)" \
 		LDFLAGS="$(LDFLAGS)"
@@ -78,7 +78,7 @@ compile_commands.json: $(BUILD_DIR)/libgtest.a
 	$(MAKE) clean
 	bear -- $(MAKE) CXX=c++ $(BUILD_DIR)/runtime.so
 
-$(BUILD_DIR)/unittest-runtime: $(BUILD_DIR)/runtime.so
+$(BUILD_DIR)/runtime/unittest-runtime: $(BUILD_DIR)/runtime/runtime.so
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(LDFLAGS) $^ -o $@
 
@@ -115,8 +115,8 @@ pprof-web:
 	pprof --web build/main tmp/fibo-bigint.prof
 	pprof --web build/main tmp/fibo-ljf.prof
 
-run-unittest-runtime: $(BUILD_DIR)/unittest-runtime
-	$(BUILD_DIR)/unittest-runtime
+run-unittest-runtime: $(BUILD_DIR)/runtime/unittest-runtime
+	$(BUILD_DIR)/runtime/unittest-runtime
 
 clean:
 	rm -rf build _dump.ll 
