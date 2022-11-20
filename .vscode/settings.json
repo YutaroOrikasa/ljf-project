@@ -121,5 +121,6 @@
         "test",
         "zcolumn"
     ],
-    "cmake.sourceDirectory": "${workspaceFolder}/googletest"
+    "cmake.sourceDirectory": "${workspaceFolder}/googletest",
+    "editor.formatOnSaveMode": "modifications"
 }
