@@ -51,7 +51,6 @@ INCLUDE_FLAGS := $(INCLUDE_PATHS:%=-I%)
 override CFLAGS += -Wall $(INCLUDE_FLAGS) $(_DEP_FLAGS)
 override CXXFLAGS += -Wall -std=c++17 $(INCLUDE_FLAGS) $(_DEP_FLAGS)
 
-include common.mk
 
 .DEFAULT_GOAL := all
 
@@ -94,11 +93,6 @@ compile_commands.json: $(BUILD_DIR)/libgtest.a
 	$(MAKE) clean
 	bear -- $(MAKE) CXX=c++ $(BUILD_DIR)/runtime.so
 
-
-$(BUILD_DIR)/runtime/unittest-runtime: $(BUILD_DIR)/runtime/runtime.so
-	mkdir -p $(BUILD_DIR)
-	$(CXX) $(LDFLAGS) $^ -o $@
-
 # gtest
 GTEST_DIR := googletest/googletest
 
@@ -112,6 +106,16 @@ googletest/.git:
 	git submodule update --init
 
 # end gtest
+
+# unittest-runtime
+UNITTEST_RUNTIME_SOURCE_FILES := $(shell find $(SOURCE_ROOT_DIR)/runtime/unittests -name \*.c -or -name \*.cpp)
+SOURCE_FILES += $(UNITTEST_RUNTIME_SOURCE_FILES)
+$(BUILD_DIR)/runtime/unittest-runtime: $(BUILD_DIR)/libgtest.a \
+										$(BUILD_DIR)/runtime/runtime.so \
+										$(UNITTEST_RUNTIME_SOURCE_FILES:%=$(BUILD_DIR)/%.o)
+	mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
+
 
 .PHONY: benchmark-ll-codes run all-bench pprof-web clean print-source-files
 
@@ -141,3 +145,5 @@ clean:
 print-source-files:
 	@echo $(SOURCE_FILES)
 
+# common rules and header dependency handling
+include common.mk
