@@ -117,7 +117,23 @@ inline StmtGrammars<TokenStream>::StmtGrammars()
     // #       eval_input is the input for the eval() functions.
     // # NB: compound_stmt in single_input is followed by extra NEWLINE!
     // single_input = NEWLINE | simple_stmt | compound_stmt + NEWLINE;
-    // file_input = (NEWLINE | stmt) * _many + ENDMARKER;
+    constexpr auto discard_separator_from_raw_file_input = //
+        [](auto &&raw_file_input_vec)
+    {
+        std::vector<ast::Stmt> result;
+        result.reserve(raw_file_input_vec.size());
+        for (auto &&newline_or_stmt : raw_file_input_vec)
+        {
+            if (auto *ast = std::get_if<ast::Stmt>(&newline_or_stmt))
+            {
+                result.push_back(*ast);
+            }
+        }
+        return result;
+    };
+
+    file_input = converter(discard_separator_from_raw_file_input) //
+        <<= (separator(NEWLINE) | stmt) * _many + separator(ENDMARKER);
 
     // decorator = "@"_p + dotted_name + opt["("_p + opt[E::arglist] + ")"] + NEWLINE;
     // decorators = decorator * _many1;

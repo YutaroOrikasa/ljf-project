@@ -21,7 +21,7 @@ struct StmtGrammars : public ExprGrammars<TokenStream>
 #define INIT_PLACE_HOLDER(name) \
     name{#name}
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(single_input);
-    // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(file_input);
+    ParserPlaceHolder<MultiStmt> INIT_PLACE_HOLDER(file_input);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(decorator);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(decorators);
     // ParserPlaceHolder<Stmt> INIT_PLACE_HOLDER(decorated);
