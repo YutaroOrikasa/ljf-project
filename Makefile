@@ -50,7 +50,7 @@ override CXXFLAGS += -Wall -std=c++17 $(INCLUDE_FLAGS) $(_DEP_FLAGS)
 
 include common.mk
 
-all:$(BUILD_DIR)/libgtest.a $(BUILD_DIR)/libljf.a $(BUILD_DIR)/main $(BUILD_DIR)/runtime/runtime.so
+all:$(BUILD_DIR)/libgtest.a $(BUILD_DIR)/libljf.a $(BUILD_DIR)/main $(BUILD_DIR)/runtime/runtime.so $(BUILD_DIR)/runtime/runtime-declaration.bc
 
 $(BUILD_DIR)/libljf.a: $(BUILD_DIR)/ljf.cpp.o
 	mkdir -p $(BUILD_DIR)
@@ -69,6 +69,11 @@ $(BUILD_DIR)/runtime/runtime.so: $(BUILD_DIR)/libgtest.a
 		CXXFLAGS="$(CXXFLAGS)" \
 		LDFLAGS="$(LDFLAGS)"
 
+# runtime-declaration.bc
+$(BUILD_DIR)/runtime/runtime-declaration.bc: runtime/runtime-declaration.cpp
+	mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -c -emit-llvm $^ -o $@
+
 # compile_commands.json
 # This target have to be PHONY because make can't find header file dependency.
 # NOTEICE: Build with ccache (cache hit) will not work well,
@@ -77,6 +82,7 @@ $(BUILD_DIR)/runtime/runtime.so: $(BUILD_DIR)/libgtest.a
 compile_commands.json: $(BUILD_DIR)/libgtest.a
 	$(MAKE) clean
 	bear -- $(MAKE) CXX=c++ $(BUILD_DIR)/runtime.so
+
 
 $(BUILD_DIR)/runtime/unittest-runtime: $(BUILD_DIR)/runtime/runtime.so
 	mkdir -p $(BUILD_DIR)
