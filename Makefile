@@ -53,6 +53,8 @@ override CXXFLAGS += -Wall -std=c++17 $(INCLUDE_FLAGS) $(_DEP_FLAGS)
 
 include common.mk
 
+.DEFAULT_GOAL := all
+
 all: $(BUILD_DIR)/libgtest.a $(BUILD_DIR)/libljf.a $(BUILD_DIR)/main $(BUILD_DIR)/runtime/runtime.so $(BUILD_DIR)/runtime/runtime-declaration.bc
 
 .PHONY: install

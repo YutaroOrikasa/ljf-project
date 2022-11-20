@@ -10,9 +10,9 @@ _DEP_FLAGS := -MMD -MP
 override CXXFLAGS += -Wall -std=c++17 $(_DEP_FLAGS) $(INCLUDE_FLAGS)
 
 
-### first rule ###
+### default goal ###
 
-all: _all
+.DEFAULT_GOAL:= all
 
 ### grammar impl ###
 GRAMMAR_SOURCE_FILES = $(shell find ljf-python/grammar -name '*.cpp')
@@ -80,5 +80,5 @@ DEPENDENCY_FILES := $(SOURCE_FILES:%=$(BUILD_DIR)/%.d)
 
 ### all ###
 # body of rule 'all'
-.PHONY: _all
-_all: $(EXECUTABLE_FILES) $(UNITTEST_EXECUTABLE)
+.PHONY: all
+all: $(EXECUTABLE_FILES) $(UNITTEST_EXECUTABLE)
