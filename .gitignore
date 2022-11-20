@@ -5,3 +5,5 @@ config.mk
 ljf-config.h
 compile_commands.json
 .cache
+.vscode/browse.vc.*
+.vscode/vscode-cpptools
