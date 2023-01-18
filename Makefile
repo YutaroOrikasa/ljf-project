@@ -110,9 +110,9 @@ googletest/.git:
 # unittest-runtime
 UNITTEST_RUNTIME_SOURCE_FILES := $(shell find $(SOURCE_ROOT_DIR)/runtime/unittests -name \*.c -or -name \*.cpp)
 SOURCE_FILES += $(UNITTEST_RUNTIME_SOURCE_FILES)
-$(BUILD_DIR)/runtime/unittest-runtime: $(BUILD_DIR)/libgtest.a \
-										$(BUILD_DIR)/runtime/runtime.so \
-										$(UNITTEST_RUNTIME_SOURCE_FILES:%=$(BUILD_DIR)/%.o)
+$(BUILD_DIR)/runtime/unittest-runtime: $(BUILD_DIR)/runtime/runtime.so \
+										$(UNITTEST_RUNTIME_SOURCE_FILES:%=$(BUILD_DIR)/%.o) \
+										$(BUILD_DIR)/libgtest.a
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
