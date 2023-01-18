@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
+#include <stdexcept>
 
 namespace ljf {
 class Object;
