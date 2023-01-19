@@ -7,8 +7,14 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <iostream>
 
 #include <cassert>
+
+// This parser combinator is for python, so depending python token class.
+// if you want to use this parser combinator for general purpose,
+// you have to fix it.
+#include "Token.hpp"
 
 // helpers
 namespace ljf::python::parser::detail {
