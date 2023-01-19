@@ -62,9 +62,11 @@ $(BUILD_DIR)/ljf-python/unittests/%.cpp.o: ljf-python/unittests/%.cpp
 $(UNITTEST_EXECUTABLE): $(UNITTEST_OBJECT_FILES) $(GRAMMAR_OBJECT_FILES)
 	mkdir -p $(@D)
 	$(MAKE) $(BUILD_DIR)/libgtest.a
-	$(CXX) $(CXXFLAGS) $(BUILD_DIR)/libgtest.a \
-										$(UNITTEST_OBJECT_FILES) \
-										$(GRAMMAR_OBJECT_FILES) -o $@
+	$(CXX) $(CXXFLAGS) \
+		$(UNITTEST_OBJECT_FILES) \
+		$(GRAMMAR_OBJECT_FILES) \
+		$(BUILD_DIR)/libgtest.a \
+		-o $@
 
 .PHONY: run-unittest
 run-unittest: $(UNITTEST_EXECUTABLE)
