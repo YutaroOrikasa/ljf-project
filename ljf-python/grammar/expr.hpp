@@ -11,9 +11,7 @@ namespace ExprGrammars_ {
         template <typename T>
         using ParserPlaceHolder = parser::PlaceHolder<T, TokenStream>;
 #define LJF_INIT_PLACE_HOLDER(name)                                            \
-    name {                                                                     \
-#name                                                                  \
-    }
+    name { #name }
 
         ParserPlaceHolder<Expr> LJF_INIT_PLACE_HOLDER(eval_input);
 

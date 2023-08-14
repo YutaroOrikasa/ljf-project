@@ -1,4 +1,5 @@
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <string>
@@ -7,7 +8,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <iostream>
 
 #include <cassert>
 
@@ -286,7 +286,7 @@ public:
 
     explicit operator bool() const noexcept { return !failed(); }
 
-    const T &success() const &noexcept {
+    const T &success() const & noexcept {
         assert(!failed());
         return std::get<T>(value_);
     }
