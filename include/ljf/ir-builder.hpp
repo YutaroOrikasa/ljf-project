@@ -4,8 +4,9 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Type.h>
 
-#include <vector>
 #include <string>
+#include <variant>
+#include <vector>
 
 namespace ljf {
 
@@ -29,8 +30,7 @@ class Module {
     detail::LLVMStuff llvmStuff_;
 
 public:
-    explicit Module(const std::string &ModuleID)
-        : llvmStuff_(ModuleID) {}
+    explicit Module(const std::string &ModuleID) : llvmStuff_(ModuleID) {}
 
     FunctionBuilder create_function() {
         std::vector<llvm::Type *> ArgsTy = {
@@ -44,15 +44,16 @@ public:
 };
 
 class ObjectRegister {};
+class CStrLiteral {};
+
+using Key = std::variant<CStrLiteral &, ObjectRegister &>;
 
 enum class Visiblity { VISIBLE, HIDDEN };
 enum class ConstantType { MUTABLE, MAYBE_CONSTANT };
-enum class KeyType { C_STRING, OBJECT };
 
 struct Attribute {
     Visiblity visiblity = Visiblity::VISIBLE;
     ConstantType constant_type = ConstantType::MUTABLE;
-    KeyType key_type = KeyType::C_STRING;
 };
 
 class FunctionBuilder {
@@ -72,16 +73,19 @@ public:
     template <typename Fn>
     ObjectRegister
     create_iteration(const ObjectRegister &iterable_object,
-                     Fn /*  (FunctionBuilder &iter_body) -> void  */ &Iteration_body_builder) {}
-    ObjectRegister create_get(const ObjectRegister &object, const ObjectRegister &key) {}
-    ObjectRegister create_set(const ObjectRegister &object, const ObjectRegister &key, const ObjectRegister &elem) {}
+                     Fn /*  (FunctionBuilder &iter_body) -> void  */
+                         &Iteration_body_builder) {}
+    ObjectRegister create_get(const ObjectRegister &object, const Key &key) {}
+    ObjectRegister create_set(const ObjectRegister &object, const Key &key,
+                              const ObjectRegister &elem) {}
     ObjectRegister create_array_get(const ObjectRegister &object) {}
     ObjectRegister create_array_set(const ObjectRegister &object) {}
     ObjectRegister create_environment_get(const ObjectRegister &env,
-                                          const ObjectRegister &key) {}
-    ObjectRegister
-    create_environment_set(const ObjectRegister &env, const ObjectRegister &key,
-                         const ObjectRegister &elem, bool deep_set = false) {}
+                                          const Key &key) {}
+    ObjectRegister create_environment_set(const ObjectRegister &env,
+                                          const Key &key,
+                                          const ObjectRegister &elem,
+                                          bool deep_set = false) {}
 
     ObjectRegister create_ljf_undefined_object() {}
     ObjectRegister create_ljf_int64_object(int64_t value) {}
@@ -91,7 +95,8 @@ public:
     ObjectRegister create_ljf_int64_object_from_string(std::string value) {}
     ObjectRegister create_ljf_big_int_object_from_string(std::string value) {}
 
-    /// @brief if value is represented in 64bit int, this function creates LJFInt64 object, otherwise creates LJFBigInt object.
+    /// @brief if value is represented in 64bit int, this function creates
+    /// LJFInt64 object, otherwise creates LJFBigInt object.
     ObjectRegister create_ljf_integer_object_from_string(std::string value) {}
 
     ObjectRegister create_ljf_float_object_from_string(std::string value) {}
