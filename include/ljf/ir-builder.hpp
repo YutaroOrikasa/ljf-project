@@ -4,6 +4,9 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Type.h>
 
+#include <vector>
+#include <string>
+
 namespace ljf {
 
 namespace detail {
@@ -79,6 +82,19 @@ public:
     ObjectRegister
     create_environment_set(const ObjectRegister &env, const ObjectRegister &key,
                          const ObjectRegister &elem, bool deep_set = false) {}
+
+    ObjectRegister create_ljf_undefined_object() {}
+    ObjectRegister create_ljf_int64_object(int64_t value) {}
+    ObjectRegister create_ljf_float_object(double value) {}
+
+    ObjectRegister create_ljf_big_int_object(std::vector<int64_t> value) {}
+    ObjectRegister create_ljf_int64_object_from_string(std::string value) {}
+    ObjectRegister create_ljf_big_int_object_from_string(std::string value) {}
+
+    /// @brief if value is represented in 64bit int, this function creates LJFInt64 object, otherwise creates LJFBigInt object.
+    ObjectRegister create_ljf_integer_object_from_string(std::string value) {}
+
+    ObjectRegister create_ljf_float_object_from_string(std::string value) {}
 };
 
 } // namespace ljf
