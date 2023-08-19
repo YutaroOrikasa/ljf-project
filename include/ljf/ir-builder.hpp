@@ -4,6 +4,7 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Type.h>
 
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
@@ -70,11 +71,49 @@ public:
     ObjectRegister create_new() {}
     ObjectRegister create_call(const ObjectRegister &function_object,
                                const ObjectRegister &arguments_object) {}
+
+    /// @brief
+    /// @tparam Fn (FunctionBuilder &Iteration_body_builder) -> void
+    /// @param iterable_object
+    /// @param Iteration_body_builder
+    /// @return
     template <typename Fn>
-    ObjectRegister
-    create_iteration(const ObjectRegister &iterable_object,
-                     Fn /*  (FunctionBuilder &iter_body) -> void  */
-                         &Iteration_body_builder) {}
+    ObjectRegister create_iteration(const ObjectRegister &iterable_object,
+                                    Fn &&Iteration_body) {}
+
+    /// @brief create cry-catch-finally
+    /// @tparam FnTry (FunctionBuilder &try_body_builder) -> void
+    /// @tparam FnCatch (FunctionBuilder &catch_body_builder) -> void
+    /// @tparam FnFinally (FunctionBuilder &finally_body_builder) -> void
+    /// @param try_body
+    /// @param catch_body
+    /// @param finally_body
+    /// @return
+    template <typename FnTry, typename FnCatch, typename FnFinally>
+    ObjectRegister create_try_catch_finally(FnTry &&try_body,
+                                            FnCatch &&catch_body,
+                                            FnFinally &&finally_body) {}
+
+    /// @brief create cry-catch-finally
+    /// @tparam FnTry (FunctionBuilder &try_body_builder) -> void
+    /// @tparam FnCatch (FunctionBuilder &catch_body_builder) -> void
+    /// @tparam FnFinally (FunctionBuilder &finally_body_builder) -> void
+    /// @param try_body
+    /// @param catch_body
+    /// @return
+    template <typename FnTry, typename FnCatch>
+    ObjectRegister create_try_catch(FnTry &&try_body, FnCatch &&catch_body) {}
+
+    /// @brief create cry-catch-finally
+    /// @tparam FnTry (FunctionBuilder &try_body_builder) -> void
+    /// @tparam FnFinally (FunctionBuilder &finally_body_builder) -> void
+    /// @param try_body
+    /// @param finally_body
+    /// @return
+    template <typename FnTry, typename FnFinally>
+    ObjectRegister create_try_finally(FnTry &&try_body,
+                                      FnFinally &&finally_body) {}
+
     ObjectRegister create_get(const ObjectRegister &object, const Key &key) {}
     ObjectRegister create_set(const ObjectRegister &object, const Key &key,
                               const ObjectRegister &elem) {}
