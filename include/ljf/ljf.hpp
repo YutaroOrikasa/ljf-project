@@ -1,5 +1,8 @@
 #pragma once
 
+#include "ljf/IRCompiler.hpp"
+#include "ljf/IRCompilerBase.hpp"
+
 #include <llvm/IR/Module.h>
 
 #include <memory>
@@ -23,8 +26,11 @@ public:
 
 using CompilerMap = std::unordered_map<std::string, std::shared_ptr<Compiler>>;
 
-void initialize(const CompilerMap &compiler_map, const std::string &ljf_tmpdir,
-                const std::string &runtime_filename = "");
+void initialize(
+    const CompilerMap &compiler_map, const std::string &ljf_tmpdir,
+    const std::string &runtime_filename = "",
+    std::unique_ptr<IRCompilerBase> = std::make_unique<IRCompiler>());
+
 
 typedef int (*ljf_main_t)(int argc, const char **argv);
 int start_entry_point_of_function_ptr(ljf_main_t ljf_main, int argc,
