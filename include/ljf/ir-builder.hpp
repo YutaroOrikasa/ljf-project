@@ -75,7 +75,7 @@ public:
     /// @brief
     /// @tparam Fn (FunctionBuilder &Iteration_body_builder) -> void
     /// @param iterable_object
-    /// @param Iteration_body_builder
+    /// @param Iteration_body
     /// @return
     template <typename Fn>
     ObjectRegister create_iteration(const ObjectRegister &iterable_object,
