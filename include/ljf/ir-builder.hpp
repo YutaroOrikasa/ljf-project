@@ -64,9 +64,11 @@ public:
     explicit FunctionBuilder(detail::LLVMStuff &llvmStuff)
         : llvmStuff_(&llvmStuff) {}
 
-    void begin_if() {}
-    void create_else() {}
-    void end_if() {}
+    template <typename Fn>
+    void create_if(const ObjectRegister &cond, Fn &&then_body) {}
+
+    template <typename Fn0, typename Fn1>
+    void create_if_else(const ObjectRegister &cond, Fn0 &&then_body, Fn1 &&else_body) {}
 
     ObjectRegister create_new() {}
     ObjectRegister create_call(const ObjectRegister &function_object,
