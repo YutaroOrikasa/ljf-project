@@ -98,5 +98,5 @@ void ljf_array_push(ljf::Object *obj, ljf::Object *value);
 /**************** other API ***************/
 ljf::Object *ljf_import(ljf::Context *, const char *src_path,
                         const char *language);
-ljf::Object *ljf_wrap_c_str(const char *str);
+ljf::Object *ljf_wrap_c_str(ljf::Context *, const char *str);
 }

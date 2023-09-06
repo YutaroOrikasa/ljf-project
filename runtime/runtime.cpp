@@ -407,7 +407,7 @@ FunctionId ljf_register_native_function(FunctionPtr fn) {
     return function_table.add_native(fn);
 }
 
-Object *ljf_wrap_c_str(const char *str) {
+Object *ljf_wrap_c_str(Context *, const char *str) {
     static_assert(sizeof(str) <= sizeof(uint64_t));
     ObjectHolder wrapper =
         ljf_new_object_with_native_data(reinterpret_cast<uint64_t>(str));
@@ -474,12 +474,11 @@ int ljf_internal_start_entry_point(ljf_main_t ljf_main,
                                    const std::string &source_path, int argc,
                                    const char **argv) {
 
-    // auto ctx = new Context();
+    auto ctx = new Context{nullptr, nullptr};
     if (ljf_main) {
         return ljf_main(argc, argv);
     } else {
-        ObjectHolder args_holder = ljf_new_object();
-        auto args = args_holder.get();
+        auto args = ljf_new(ctx);
         for (size_t i = 0; i < argc; i++) {
             ObjectHolder wrap_holder = ljf_wrap_c_str(argv[i]);
             auto wrap = wrap_holder.get();
