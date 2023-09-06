@@ -44,6 +44,7 @@ ljf::Object *ljf_call_function(ljf::Context *, ljf::FunctionId function_id,
                                ljf::Object *env, ljf::Object *arg);
 
 /**************** new API ***************/
+ljf::Object *ljf_new(ljf::Context *);
 ljf::Object *ljf_new_object();
 
 ljf::Object *ljf_new_object_with_native_data(uint64_t data);
@@ -65,5 +66,7 @@ ljf::Object *ljf_array_get(ljf::Object *obj, size_t index);
 void ljf_array_set(ljf::Object *obj, size_t index, ljf::Object *value);
 void ljf_array_push(ljf::Object *obj, ljf::Object *value);
 
+/**************** other API ***************/
+ljf::Object *ljf_import(ljf::Context *, const char *src_path, const char *language);
 ljf::Object *ljf_wrap_c_str(const char *str);
 }

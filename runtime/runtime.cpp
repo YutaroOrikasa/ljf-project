@@ -467,6 +467,8 @@ int ljf_internal_start_entry_point(ljf_main_t ljf_main,
                                    const std::string &language,
                                    const std::string &source_path, int argc,
                                    const char **argv) {
+
+    // auto ctx = new Context();
     if (ljf_main) {
         return ljf_main(argc, argv);
     } else {
