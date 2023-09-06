@@ -37,7 +37,6 @@ public:
     }
 };
 
-
 class ThreadLocalRoot {
 private:
     Object *returned_object_ = nullptr;

@@ -13,7 +13,8 @@ public:
     /// @param basedir
     /// @param
     /// @return Path to compiled .so file
-    virtual std::filesystem::path compile(const std::filesystem::path &basedir, Module &module) override {
+    virtual std::filesystem::path compile(const std::filesystem::path &basedir,
+                                          Module &module) override {
         // stab
     }
 };

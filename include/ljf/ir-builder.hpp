@@ -68,7 +68,8 @@ public:
     void create_if(const ObjectRegister &cond, Fn &&then_body) {}
 
     template <typename Fn0, typename Fn1>
-    void create_if_else(const ObjectRegister &cond, Fn0 &&then_body, Fn1 &&else_body) {}
+    void create_if_else(const ObjectRegister &cond, Fn0 &&then_body,
+                        Fn1 &&else_body) {}
 
     ObjectRegister create_new() {}
     ObjectRegister create_call(const ObjectRegister &function_object,

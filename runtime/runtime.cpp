@@ -9,7 +9,6 @@
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Module.h>
 
-
 #include "Object.hpp"
 #include "ObjectIterator.hpp"
 #include "Roots.hpp"
@@ -53,29 +52,24 @@ static Done done;
 
 namespace ljf {
 
-class TemporaryHolders
-{
+class TemporaryHolders {
 private:
     std::vector<ObjectHolder> holders_;
+
 public:
-    void add(Object *obj) {
-        holders_.push_back(obj);
-    }
+    void add(Object *obj) { holders_.push_back(obj); }
 };
 
-class Context
-{
+class Context {
 private:
     TemporaryHolders temporary_holders_;
     llvm::Module *LLVMModule_;
     Context *caller_context_ = nullptr;
+
 public:
     explicit Context(llvm::Module *LLVMModule, Context *caller_context)
         : LLVMModule_(LLVMModule), caller_context_(caller_context) {}
-    void register_temporary_object(
-        Object *obj) {
-        temporary_holders_.add(obj);
-    }
+    void register_temporary_object(Object *obj) { temporary_holders_.add(obj); }
 };
 
 using TemporaryStorage = Object;
@@ -112,9 +106,13 @@ private:
     }
 
 public:
-    FunctionId add_native(FunctionPtr fn) { return add({nullptr, nullptr, fn}); }
+    FunctionId add_native(FunctionPtr fn) {
+        return add({nullptr, nullptr, fn});
+    }
 
-    FunctionId add_llvm(llvm::Function *fn, llvm::Module *module) { return add({fn, module, nullptr}); }
+    FunctionId add_llvm(llvm::Function *fn, llvm::Module *module) {
+        return add({fn, module, nullptr});
+    }
 
     void set_native(FunctionId id, FunctionPtr fn) {
         std::lock_guard lk{mutex_};
@@ -234,8 +232,7 @@ ObjectHolder create_callee_environment(Environment *parent, Object *arg) {
 extern "C" {
 using namespace ljf::internal;
 
-void ljf_internal_set_native_function(FunctionId id,
-                                                 FunctionPtr fn) {
+void ljf_internal_set_native_function(FunctionId id, FunctionPtr fn) {
     function_table.set_native(id, fn);
 }
 
@@ -303,8 +300,8 @@ void ljf_set_function_id_to_function_table(Object *obj, const char *key,
 
 /// if arg == null callee's local frame env and argument env will not be
 /// created.
-Object *ljf_call_function(Context *caller_ctx, FunctionId function_id, Environment *env,
-                          Object *arg) {
+Object *ljf_call_function(Context *caller_ctx, FunctionId function_id,
+                          Environment *env, Object *arg) {
     // std::cout << "arg\n";
     // if (arg)
     // {
@@ -329,14 +326,11 @@ Object *ljf_call_function(Context *caller_ctx, FunctionId function_id, Environme
     Context ctx{func_data.LLVMModule, caller_ctx};
 
     thread_local_root->set_top_context(&ctx);
-    class Finally
-    {
+    class Finally {
     public:
         Context *ctx_;
-        ~Finally() {
-            thread_local_root->set_top_context(ctx_);
-        }
-    } fin {caller_ctx};
+        ~Finally() { thread_local_root->set_top_context(ctx_); }
+    } fin{caller_ctx};
 
     auto ret = func_ptr(&ctx, callee_env.get());
 
@@ -470,9 +464,9 @@ void ljf_internal_resize_object_array_table_size(Object *obj, uint64_t size) {
 }
 
 int ljf_internal_start_entry_point(ljf_main_t ljf_main,
-                                              const std::string &language,
-                                              const std::string &source_path,
-                                              int argc, const char **argv) {
+                                   const std::string &language,
+                                   const std::string &source_path, int argc,
+                                   const char **argv) {
     if (ljf_main) {
         return ljf_main(argc, argv);
     } else {
@@ -496,7 +490,6 @@ int ljf_internal_start_entry_point(ljf_main_t ljf_main,
         return ljf_get_native_data(ret.get());
     }
 }
-
 }
 namespace ljf::internal::check_ {
 ljf_internal_start_entry_point_t ljf_internal_start_entry_point_ =

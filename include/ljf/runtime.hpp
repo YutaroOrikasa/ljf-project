@@ -48,7 +48,6 @@ ljf::Object *ljf_new_object();
 
 ljf::Object *ljf_new_object_with_native_data(uint64_t data);
 
-
 uint64_t ljf_get_native_data(const ljf::Object *obj);
 
 /**************** environment API ***************/
