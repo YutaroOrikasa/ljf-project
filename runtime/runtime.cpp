@@ -237,6 +237,7 @@ void ljf_internal_set_native_function(FunctionId id,
     function_table.set_native(id, fn);
 }
 
+/**************** table API ***************/
 Object *ljf_get(Object *obj, const char *key, ljf::TableVisiblity visiblity) {
     check_not_null(obj);
 
