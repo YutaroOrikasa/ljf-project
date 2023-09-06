@@ -9,8 +9,12 @@
 
 namespace ljf {
 class Object;
+class Context;
 using Environment = Object;
 using FunctionId = std::size_t;
+
+using FunctionPtr = Object *(*)(Context *ctx, Environment *);
+
 enum TableVisiblity { VISIBLE, HIDDEN };
 
 class runtime_error : public std::runtime_error {
@@ -54,8 +58,7 @@ void ljf_environment_set(ljf::Environment *env, const char *key,
                          ljf::Object *value, ljf::TableVisiblity vis);
 
 /**************** function registration API ***************/
-ljf::FunctionId ljf_register_native_function(
-    ljf::Object *(*fn)(ljf::Object *env, ljf::Object *tmp));
+ljf::FunctionId ljf_register_native_function(ljf::FunctionPtr);
 
 /**************** array API ***************/
 size_t ljf_array_size(ljf::Object *obj);

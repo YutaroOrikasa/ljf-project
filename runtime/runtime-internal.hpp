@@ -18,7 +18,8 @@ ObjectHolder load_source_code(const std::string &language,
 } // namespace ljf::internal
 
 extern "C" {
-ljf::FunctionId ljf_internal_register_llvm_function(llvm::Function *f);
+ljf::FunctionId ljf_internal_register_llvm_function(llvm::Function *f,
+                                                    llvm::Module *module);
 
 ljf::Object *ljf_internal_get_object_by_index(ljf::Object *obj, uint64_t index);
 void ljf_internal_set_object_by_index(ljf::Object *obj, uint64_t index,

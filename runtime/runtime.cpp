@@ -7,6 +7,8 @@
 #include "gtest/gtest.h"
 
 #include <llvm/IR/Function.h>
+#include <llvm/IR/Module.h>
+
 
 #include "Object.hpp"
 #include "ObjectIterator.hpp"
@@ -51,13 +53,35 @@ static Done done;
 
 namespace ljf {
 
-using TemporaryStorage = Object;
+class TemporaryHolders
+{
+private:
+    std::vector<ObjectHolder> holders_;
+public:
+    void add(Object *obj) {
+        holders_.push_back(obj);
+    }
+};
 
-using FunctionPtr = Object *(*)(Environment *, TemporaryStorage *);
+class Context
+{
+private:
+    TemporaryHolders temporary_holders_;
+    llvm::Module *LLVMModule_;
+public:
+    explicit Context(llvm::Module *LLVMModule) : LLVMModule_(LLVMModule) {}
+    void register_temporary_object(
+        Object *obj) {
+        temporary_holders_.add(obj);
+    }
+};
+
+using TemporaryStorage = Object;
 
 struct FunctionData {
     // naive means 'not optimized'
     const llvm::Function *naive_llvm_function;
+    llvm::Module *LLVMModule;
 
     FunctionPtr naive_function = nullptr;
 
@@ -86,9 +110,9 @@ private:
     }
 
 public:
-    FunctionId add_native(FunctionPtr fn) { return add({nullptr, fn}); }
+    FunctionId add_native(FunctionPtr fn) { return add({nullptr, nullptr, fn}); }
 
-    FunctionId add_llvm(llvm::Function *fn) { return add({fn, nullptr}); }
+    FunctionId add_llvm(llvm::Function *fn, llvm::Module *module) { return add({fn, module, nullptr}); }
 
     void set_native(FunctionId id, FunctionPtr fn) {
         std::lock_guard lk{mutex_};
@@ -112,8 +136,8 @@ public:
 namespace {
     FunctionTable function_table;
 
-    FunctionId register_llvm_function(llvm::Function *f) {
-        return function_table.add_llvm(f);
+    FunctionId register_llvm_function(llvm::Function *f, llvm::Module *module) {
+        return function_table.add_llvm(f, module);
     }
 } // namespace
 
@@ -205,9 +229,10 @@ ObjectHolder create_callee_environment(Environment *parent, Object *arg) {
 
 } // namespace ljf::internal
 
+extern "C" {
 using namespace ljf::internal;
 
-extern "C" void ljf_internal_set_native_function(FunctionId id,
+void ljf_internal_set_native_function(FunctionId id,
                                                  FunctionPtr fn) {
     function_table.set_native(id, fn);
 }
@@ -298,9 +323,9 @@ Object *ljf_call_function(FunctionId function_id, Environment *env,
     data_for_arg_type.called_count++;
 
     FunctionPtr func_ptr = func_data.naive_function;
-    TemporaryStorage tmp;
+    Context ctx {func_data.LLVMModule};
 
-    auto ret = func_ptr(callee_env.get(), &tmp);
+    auto ret = func_ptr(&ctx, callee_env.get());
 
     thread_local_root->hold_returned_object(ret);
 
@@ -365,8 +390,7 @@ void ljf_environment_set(Environment *env, const char *key, Object *value,
     ljf_set(map0, key, value, vis);
 }
 
-FunctionId ljf_register_native_function(Object *(*fn)(Environment *,
-                                                      TemporaryStorage *)) {
+FunctionId ljf_register_native_function(FunctionPtr fn) {
     return function_table.add_native(fn);
 }
 
@@ -410,8 +434,9 @@ Object *ljf_load_source_code(const char *language, const char *source_path,
 
 // ----- internal -----
 
-FunctionId ljf_internal_register_llvm_function(llvm::Function *f) {
-    return ljf::register_llvm_function(f);
+FunctionId ljf_internal_register_llvm_function(llvm::Function *f,
+                                               llvm::Module *module) {
+    return ljf::register_llvm_function(f, module);
 }
 
 Object *ljf_internal_get_object_by_index(Object *obj, uint64_t index) {
@@ -431,7 +456,7 @@ void ljf_internal_resize_object_array_table_size(Object *obj, uint64_t size) {
     obj->array_table_resize(size);
 }
 
-extern "C" int ljf_internal_start_entry_point(ljf_main_t ljf_main,
+int ljf_internal_start_entry_point(ljf_main_t ljf_main,
                                               const std::string &language,
                                               const std::string &source_path,
                                               int argc, const char **argv) {
@@ -459,6 +484,7 @@ extern "C" int ljf_internal_start_entry_point(ljf_main_t ljf_main,
     }
 }
 
+}
 namespace ljf::internal::check_ {
 ljf_internal_start_entry_point_t ljf_internal_start_entry_point_ =
     ljf_internal_start_entry_point;

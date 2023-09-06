@@ -34,13 +34,13 @@ namespace ljf {
 namespace {
     llvm::LLVMContext llvm_context;
 
-    struct Context {
+    struct LoaderContext {
         CompilerMap compiler_map;
         std::string ljf_tmpdir;
         std::string ljf_runtime_filename;
     };
     // set by ljf::initialize()
-    std::unique_ptr<Context> context = nullptr;
+    std::unique_ptr<LoaderContext> context = nullptr;
 
     void check_context_initialized() {
         if (!context) {
@@ -69,8 +69,8 @@ ObjectHolder load_source_code(const std::string &language,
     if (!context->compiler_map.count(language)) {
         throw std::invalid_argument("No such compiler for `" + language + "`");
     }
-    std::unique_ptr<llvm::Module> module =
-        context->compiler_map.at(language)->compile(source_path);
+    llvm::Module *module =
+        context->compiler_map.at(language)->compile(source_path).release();
     if (!module) {
         throw std::runtime_error("compiling of `" + language + "` code failed");
     }
@@ -105,7 +105,7 @@ ObjectHolder load_source_code(const std::string &language,
 
         verbs() << "registering " << name << ": ";
 
-        auto id = ljf_internal_register_llvm_function(&func);
+        auto id = ljf_internal_register_llvm_function(&func, module);
         func_to_register[id] = &func;
         ljf_set_function_id_to_function_table(module_func_table.get(),
                                               func.getName().data(), id);
@@ -238,8 +238,8 @@ void ljf_internal_initialize(const CompilerMap &compiler_map,
         throw std::logic_error("ljf::initialize() is called twice or more");
     }
 
-    context = std::make_unique<Context>(
-        Context{compiler_map, ljf_tmpdir, runtime_filename});
+    context = std::make_unique<LoaderContext>(
+        LoaderContext{compiler_map, ljf_tmpdir, runtime_filename});
 
     // remove ljf_tmpdir
     if (auto err_code =
