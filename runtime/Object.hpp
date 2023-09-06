@@ -9,6 +9,8 @@
 
 #include "ljf/runtime.hpp"
 
+#include "AttributeTraits.hpp"
+
 namespace ljf {
 class Object;
 using ObjectPtr = Object *;
@@ -57,16 +59,17 @@ public:
         ++other.version_;
     }
 
-    Object *get(const char *key, TableVisiblity visiblity) {
-        auto &table = (visiblity == VISIBLE) ? hash_table_ : hidden_table_;
+    Object *get(const char *key, LJFAttribute attr) {
+        auto &table = AttributeTraits::is_visible(attr) ? hash_table_ : hidden_table_;
         std::lock_guard lk{mutex_};
 
         return array_table_.at(table.at(key));
     }
 
-    void set(const char *key, Object *value, TableVisiblity visiblity) {
+    void set(const char *key, Object *value, LJFAttribute attr) {
 
-        auto &table = (visiblity == VISIBLE) ? hash_table_ : hidden_table_;
+        auto &table =
+            AttributeTraits::is_visible(attr) ? hash_table_ : hidden_table_;
 
         size_t index;
         {
@@ -236,16 +239,16 @@ public:
 };
 
 inline void set_object_to_table(Object *obj, const char *key, Object *value) {
-    ::ljf_set(obj, key, value, ljf::VISIBLE);
+    ::ljf_set(obj, key, value, LJFAttribute::VISIBLE);
 }
 
 inline Object *get_object_from_hidden_table(Object *obj, const char *key) {
-    return ::ljf_get(obj, key, HIDDEN);
+    return ::ljf_get(obj, key, LJFAttribute::HIDDEN);
 }
 
 inline void set_object_to_hidden_table(Object *obj, const char *key,
                                        Object *value) {
-    ::ljf_set(obj, key, value, HIDDEN);
+    ::ljf_set(obj, key, value, LJFAttribute::HIDDEN);
 }
 
 inline void increment_ref_count(Object *obj) {

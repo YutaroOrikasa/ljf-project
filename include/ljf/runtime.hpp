@@ -15,7 +15,12 @@ using FunctionId = std::size_t;
 
 using FunctionPtr = Object *(*)(Context *ctx, Environment *);
 
-enum TableVisiblity { VISIBLE, HIDDEN };
+enum TableVisiblity {
+    TAB_VISIBLE,
+    TAB_HIDDEN,
+    VISIBLE = TAB_VISIBLE,
+    HIDDEN = TAB_HIDDEN
+};
 
 class runtime_error : public std::runtime_error {
 public:
@@ -25,14 +30,28 @@ public:
 template <typename Out> Out &operator<<(Out &out, const Object &);
 } // namespace ljf
 
+enum class LJFAttribute : uint64_t {
+    // visiblity
+    VISIBLE = 0 << 0,
+    HIDDEN = 1 << 0,
+    // constant type
+    MUTABLE = 0 << 1,
+    MAYBE_CONSTANT = 1 << 1,
+    // reserved for future:
+    // CONSTANT = 1 << 2
+    //
+    // data type
+    OBJECT = 0 << 3,
+    NATIVE = 1 << 3,
+};
+
 constexpr ljf::Object *ljf_undefined = nullptr;
 
 extern "C" {
-ljf::Object *ljf_get(ljf::Object *obj, const char *key,
-                     ljf::TableVisiblity visiblity);
+ljf::Object *ljf_get(ljf::Object *obj, const char *key, LJFAttribute attr);
 
 void ljf_set(ljf::Object *obj, const char *key, ljf::Object *value,
-             ljf::TableVisiblity visiblity);
+             LJFAttribute attr);
 
 /**************** function API ***************/
 ljf::FunctionId ljf_get_function_id_from_function_table(ljf::Object *obj,
@@ -53,9 +72,9 @@ uint64_t ljf_get_native_data(const ljf::Object *obj);
 
 /**************** environment API ***************/
 ljf::Object *ljf_environment_get(ljf::Environment *env, const char *key,
-                                 ljf::TableVisiblity vis);
+                                 LJFAttribute attr);
 void ljf_environment_set(ljf::Environment *env, const char *key,
-                         ljf::Object *value, ljf::TableVisiblity vis);
+                         ljf::Object *value, LJFAttribute attr);
 
 /**************** function registration API ***************/
 ljf::FunctionId ljf_register_native_function(ljf::FunctionPtr);
@@ -67,6 +86,7 @@ void ljf_array_set(ljf::Object *obj, size_t index, ljf::Object *value);
 void ljf_array_push(ljf::Object *obj, ljf::Object *value);
 
 /**************** other API ***************/
-ljf::Object *ljf_import(ljf::Context *, const char *src_path, const char *language);
+ljf::Object *ljf_import(ljf::Context *, const char *src_path,
+                        const char *language);
 ljf::Object *ljf_wrap_c_str(const char *str);
 }

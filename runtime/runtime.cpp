@@ -242,16 +242,16 @@ void ljf_internal_set_native_function(FunctionId id, FunctionPtr fn) {
 }
 
 /**************** table API ***************/
-Object *ljf_get(Object *obj, const char *key, ljf::TableVisiblity visiblity) {
+Object *ljf_get(Object *obj, const char *key, LJFAttribute attr) {
     check_not_null(obj);
 
-    return obj->get(key, visiblity);
+    return obj->get(key, attr);
 }
 
 void ljf_set(Object *obj, const char *key, Object *value,
-             ljf::TableVisiblity visiblity) {
+             LJFAttribute attr) {
     check_not_null(obj);
-    obj->set(key, value, visiblity);
+    obj->set(key, value, attr);
 }
 
 /**************** array API ***************/
@@ -369,7 +369,7 @@ uint64_t ljf_get_native_data(const Object *obj) {
 }
 
 Object *ljf_environment_get(Environment *env, const char *key,
-                            ljf::TableVisiblity vis) {
+                            LJFAttribute attr) {
     check_not_null(env);
 
     auto maps = get_object_from_hidden_table(env, "ljf.env.maps");
@@ -384,7 +384,7 @@ Object *ljf_environment_get(Environment *env, const char *key,
         // env object is nested.
         // maps->array_at(0) is most inner environment.
         auto obj = maps->array_at(i);
-        auto value = ljf_get(obj, key, vis);
+        auto value = ljf_get(obj, key, attr);
         if (value) {
             return value;
         }
@@ -394,7 +394,7 @@ Object *ljf_environment_get(Environment *env, const char *key,
 }
 
 void ljf_environment_set(Environment *env, const char *key, Object *value,
-                         TableVisiblity vis) {
+                         LJFAttribute attr) {
     check_not_null(env);
 
     auto maps = get_object_from_hidden_table(env, "ljf.env.maps");
@@ -405,7 +405,7 @@ void ljf_environment_set(Environment *env, const char *key, Object *value,
     }
 
     auto map0 = maps->array_at(0);
-    ljf_set(map0, key, value, vis);
+    ljf_set(map0, key, value, attr);
 }
 
 FunctionId ljf_register_native_function(FunctionPtr fn) {
