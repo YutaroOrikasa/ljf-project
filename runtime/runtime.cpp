@@ -68,8 +68,10 @@ class Context
 private:
     TemporaryHolders temporary_holders_;
     llvm::Module *LLVMModule_;
+    Context *caller_context_ = nullptr;
 public:
-    explicit Context(llvm::Module *LLVMModule) : LLVMModule_(LLVMModule) {}
+    explicit Context(llvm::Module *LLVMModule, Context *caller_context)
+        : LLVMModule_(LLVMModule), caller_context_(caller_context) {}
     void register_temporary_object(
         Object *obj) {
         temporary_holders_.add(obj);
@@ -301,7 +303,7 @@ void ljf_set_function_id_to_function_table(Object *obj, const char *key,
 
 /// if arg == null callee's local frame env and argument env will not be
 /// created.
-Object *ljf_call_function(FunctionId function_id, Environment *env,
+Object *ljf_call_function(Context *caller_ctx, FunctionId function_id, Environment *env,
                           Object *arg) {
     // std::cout << "arg\n";
     // if (arg)
@@ -324,7 +326,17 @@ Object *ljf_call_function(FunctionId function_id, Environment *env,
     data_for_arg_type.called_count++;
 
     FunctionPtr func_ptr = func_data.naive_function;
-    Context ctx {func_data.LLVMModule};
+    Context ctx{func_data.LLVMModule, caller_ctx};
+
+    thread_local_root->set_top_context(&ctx);
+    class Finally
+    {
+    public:
+        Context *ctx_;
+        ~Finally() {
+            thread_local_root->set_top_context(ctx_);
+        }
+    } fin {caller_ctx};
 
     auto ret = func_ptr(&ctx, callee_env.get());
 

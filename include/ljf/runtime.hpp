@@ -40,8 +40,8 @@ ljf::FunctionId ljf_get_function_id_from_function_table(ljf::Object *obj,
 void ljf_set_function_id_to_function_table(ljf::Object *obj, const char *key,
                                            ljf::FunctionId function_id);
 
-ljf::Object *ljf_call_function(ljf::FunctionId function_id, ljf::Object *env,
-                               ljf::Object *arg);
+ljf::Object *ljf_call_function(ljf::Context *, ljf::FunctionId function_id,
+                               ljf::Object *env, ljf::Object *arg);
 
 /**************** new API ***************/
 ljf::Object *ljf_new_object();

@@ -37,29 +37,11 @@ public:
     }
 };
 
-using TemporaryStorage = Object;
-
-struct CallStack : Object {
-    explicit CallStack(Environment *env, TemporaryStorage *tmp,
-                       CallStack *next) {
-        ljf::set_object_to_table(this, "env", env);
-        ljf::set_object_to_table(this, "tmp", tmp);
-        ljf::set_object_to_table(this, "next", next);
-    }
-
-    Environment *env() { return ljf_get(this, "env", ljf::VISIBLE); }
-
-    TemporaryStorage *tmp() { return ljf_get(this, "tmp", ljf::VISIBLE); }
-
-    CallStack *next() {
-        return static_cast<CallStack *>(ljf_get(this, "next", ljf::VISIBLE));
-    }
-};
 
 class ThreadLocalRoot {
 private:
     Object *returned_object_ = nullptr;
-    CallStack *call_stack = nullptr;
+    Context *top_context_ = nullptr;
 
 public:
     void hold_returned_object(Object *obj) {
@@ -69,14 +51,8 @@ public:
         returned_object_ = obj;
     }
 
-    void push_call_stack(Environment *env, TemporaryStorage *tmp) {
-        auto next = call_stack;
-        call_stack = new CallStack(env, tmp, next);
-    }
+    void set_top_context(Context *ctx) { top_context_ = ctx; }
 
-    void pop_call_stack() {
-        auto next = call_stack->next();
-        call_stack = next;
-    }
+    Context *get_top_context() { return top_context_; }
 };
 } // namespace ljf
