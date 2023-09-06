@@ -57,7 +57,10 @@ private:
     std::vector<ObjectHolder> holders_;
 
 public:
-    void add(Object *obj) { holders_.push_back(obj); }
+    Object *add(Object *obj) {
+        holders_.push_back(obj);
+        return obj;
+    }
 };
 
 class Context {
@@ -69,7 +72,9 @@ private:
 public:
     explicit Context(llvm::Module *LLVMModule, Context *caller_context)
         : LLVMModule_(LLVMModule), caller_context_(caller_context) {}
-    void register_temporary_object(Object *obj) { temporary_holders_.add(obj); }
+    Object *register_temporary_object(Object *obj) {
+        return temporary_holders_.add(obj);
+    }
 };
 
 using TemporaryStorage = Object;
@@ -347,6 +352,12 @@ Object *ljf_new_object_with_native_data(uint64_t data) {
     allocated_memory_size += sizeof(Object);
     thread_local_root->hold_returned_object(obj);
     return obj;
+}
+
+Object *ljf_new(Context *ctx) {
+    Object *obj = new Object();
+    allocated_memory_size += sizeof(Object);
+    return ctx->register_temporary_object(obj);
 }
 
 Object *ljf_new_object() { return ljf_new_object_with_native_data(0); }
