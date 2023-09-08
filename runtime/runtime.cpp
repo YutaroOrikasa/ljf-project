@@ -6,6 +6,7 @@
 
 #include "gtest/gtest.h"
 
+#include <llvm/ADT/ScopeExit.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Module.h>
 
@@ -248,8 +249,7 @@ Object *ljf_get(Object *obj, const char *key, LJFAttribute attr) {
     return obj->get(key, attr);
 }
 
-void ljf_set(Object *obj, const char *key, Object *value,
-             LJFAttribute attr) {
+void ljf_set(Object *obj, const char *key, Object *value, LJFAttribute attr) {
     check_not_null(obj);
     obj->set(key, value, attr);
 }
@@ -331,11 +331,8 @@ Object *ljf_call_function(Context *caller_ctx, FunctionId function_id,
     Context ctx{func_data.LLVMModule, caller_ctx};
 
     thread_local_root->set_top_context(&ctx);
-    class Finally {
-    public:
-        Context *ctx_;
-        ~Finally() { thread_local_root->set_top_context(ctx_); }
-    } fin{caller_ctx};
+    auto finally_restore_ctx =
+        llvm::make_scope_exit([&caller_ctx] { thread_local_root->set_top_context(caller_ctx); });
 
     auto ret = func_ptr(&ctx, callee_env.get());
 
