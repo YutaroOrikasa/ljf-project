@@ -31,18 +31,23 @@ template <typename Out> Out &operator<<(Out &out, const Object &);
 } // namespace ljf
 
 enum class LJFAttribute : uint64_t {
-    // visiblity
+    // visiblity, bit 0
     VISIBLE = 0 << 0,
     HIDDEN = 1 << 0,
-    // constant type
+    // constant type, bit 1, 2
     MUTABLE = 0 << 1,
     MAYBE_CONSTANT = 1 << 1,
     // reserved for future:
-    // CONSTANT = 1 << 2
+    // CONSTANT = 0b10 << 1
     //
-    // data type
-    OBJECT = 0 << 3,
-    NATIVE = 1 << 3,
+    // key type, bit 3, 4
+    KEY_TYPE_MASK = 0b11 << 3,
+    C_STR_KEY = 0 << 3,
+    OBJECT_KEY = 1 << 3,
+    //
+    // data type, bit 32
+    OBJECT = 0ul << 32,
+    NATIVE = 1ul << 32,
 };
 
 constexpr ljf::Object *ljf_undefined = nullptr;

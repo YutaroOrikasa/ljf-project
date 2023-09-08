@@ -1,5 +1,7 @@
 #pragma once
 
+#include <assert.h>
+#include <functional>
 #include <iostream>
 #include <mutex>
 #include <string>
@@ -13,6 +15,49 @@
 
 namespace ljf {
 class Object;
+
+class Key {
+private:
+    LJFAttribute attr_;
+    void *key_;
+
+public:
+    Key(LJFAttribute attr, void *key) : attr_(attr), key_(key) {}
+
+    bool is_c_str_key() const {
+        return AttributeTraits::mask(attr_, LJFAttribute::KEY_TYPE_MASK) ==
+               LJFAttribute::C_STR_KEY;
+    }
+    bool is_object_key() const {
+        return AttributeTraits::mask(attr_, LJFAttribute::KEY_TYPE_MASK) ==
+               LJFAttribute::OBJECT_KEY;
+    }
+
+    const char *get_key_as_c_str() const {
+        assert(is_c_str_key());
+        return static_cast<const char *>(key_);
+    }
+    Object *get_key_as_object() const {
+        assert(is_object_key());
+        return static_cast<Object *>(key_);
+    }
+
+    size_t hash_code() const {
+        if (is_c_str_key()) {
+            return std::hash<std::string_view>()(
+                std::string_view(get_key_as_c_str()));
+        } else {
+            throw "not implemented";
+        }
+    }
+};
+} // namespace ljf
+
+template <> struct std::hash<ljf::Key> {
+    size_t operator()(const ljf::Key &key) { return key.hash_code(); }
+};
+
+namespace ljf {
 using ObjectPtr = Object *;
 
 class TypeObject;
@@ -60,7 +105,8 @@ public:
     }
 
     Object *get(const char *key, LJFAttribute attr) {
-        auto &table = AttributeTraits::is_visible(attr) ? hash_table_ : hidden_table_;
+        auto &table =
+            AttributeTraits::is_visible(attr) ? hash_table_ : hidden_table_;
         std::lock_guard lk{mutex_};
 
         return array_table_.at(table.at(key));
