@@ -1,6 +1,3 @@
-namespace ljf {
+#pragma once
 
-class Object;
-void increment_ref_count(Object *obj);
-void decrement_ref_count(Object *obj);
-} // namespace ljf
+#include "ljf/internal/object-fwd.hpp"
