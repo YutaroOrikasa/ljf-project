@@ -474,13 +474,14 @@ int ljf_internal_start_entry_point(ljf_main_t ljf_main,
                                    const std::string &source_path, int argc,
                                    const char **argv) {
 
-    auto ctx = new Context{nullptr, nullptr};
+    auto ctx_up = std::make_unique<Context>(nullptr, nullptr);
+    auto ctx = ctx_up.get();
     if (ljf_main) {
         return ljf_main(argc, argv);
     } else {
         auto args = ljf_new(ctx);
         for (size_t i = 0; i < argc; i++) {
-            ObjectHolder wrap_holder = ljf_wrap_c_str(argv[i]);
+            ObjectHolder wrap_holder = ljf_wrap_c_str(ctx, argv[i]);
             auto wrap = wrap_holder.get();
             ljf_array_push(args, wrap);
         }
