@@ -14,6 +14,12 @@ public:
     static LJFAttribute mask(LJFAttribute a, LJFAttribute b) {
         return static_cast<LJFAttribute>( static_cast<uint64_t>(a) & static_cast<uint64_t>(b));
     }
+
+    // "or" is reserved by C++ so use "or_attr"
+    static LJFAttribute or_attr(LJFAttribute a, LJFAttribute b) {
+        return static_cast<LJFAttribute>(static_cast<uint64_t>(a) |
+                                         static_cast<uint64_t>(b));
+    }
     static bool is_visible(LJFAttribute attr) {
         return !is_flag_enable(attr, 0b0001);
     }

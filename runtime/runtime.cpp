@@ -243,13 +243,13 @@ void ljf_internal_set_native_function(FunctionId id, FunctionPtr fn) {
 }
 
 /**************** table API ***************/
-Object *ljf_get(Object *obj, const char *key, LJFAttribute attr) {
+Object *ljf_get(Object *obj, void *key, LJFAttribute attr) {
     check_not_null(obj);
 
     return obj->get(key, attr);
 }
 
-void ljf_set(Object *obj, const char *key, Object *value, LJFAttribute attr) {
+void ljf_set(Object *obj, void *key, Object *value, LJFAttribute attr) {
     check_not_null(obj);
     obj->set(key, value, attr);
 }
@@ -331,8 +331,8 @@ Object *ljf_call_function(Context *caller_ctx, FunctionId function_id,
     Context ctx{func_data.LLVMModule, caller_ctx};
 
     thread_local_root->set_top_context(&ctx);
-    auto finally_restore_ctx =
-        llvm::make_scope_exit([&caller_ctx] { thread_local_root->set_top_context(caller_ctx); });
+    auto finally_restore_ctx = llvm::make_scope_exit(
+        [&caller_ctx] { thread_local_root->set_top_context(caller_ctx); });
 
     auto ret = func_ptr(&ctx, callee_env.get());
 
@@ -365,16 +365,14 @@ uint64_t ljf_get_native_data(const Object *obj) {
     return obj->get_native_data();
 }
 
-Object *ljf_environment_get(Environment *env, const char *key,
-                            LJFAttribute attr) {
+Object *ljf_environment_get(Environment *env, void *key, LJFAttribute attr) {
     check_not_null(env);
 
     auto maps = get_object_from_hidden_table(env, "ljf.env.maps");
 
     if (!maps) {
-        env->dump();
         throw ljf::runtime_error(
-            "ljf_get_object_from_environment: not a Environment");
+            "ljf_get_object_from_environment: not an Environment");
     }
 
     for (size_t i = 0; i < maps->array_size(); i++) {
@@ -390,7 +388,7 @@ Object *ljf_environment_get(Environment *env, const char *key,
     return ljf_undefined;
 }
 
-void ljf_environment_set(Environment *env, const char *key, Object *value,
+void ljf_environment_set(Environment *env, void *key, Object *value,
                          LJFAttribute attr) {
     check_not_null(env);
 

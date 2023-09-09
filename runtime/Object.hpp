@@ -21,16 +21,22 @@ private:
     LJFAttribute attr_;
     void *key_;
 
+    LJFAttribute mask_attr() const {
+        return AttributeTraits::mask(attr_, LJFAttribute::KEY_TYPE_MASK);
+    }
+
 public:
     Key(LJFAttribute attr, void *key) : attr_(attr), key_(key) {}
 
-    bool is_c_str_key() const {
-        return AttributeTraits::mask(attr_, LJFAttribute::KEY_TYPE_MASK) ==
-               LJFAttribute::C_STR_KEY;
-    }
+    Key() = default;
+    Key(const Key &) = default;
+    Key(Key &&) = default;
+    Key &operator=(const Key &) = default;
+    Key &operator=(Key &&) = default;
+
+    bool is_c_str_key() const { return mask_attr() == LJFAttribute::C_STR_KEY; }
     bool is_object_key() const {
-        return AttributeTraits::mask(attr_, LJFAttribute::KEY_TYPE_MASK) ==
-               LJFAttribute::OBJECT_KEY;
+        return mask_attr() == LJFAttribute::OBJECT_KEY;
     }
 
     const char *get_key_as_c_str() const {
@@ -50,11 +56,15 @@ public:
             throw "not implemented";
         }
     }
+
+    bool operator==(const Key &other) const {
+        return (mask_attr() == other.mask_attr()) && key_ == other.key_;
+    }
 };
 } // namespace ljf
 
 template <> struct std::hash<ljf::Key> {
-    size_t operator()(const ljf::Key &key) { return key.hash_code(); }
+    size_t operator()(const ljf::Key &key) const { return key.hash_code(); }
 };
 
 namespace ljf {
@@ -73,8 +83,8 @@ private:
     std::recursive_mutex mutex_;
     size_t version_ = 0;
     std::shared_ptr<TypeObject> type_object_;
-    std::unordered_map<std::string, size_t> hash_table_;
-    std::unordered_map<std::string, size_t> hidden_table_;
+    std::unordered_map<Key, size_t> hash_table_;
+    std::unordered_map<Key, size_t> hidden_table_;
     std::vector<ObjectPtr> array_table_;
     std::vector<ObjectPtr> array_;
     std::unordered_map<std::string, FunctionId> function_id_table_;
@@ -104,27 +114,29 @@ public:
         ++other.version_;
     }
 
-    Object *get(const char *key, LJFAttribute attr) {
+    Object *get(void *key, LJFAttribute attr) {
+        Key key_obj{attr, key};
         auto &table =
             AttributeTraits::is_visible(attr) ? hash_table_ : hidden_table_;
         std::lock_guard lk{mutex_};
 
-        return array_table_.at(table.at(key));
+        return array_table_.at(table.at(key_obj));
     }
 
-    void set(const char *key, Object *value, LJFAttribute attr) {
+    void set(void *key, Object *value, LJFAttribute attr) {
 
+        Key key_obj{attr, key};
         auto &table =
             AttributeTraits::is_visible(attr) ? hash_table_ : hidden_table_;
 
         size_t index;
         {
             std::lock_guard lk{mutex_};
-            if (!table.count(key)) {
+            if (!table.count(key_obj)) {
                 index = array_table_new_index();
-                table[key] = index;
+                table[key_obj] = index;
             } else {
-                index = table.at(key);
+                index = table.at(key_obj);
             }
         }
         // assert(value != 0);
@@ -249,52 +261,22 @@ public:
 
     friend void increment_ref_count(Object *obj);
     friend void decrement_ref_count(Object *obj);
-
-    void dump() {
-        std::cout << this << ":\n";
-        std::cout << "{\n";
-        std::cout << "    {\n";
-        for (auto &&[key, value] : hash_table_) {
-            std::cout << "        " << key << ": " << value << "\n";
-        }
-        std::cout << "    }\n";
-
-        std::cout << "    hidden: {\n";
-        for (auto &&[key, value] : hidden_table_) {
-            std::cout << "        " << key << ": " << value << "\n";
-        }
-        std::cout << "    }\n";
-
-        std::cout << "    array table: [";
-        for (auto &&v : array_table_) {
-            std::cout << v << ", ";
-        }
-        std::cout << "]\n";
-
-        std::cout << "    array: [";
-        for (auto &&v : array_) {
-            std::cout << v << ", ";
-        }
-        std::cout << "]\n";
-
-        std::cout << "    native_data: " << native_data_ << "\n";
-        std::cout << "    ref_count: " << ref_count_ << "\n";
-
-        std::cout << "}\n";
-    }
 };
 
 inline void set_object_to_table(Object *obj, const char *key, Object *value) {
-    ::ljf_set(obj, key, value, LJFAttribute::VISIBLE);
+    ::ljf_set(obj, const_cast<char *>(key), value,
+              AttributeTraits::or_attr(LJFAttribute::VISIBLE, LJFAttribute::C_STR_KEY));
 }
 
 inline Object *get_object_from_hidden_table(Object *obj, const char *key) {
-    return ::ljf_get(obj, key, LJFAttribute::HIDDEN);
+    return ::ljf_get(obj, const_cast<char *>(key),
+                     AttributeTraits::or_attr(LJFAttribute::HIDDEN, LJFAttribute::C_STR_KEY));
 }
 
 inline void set_object_to_hidden_table(Object *obj, const char *key,
                                        Object *value) {
-    ::ljf_set(obj, key, value, LJFAttribute::HIDDEN);
+    ::ljf_set(obj, const_cast<char *>(key), value,
+              AttributeTraits::or_attr(LJFAttribute::HIDDEN, LJFAttribute::C_STR_KEY));
 }
 
 inline void increment_ref_count(Object *obj) {

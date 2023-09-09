@@ -15,14 +15,14 @@ class Object::TableIterator {
 private:
     size_t version_;
     ObjectHolder obj_;
-    std::unordered_map<std::string, size_t>::iterator map_iter_;
-    std::unordered_map<std::string, size_t>::iterator map_iter_end_;
+    std::unordered_map<Key, size_t>::iterator map_iter_;
+    std::unordered_map<Key, size_t>::iterator map_iter_end_;
 
     /// Caller must hold lock of obj.
     explicit TableIterator(
         ObjectHolder obj,
-        const std::unordered_map<std::string, size_t>::iterator &map_iter,
-        const std::unordered_map<std::string, size_t>::iterator &map_iter_end)
+        const std::unordered_map<Key, size_t>::iterator &map_iter,
+        const std::unordered_map<Key, size_t>::iterator &map_iter_end)
         : obj_(obj) {
         version_ = obj->version_;
         map_iter_ = map_iter;
@@ -45,7 +45,7 @@ private:
 
 public:
     struct KeyValue {
-        std::string key;
+        Key key;
         ObjectHolder value;
     };
 
@@ -81,7 +81,7 @@ public:
         return TableIterator(obj_, ++map_iter, map_iter_end_);
     }
 
-    std::string key() const { return get().key; }
+    Key key() const { return get().key; }
 
     ObjectHolder value() const { return get().value; }
     bool is_end() const { return map_iter_ == map_iter_end_; }

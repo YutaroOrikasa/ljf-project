@@ -10,7 +10,7 @@ TEST(ObjectIterator, HashTable) {
     set_object_to_table(obj.get(), "elem", elem.get());
 
     auto iter = obj->iter_hash_table();
-    EXPECT_EQ(iter.get().key, "elem");
+    EXPECT_EQ(iter.get().key.get_key_as_c_str(), "elem");
     EXPECT_EQ(iter.get().value, elem);
     auto iter_next = iter.next();
     ASSERT_TRUE(iter_next.is_end());
