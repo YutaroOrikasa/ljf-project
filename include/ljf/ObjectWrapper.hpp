@@ -32,6 +32,10 @@ public:
         return holder_ != other.holder_;
     }
 
+    /// @brief Please use carefully (eg. dangling returned pointer).
+    /// @return
+    Object *get_wrapped_pointer() const { return holder_.get(); }
+
     ObjectWrapper get(const char *key) const {
         return get_impl(key, LJFAttribute::VISIBLE);
     }
