@@ -1,12 +1,18 @@
 #pragma once
 
 #include "internal/ObjectHolder.hpp"
+#include "ljf/runtime.hpp"
 
 namespace ljf {
 
 class ObjectWrapper {
 private:
     ObjectHolder holder_;
+
+    ObjectWrapper get_impl(const char *key, LJFAttribute visiblity) const;
+
+    void set_impl(const char *key, const ObjectWrapper &value,
+                  LJFAttribute visiblity) const;
 
 public:
     /*implicit*/ ObjectWrapper(ObjectHolder holder) : holder_(holder) {}
@@ -18,7 +24,28 @@ public:
     ObjectWrapper &operator=(const ObjectWrapper &) = default;
     ObjectWrapper &operator=(ObjectWrapper &&) = default;
 
-    ObjectWrapper get(const char *key) const;
+    bool operator==(const ObjectWrapper &other) const {
+        return holder_ == other.holder_;
+    }
+
+    bool operator!=(const ObjectWrapper &other) const {
+        return holder_ != other.holder_;
+    }
+
+    ObjectWrapper get(const char *key) const {
+        return get_impl(key, LJFAttribute::VISIBLE);
+    }
+
+    ObjectWrapper get_hidden(const char *key) const {
+        return get_impl(key, LJFAttribute::HIDDEN);
+    }
+
+    void set(const char *key, const ObjectWrapper &value) const {
+        set_impl(key, value, LJFAttribute::VISIBLE);
+    }
+    void set_hidden(const char *key, const ObjectWrapper &value) const {
+        set_impl(key, value, LJFAttribute::HIDDEN);
+    }
 };
 
 } // namespace ljf
