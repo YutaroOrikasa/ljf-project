@@ -230,7 +230,7 @@ void ljf_set(Context *ctx, Object *obj, LJFHandle key_handle_or_cstr,
             LJFAttribute::C_STR_KEY) {
             return reinterpret_cast<void *>(key_handle_or_cstr);
         } else {
-            ctx->get_from_handle(key_handle_or_cstr);
+            return ctx->get_from_handle(key_handle_or_cstr);
         }
     }();
     ctx->get_from_handle(obj)->set(key, ctx->get_from_handle(value), attr);
