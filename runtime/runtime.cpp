@@ -457,7 +457,7 @@ int ljf_internal_start_entry_point(ljf_main_t ljf_main,
                                    const std::string &source_path, int argc,
                                    const char **argv) {
 
-    auto ctx_up = std::make_unique<Context>(nullptr, nullptr);
+    auto ctx_up = internal::make_temporary_context();
     auto ctx = ctx_up.get();
     if (ljf_main) {
         return ljf_main(argc, argv);
