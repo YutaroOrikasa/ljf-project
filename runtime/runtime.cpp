@@ -52,34 +52,6 @@ struct Done {
 static Done done;
 
 namespace ljf {
-
-class TemporaryHolders {
-private:
-    std::vector<ObjectHolder> holders_;
-
-public:
-    Object *add(Object *obj) {
-        holders_.push_back(obj);
-        return obj;
-    }
-};
-
-class Context {
-private:
-    TemporaryHolders temporary_holders_;
-    llvm::Module *LLVMModule_;
-    Context *caller_context_ = nullptr;
-
-public:
-    explicit Context(llvm::Module *LLVMModule, Context *caller_context)
-        : LLVMModule_(LLVMModule), caller_context_(caller_context) {}
-    Object *register_temporary_object(Object *obj) {
-        return temporary_holders_.add(obj);
-    }
-};
-
-using TemporaryStorage = Object;
-
 struct FunctionData {
     // naive means 'not optimized'
     const llvm::Function *naive_llvm_function;
@@ -243,15 +215,25 @@ void ljf_internal_set_native_function(FunctionId id, FunctionPtr fn) {
 }
 
 /**************** table API ***************/
-Object *ljf_get(Object *obj, void *key, LJFAttribute attr) {
+Object *ljf_get(ljf::Context *ctx, Object *obj, void *key, LJFAttribute attr) {
     check_not_null(obj);
 
-    return obj->get(key, attr);
+    return ctx->register_temporary_object(
+        ctx->get_from_handle(obj)->get(key, attr));
 }
 
-void ljf_set(Object *obj, void *key, Object *value, LJFAttribute attr) {
+void ljf_set(Context *ctx, Object *obj, LJFHandle key_handle_or_cstr,
+             Object *value, LJFAttribute attr) {
     check_not_null(obj);
-    obj->set(key, value, attr);
+    auto key = [&]() -> void * {
+        if (AttributeTraits::mask(attr, LJFAttribute::KEY_TYPE_MASK) ==
+            LJFAttribute::C_STR_KEY) {
+            return reinterpret_cast<void *>(key_handle_or_cstr);
+        } else {
+            ctx->get_from_handle(key_handle_or_cstr);
+        }
+    }();
+    ctx->get_from_handle(obj)->set(key, ctx->get_from_handle(value), attr);
 }
 
 /**************** array API ***************/
@@ -365,7 +347,8 @@ uint64_t ljf_get_native_data(const Object *obj) {
     return obj->get_native_data();
 }
 
-Object *ljf_environment_get(Environment *env, void *key, LJFAttribute attr) {
+Object *ljf_environment_get(ljf::Context *ctx, Environment *env, void *key,
+                            LJFAttribute attr) {
     check_not_null(env);
 
     auto maps = get_object_from_hidden_table(env, "ljf.env.maps");
@@ -379,17 +362,17 @@ Object *ljf_environment_get(Environment *env, void *key, LJFAttribute attr) {
         // env object is nested.
         // maps->array_at(0) is most inner environment.
         auto obj = maps->array_at(i);
-        auto value = ljf_get(obj, key, attr);
+        auto value = obj->get(key, attr);
         if (value) {
-            return value;
+            return ctx->register_temporary_object(value.get());
         }
     }
 
     return ljf_undefined;
 }
 
-void ljf_environment_set(Environment *env, void *key, Object *value,
-                         LJFAttribute attr) {
+void ljf_environment_set(ljf::Context *ctx, Environment *env, void *key,
+                         Object *value, LJFAttribute attr) {
     check_not_null(env);
 
     auto maps = get_object_from_hidden_table(env, "ljf.env.maps");
@@ -400,7 +383,7 @@ void ljf_environment_set(Environment *env, void *key, Object *value,
     }
 
     auto map0 = maps->array_at(0);
-    ljf_set(map0, key, value, attr);
+    ljf_set(ctx, map0, key, value, attr);
 }
 
 FunctionId ljf_register_native_function(FunctionPtr fn) {

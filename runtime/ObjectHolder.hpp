@@ -1,5 +1,6 @@
 #pragma once
-#include "Object.hpp"
+
+#include "object-fwd.hpp"
 
 namespace ljf {
 
@@ -49,6 +50,9 @@ public:
 
     Object *get() const noexcept { return obj_; }
 
+    // TODO Make explicit
+    // Implicit conversion make dangling pointer, eg:
+    // Object *fn(ObjectHolder h) { return h; }
     /*implicit*/ operator Object *() const noexcept { return obj_; }
 
     explicit operator bool() const noexcept { return bool(obj_); }

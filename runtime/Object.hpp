@@ -12,6 +12,7 @@
 #include "ljf/runtime.hpp"
 
 #include "AttributeTraits.hpp"
+#include "ObjectHolder.hpp"
 
 namespace ljf {
 class Object;
@@ -114,13 +115,13 @@ public:
         ++other.version_;
     }
 
-    Object *get(void *key, LJFAttribute attr) {
+    ObjectHolder get(void *key, LJFAttribute attr) {
         Key key_obj{attr, key};
         auto &table =
             AttributeTraits::is_visible(attr) ? hash_table_ : hidden_table_;
         std::lock_guard lk{mutex_};
 
-        return array_table_.at(table.at(key_obj));
+        return ObjectHolder(array_table_.at(table.at(key_obj)));
     }
 
     void set(void *key, Object *value, LJFAttribute attr) {
@@ -188,9 +189,9 @@ public:
         std::lock_guard lk{mutex_};
         return array_.size();
     }
-    Object *array_at(uint64_t index) {
+    ObjectHolder array_at(uint64_t index) {
         std::lock_guard lk{mutex_};
-        return array_.at(index);
+        return ObjectHolder(array_.at(index));
     }
     void array_set_at(uint64_t index, Object *value) {
         Object *old_value;
@@ -264,48 +265,22 @@ public:
 };
 
 inline void set_object_to_table(Object *obj, const char *key, Object *value) {
-    ::ljf_set(obj, const_cast<char *>(key), value,
+    obj->set(const_cast<char *>(key), value,
               AttributeTraits::or_attr(LJFAttribute::VISIBLE, LJFAttribute::C_STR_KEY));
 }
 
-inline Object *get_object_from_hidden_table(Object *obj, const char *key) {
-    return ::ljf_get(obj, const_cast<char *>(key),
-                     AttributeTraits::or_attr(LJFAttribute::HIDDEN, LJFAttribute::C_STR_KEY));
+inline ObjectHolder get_object_from_hidden_table(Object *obj, const char *key) {
+    return obj->get(const_cast<char *>(key),
+                    AttributeTraits::or_attr(LJFAttribute::HIDDEN,
+                                             LJFAttribute::C_STR_KEY));
 }
 
 inline void set_object_to_hidden_table(Object *obj, const char *key,
                                        Object *value) {
-    ::ljf_set(obj, const_cast<char *>(key), value,
-              AttributeTraits::or_attr(LJFAttribute::HIDDEN, LJFAttribute::C_STR_KEY));
+    obj->set(const_cast<char *>(key), value,
+             AttributeTraits::or_attr(LJFAttribute::HIDDEN,
+                                      LJFAttribute::C_STR_KEY));
 }
-
-inline void increment_ref_count(Object *obj) {
-    if (obj) {
-        std::lock_guard lk{*obj};
-        obj->ref_count_++;
-    }
-}
-
-inline void decrement_ref_count(Object *obj) {
-    // std::cerr << "decrement_ref_count() obj: " << obj << std::endl;
-
-    if (!obj) {
-        return;
-    }
-
-    obj->lock();
-    assert(obj->ref_count_ > 0);
-    obj->ref_count_--;
-    if (obj->ref_count_ == 0) {
-        obj->unlock();
-        delete obj;
-
-        // Commented out for experimentation.
-        //
-        // assert(allocated_memory_size >= sizeof(Object));
-        // allocated_memory_size -= sizeof(Object);
-        return;
-    }
-    obj->unlock();
-}
+void increment_ref_count(Object *obj);
+void decrement_ref_count(Object *obj);
 } // namespace ljf

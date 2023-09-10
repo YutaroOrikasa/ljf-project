@@ -58,9 +58,10 @@ enum class LJFAttribute : uint64_t {
 constexpr ljf::Object *ljf_undefined = nullptr;
 
 extern "C" {
-ljf::Object *ljf_get(ljf::Object *obj, void *key, LJFAttribute attr);
+ljf::Object *ljf_get(ljf::Context *, ljf::Object *obj, void *key,
+                     LJFAttribute attr);
 
-void ljf_set(ljf::Object *obj, void *key, ljf::Object *value,
+void ljf_set(ljf::Context *, ljf::Object *obj, void *key, ljf::Object *value,
              LJFAttribute attr);
 
 /**************** function API ***************/
@@ -81,10 +82,10 @@ ljf::Object *ljf_new_object_with_native_data(uint64_t data);
 uint64_t ljf_get_native_data(const ljf::Object *obj);
 
 /**************** environment API ***************/
-ljf::Object *ljf_environment_get(ljf::Environment *env, void *key,
-                                 LJFAttribute attr);
-void ljf_environment_set(ljf::Environment *env, void *key, ljf::Object *value,
-                         LJFAttribute attr);
+ljf::Object *ljf_environment_get(ljf::Context *, ljf::Environment *env,
+                                 void *key, LJFAttribute attr);
+void ljf_environment_set(ljf::Context *, ljf::Environment *env, void *key,
+                         ljf::Object *value, LJFAttribute attr);
 
 /**************** function registration API ***************/
 ljf::FunctionId ljf_register_native_function(ljf::FunctionPtr);
