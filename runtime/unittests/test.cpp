@@ -2,37 +2,30 @@
 
 #include "../runtime-internal.hpp"
 #include "ljf/runtime.hpp"
+#include "ljf/ObjectWrapper.hpp"
 
 using namespace ljf;
 using namespace ljf::internal;
 
 TEST(LJFSetGet, SetGetVisible) {
     auto ctx = make_temporary_context();
-    ObjectHolder obj = ljf_new(ctx.get());
-    ObjectHolder elem = ljf_new(ctx.get());
-    ljf_set(ctx.get(), obj.get(), cast_to_ljf_handle("elem"), elem.get(),
-            LJFAttribute::VISIBLE);
+    ObjectWrapper obj = ljf_new(ctx.get());
+    ObjectWrapper elem = ljf_new(ctx.get());
+    obj.set("elem", elem);
 
-    ASSERT_EQ(elem.get(), ljf_get(ctx.get(), obj.get(), cast_to_ljf_handle("elem"),
-                                  LJFAttribute::VISIBLE));
-    ASSERT_THROW(
-        ljf_get(ctx.get(), obj.get(), cast_to_ljf_handle("elem"), LJFAttribute::HIDDEN),
-        std::out_of_range);
+    ASSERT_EQ(elem, obj.get("elem"));
+    ASSERT_THROW(obj.get_hidden("elem"), std::out_of_range);
 }
 
 TEST(LJFSetGet, SetGetHidden) {
     auto ctx = make_temporary_context();
-    ObjectHolder obj = ljf_new(ctx.get());
-    ObjectHolder elem = ljf_new(ctx.get());
-    ljf_set(ctx.get(), obj.get(), cast_to_ljf_handle("elem"), elem.get(),
-            LJFAttribute::HIDDEN);
+    ObjectWrapper obj = ljf_new(ctx.get());
+    ObjectWrapper elem = ljf_new(ctx.get());
+    obj.set_hidden("elem", elem);
 
-    ASSERT_EQ(elem.get(),
-              ljf_get(ctx.get(), obj.get(), cast_to_ljf_handle("elem"),
-                      LJFAttribute::HIDDEN));
-    ASSERT_THROW(ljf_get(ctx.get(), obj.get(), cast_to_ljf_handle("elem"),
-                         LJFAttribute::VISIBLE),
-                 std::out_of_range);
+    ASSERT_EQ(elem, obj.get_hidden("elem"));
+
+    ASSERT_THROW(obj.get("elem"), std::out_of_range);
 }
 
 TEST(LJFEnvironment, GetOuterValue) {
