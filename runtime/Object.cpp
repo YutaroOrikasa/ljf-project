@@ -1,7 +1,6 @@
 #include "Object.hpp"
 
-namespace ljf
-{
+namespace ljf {
 
 void increment_ref_count(Object *obj) {
     if (obj) {
@@ -32,4 +31,9 @@ void decrement_ref_count(Object *obj) {
     }
     obj->unlock();
 }
+
+namespace internal {
+    ObjectHolder make_new_held_object() { return ObjectHolder(new Object()); }
+} // namespace internal
+
 } // namespace ljf

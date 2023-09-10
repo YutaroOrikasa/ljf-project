@@ -81,7 +81,7 @@ ObjectHolder load_source_code(const std::string &language,
             "` generated invalid llvm module; source: " + source_path);
     }
 
-    ObjectHolder module_func_table = ljf_new_object();
+    auto module_func_table = make_new_held_object();
     std::map<FunctionId, llvm::Function *> func_to_register;
 
     for (auto &func : module->functions()) {

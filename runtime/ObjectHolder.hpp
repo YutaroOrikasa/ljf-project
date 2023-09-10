@@ -23,6 +23,7 @@ public:
         other.obj_ = nullptr;
     }
 
+
     ObjectHolder &operator=(Object *o) noexcept {
         // Consider case obj_ == o
         increment_ref_count(o);

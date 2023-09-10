@@ -8,8 +8,8 @@ using namespace ljf::internal;
 
 TEST(LJFSetGet, SetGetVisible) {
     auto ctx = make_temporary_context();
-    ObjectHolder obj = ljf_new_object();
-    ObjectHolder elem = ljf_new_object();
+    ObjectHolder obj = ljf_new(ctx.get());
+    ObjectHolder elem = ljf_new(ctx.get());
     ljf_set(ctx.get(), obj.get(), cast_to_ljf_handle("elem"), elem.get(),
             LJFAttribute::VISIBLE);
 
@@ -22,8 +22,8 @@ TEST(LJFSetGet, SetGetVisible) {
 
 TEST(LJFSetGet, SetGetHidden) {
     auto ctx = make_temporary_context();
-    ObjectHolder obj = ljf_new_object();
-    ObjectHolder elem = ljf_new_object();
+    ObjectHolder obj = ljf_new(ctx.get());
+    ObjectHolder elem = ljf_new(ctx.get());
     ljf_set(ctx.get(), obj.get(), cast_to_ljf_handle("elem"), elem.get(),
             LJFAttribute::HIDDEN);
 
@@ -38,8 +38,8 @@ TEST(LJFSetGet, SetGetHidden) {
 TEST(LJFEnvironment, GetOuterValue) {
     using namespace ljf::internal;
     auto ctx = make_temporary_context();
-    ObjectHolder obj = ljf_new_object();
-    ObjectHolder env0 = create_environment();
+    ObjectHolder obj = ljf_new(ctx.get());
+    ObjectHolder env0 = create_environment(ctx.get());
     ljf_environment_set(ctx.get(), env0, cast_to_ljf_handle("obj"), obj,
                         LJFAttribute::VISIBLE);
     ObjectHolder env = create_callee_environment(env0, nullptr);
@@ -53,8 +53,9 @@ TEST(LJFEnvironment, GetOuterValue) {
 }
 
 TEST(ObjectHolder, NotEqual) {
-    ObjectHolder obj1 = ljf_new_object();
-    ObjectHolder obj2 = ljf_new_object();
+    auto ctx = make_temporary_context();
+    ObjectHolder obj1 = ljf_new(ctx.get());
+    ObjectHolder obj2 = ljf_new(ctx.get());
 
     ASSERT_EQ(obj1, obj1);
     ASSERT_NE(obj1, obj2);

@@ -75,7 +75,6 @@ ljf::Object *ljf_call_function(ljf::Context *, ljf::FunctionId function_id,
 
 /**************** new API ***************/
 ljf::Object *ljf_new(ljf::Context *);
-ljf::Object *ljf_new_object();
 
 ljf::Object *ljf_new_object_with_native_data(uint64_t data);
 

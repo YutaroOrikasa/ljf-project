@@ -45,11 +45,13 @@ public:
 
 namespace ljf::internal {
 
+ObjectHolder make_new_held_object();
+
 inline std::unique_ptr<Context> make_temporary_context() {
     return std::make_unique<Context>(nullptr, nullptr);
 }
 
-ObjectHolder create_environment(bool prepare_0th_frame = true);
+ObjectHolder create_environment(Context *, bool prepare_0th_frame = true);
 ObjectHolder create_callee_environment(Environment *parent, Object *arg);
 
 ObjectHolder load_source_code(const std::string &language,

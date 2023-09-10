@@ -149,15 +149,15 @@ using namespace ljf;
 
 namespace ljf::internal {
 
-ObjectHolder create_environment(Object *arg) {
+ObjectHolder create_environment(Context *ctx, Object *arg) {
 
-    ObjectHolder env = ljf_new_object();
+    auto env = ljf_new(ctx);
 
-    ObjectHolder env_maps = ljf_new_object();
-    set_object_to_hidden_table(env.get(), "ljf.env.maps", env_maps);
+    auto env_maps = ljf_new(ctx);
+    set_object_to_hidden_table(env, "ljf.env.maps", env_maps);
 
     if (arg) {
-        auto local_env = ljf_new_object();
+        auto local_env = ljf_new(ctx);
         local_env->swap(*arg);
         // arg is now empty
 
@@ -167,19 +167,21 @@ ObjectHolder create_environment(Object *arg) {
     return env;
 }
 
-ObjectHolder create_environment(bool prepare_0th_frame /*=true*/) {
+ObjectHolder create_environment(Context *ctx,
+                                bool prepare_0th_frame /*=true*/) {
 
     if (prepare_0th_frame) {
-        ObjectHolder arg = ljf_new_object();
-        return create_environment(arg.get());
+        auto arg = ljf_new(ctx);
+        return create_environment(ctx, arg);
     } else {
-        return create_environment(nullptr);
+        return create_environment(ctx, nullptr);
     }
 }
 
 ObjectHolder create_callee_environment(Environment *parent, Object *arg) {
+    auto ctx = internal::make_temporary_context();
     // Prepare callee local env and set arguments into the local env.
-    auto callee_env = internal::create_environment(arg);
+    auto callee_env = internal::create_environment(ctx.get(), arg);
     auto callee_env_maps =
         get_object_from_hidden_table(callee_env.get(), "ljf.env.maps");
 
@@ -326,7 +328,7 @@ Object *ljf_call_function(Context *caller_ctx, FunctionId function_id,
     return ret;
 }
 
-Object *ljf_new_object_with_native_data(uint64_t data) {
+Object *ljf_new_with_native_data(uint64_t data) {
     Object *obj = new Object(data);
     allocated_memory_size += sizeof(Object);
     thread_local_root->hold_returned_object(obj);
@@ -338,8 +340,6 @@ Object *ljf_new(Context *ctx) {
     allocated_memory_size += sizeof(Object);
     return ctx->register_temporary_object(obj);
 }
-
-Object *ljf_new_object() { return ljf_new_object_with_native_data(0); }
 
 uint64_t ljf_get_native_data(const Object *obj) {
     check_not_null(obj);
@@ -393,11 +393,11 @@ FunctionId ljf_register_native_function(FunctionPtr fn) {
 Object *ljf_wrap_c_str(Context *, const char *str) {
     static_assert(sizeof(str) <= sizeof(uint64_t));
     ObjectHolder wrapper =
-        ljf_new_object_with_native_data(reinterpret_cast<uint64_t>(str));
+        ljf_new_with_native_data(reinterpret_cast<uint64_t>(str));
 
     // TODO: set attribute = constant
     set_object_to_table(wrapper.get(), "length",
-                        ljf_new_object_with_native_data(strlen(str)));
+                        ljf_new_with_native_data(strlen(str)));
 
     thread_local_root->hold_returned_object(wrapper.get());
     return wrapper.get();
@@ -409,7 +409,7 @@ static Object *load_source_code(const char *language, const char *source_path,
                                 Object *&env, bool create_module_local_env) {
     ObjectHolder env_holder = env;
     if (create_module_local_env) {
-        ObjectHolder arg = ljf_new_object();
+        auto arg = make_new_held_object();
         env_holder = create_callee_environment(env, arg.get());
     }
 
@@ -468,7 +468,7 @@ int ljf_internal_start_entry_point(ljf_main_t ljf_main,
             auto wrap = wrap_holder.get();
             ljf_array_push(args, wrap);
         }
-        ObjectHolder arg = ljf_new_object();
+        ObjectHolder arg = ljf_new(ctx);
         set_object_to_table(arg.get(), "args", args);
         ObjectHolder env_holder = create_callee_environment(nullptr, arg.get());
 
