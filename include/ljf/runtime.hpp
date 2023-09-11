@@ -32,6 +32,11 @@ inline LJFHandle cast_to_ljf_handle(const char *str) {
     return reinterpret_cast<LJFHandle>(const_cast<char *>(str));
 }
 
+template <typename T> LJFHandle cast_to_ljf_handle(T value) {
+    return reinterpret_cast<LJFHandle>(static_cast<uint64_t>(value));
+}
+
+
 template <typename Out> Out &operator<<(Out &out, const Object &);
 } // namespace ljf
 

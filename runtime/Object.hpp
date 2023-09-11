@@ -139,7 +139,7 @@ public:
         }
     }
 
-    void set(void *key, Object *value, LJFAttribute attr) {
+    void set(const void *key, Object *value, LJFAttribute attr) {
 
         Key key_obj{attr, key};
         auto &table =

@@ -14,6 +14,8 @@
 #include "ObjectIterator.hpp"
 #include "Roots.hpp"
 #include "TypeObject.hpp"
+#include "ljf-system-property.hpp"
+#include "ljf/ObjectWrapper.hpp"
 #include "ljf/initmsg.hpp"
 #include "ljf/runtime.hpp"
 #include "runtime-internal.hpp"
@@ -402,17 +404,21 @@ FunctionId ljf_register_llvm_function(Context*ctx, const char *function_name, Fu
     return function_table.add_llvm(fn, LLVMModule, fn_ptr);
 }
 
-LJFHandle ljf_wrap_c_str(Context *, const char *str) {
+LJFHandle ljf_wrap_c_str(Context *ctx, const char *str) {
     static_assert(sizeof(str) <= sizeof(uint64_t));
-    ObjectHolder wrapper =
-        ljf_new_with_native_data(reinterpret_cast<uint64_t>(str));
+    auto str_obj = make_new_wrapped_object();
 
-    // TODO: set attribute = constant
-    set_object_to_table(wrapper.get(), "length",
-                        ljf_new_with_native_data(strlen(str)));
+    set_ljf_native_system_property(str_obj, ljf_native_value_c_str,
+                                   cast_to_ljf_handle(str));
 
-    thread_local_root->hold_returned_object(wrapper.get());
-    throw "not implemented";
+    auto int_obj = make_new_wrapped_object();
+    set_ljf_native_system_property(int_obj, ljf_native_value_c_str,
+                                   cast_to_ljf_handle(strlen(str)));
+
+    set_ljf_system_property(str_obj, ljf_c_str_length, int_obj);
+
+    return ctx->register_temporary_object(str_obj.get_wrapped_pointer());
+
     // return wrapper.get();
 }
 

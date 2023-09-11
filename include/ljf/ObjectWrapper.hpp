@@ -36,6 +36,15 @@ public:
     /// @return
     Object *get_wrapped_pointer() const { return holder_.get(); }
 
+    /// @brief Please use carefully (eg. getting native value as object pointer).
+    /// @return
+    uint64_t get_native_value(const char *key, LJFAttribute attr) const;
+
+    /// @brief Please use carefully (eg. passing invalid attribute).
+    /// @return
+    void set_native_value(const char *key, uint64_t value,
+                          LJFAttribute attr) const;
+
     ObjectWrapper get(const char *key) const {
         return get_impl(key, LJFAttribute::VISIBLE);
     }
