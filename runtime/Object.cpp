@@ -1,4 +1,5 @@
 #include "Object.hpp"
+#include "runtime-internal.hpp"
 
 namespace ljf {
 
@@ -32,6 +33,9 @@ void decrement_ref_count(Object *obj) {
     obj->unlock();
 }
 
+LJFHandle ObjectHolder::get_handle(Context &ctx) const {
+    return ctx.register_temporary_object(obj_);
+}
 namespace internal {
     ObjectHolder make_new_held_object() { return ObjectHolder(new Object()); }
 } // namespace internal

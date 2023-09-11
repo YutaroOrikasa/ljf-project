@@ -8,13 +8,10 @@ using namespace ljf::internal;
 
 TEST(TestSystemPropertyUtility, Test) {
     auto ctx = make_temporary_context();
-    ObjectWrapper obj = ljf_new(ctx.get());
-    ObjectWrapper elem = ljf_new(ctx.get());
+    ObjectWrapper obj = make_new_wrapped_object();
+    ObjectWrapper elem = make_new_wrapped_object();
     set_ljf_system_property(obj, "ljf.elem", elem);
 
     ASSERT_EQ(elem, get_ljf_system_property(obj, "ljf.elem"));
-    ASSERT_EQ(elem, ljf_get(ctx.get(), obj.get_wrapped_pointer(),
-                            const_cast<char *>("ljf.elem"),
-                            AttributeTraits::or_attr(LJFAttribute::C_STR_KEY,
-                                                     LJFAttribute::HIDDEN)));
+    ASSERT_EQ(elem, obj.get_hidden("ljf.elem"));
 }

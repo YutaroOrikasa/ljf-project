@@ -1,14 +1,16 @@
 #include "../ObjectIterator.hpp"
 #include "gtest/gtest.h"
+#include "../ObjectHolder.hpp"
 
 using namespace ljf;
+using namespace ljf::internal;
 
 static const auto ctx_up = internal::make_temporary_context();
 static const auto ctx = ctx_up.get();
 // unittests for Iterator family (they are private data and methods)
 TEST(ObjectIterator, HashTable) {
-    ObjectHolder obj = ljf_new(ctx);
-    ObjectHolder elem = ljf_new(ctx);
+    ObjectHolder obj = make_new_held_object();
+    ObjectHolder elem = make_new_held_object();
     set_object_to_table(obj.get(), "elem", elem.get());
 
     auto iter = obj->iter_hash_table();
@@ -19,8 +21,8 @@ TEST(ObjectIterator, HashTable) {
 }
 
 TEST(ObjectIterator, BrokenIter) {
-    ObjectHolder obj = ljf_new(ctx);
-    ObjectHolder elem = ljf_new(ctx);
+    ObjectHolder obj = make_new_held_object();
+    ObjectHolder elem = make_new_held_object();
     set_object_to_table(obj.get(), "elem", elem.get());
 
     auto iter = obj->iter_hash_table();

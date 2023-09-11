@@ -7,14 +7,14 @@
 #include <stdexcept>
 #include <unordered_map>
 
-using LJFHandle = void *;
+using LJFHandle = uint64_t;
 namespace ljf {
 class Object;
 class Context;
 using Environment = Object;
 using FunctionId = std::size_t;
 
-using FunctionPtr = Object *(*)(Context *ctx, Environment *);
+using FunctionPtr = LJFHandle (*)(Context *ctx, Environment *);
 
 enum TableVisiblity {
     TAB_VISIBLE,
@@ -55,13 +55,13 @@ enum class LJFAttribute : uint64_t {
     NATIVE = 1ul << 32,
 };
 
-constexpr ljf::Object *ljf_undefined = nullptr;
+constexpr LJFHandle ljf_undefined = -1;
 
 extern "C" {
-ljf::Object *ljf_get(ljf::Context *, ljf::Object *obj, void *key,
+LJFHandle ljf_get(ljf::Context *, LJFHandle obj, LJFHandle key,
                      LJFAttribute attr);
 
-void ljf_set(ljf::Context *, ljf::Object *obj, void *key, ljf::Object *value,
+void ljf_set(ljf::Context *, LJFHandle obj, LJFHandle key, LJFHandle value,
              LJFAttribute attr);
 
 /**************** function API ***************/
@@ -70,33 +70,33 @@ ljf::FunctionId ljf_get_function_id_from_function_table(ljf::Object *obj,
 void ljf_set_function_id_to_function_table(ljf::Object *obj, const char *key,
                                            ljf::FunctionId function_id);
 
-ljf::Object *ljf_call_function(ljf::Context *, ljf::FunctionId function_id,
-                               ljf::Object *env, ljf::Object *arg);
+LJFHandle ljf_call_function(ljf::Context *, ljf::FunctionId function_id,
+                               LJFHandle env, LJFHandle arg);
 
 /**************** new API ***************/
-ljf::Object *ljf_new(ljf::Context *);
+LJFHandle ljf_new(ljf::Context *);
 
 ljf::Object *ljf_new_object_with_native_data(uint64_t data);
 
 uint64_t ljf_get_native_data(const ljf::Object *obj);
 
 /**************** environment API ***************/
-ljf::Object *ljf_environment_get(ljf::Context *, ljf::Environment *env,
-                                 void *key, LJFAttribute attr);
-void ljf_environment_set(ljf::Context *, ljf::Environment *env, void *key,
-                         ljf::Object *value, LJFAttribute attr);
+LJFHandle ljf_environment_get(ljf::Context *, ljf::Environment *env,
+                                 LJFHandle key, LJFAttribute attr);
+void ljf_environment_set(ljf::Context *, ljf::Environment *env, LJFHandle key,
+                         LJFHandle value, LJFAttribute attr);
 
 /**************** function registration API ***************/
 ljf::FunctionId ljf_register_native_function(ljf::FunctionPtr);
 
 /**************** array API ***************/
-size_t ljf_array_size(ljf::Object *obj);
-ljf::Object *ljf_array_get(ljf::Object *obj, size_t index);
+size_t ljf_array_size(ljf::Context *, LJFHandle obj);
+LJFHandle ljf_array_get(ljf::Context *, LJFHandle obj, size_t index);
 void ljf_array_set(ljf::Object *obj, size_t index, ljf::Object *value);
-void ljf_array_push(ljf::Object *obj, ljf::Object *value);
+void ljf_array_push(ljf::Context *, LJFHandle obj, LJFHandle value);
 
 /**************** other API ***************/
-ljf::Object *ljf_import(ljf::Context *, const char *src_path,
+LJFHandle ljf_import(ljf::Context *, const char *src_path,
                         const char *language);
-ljf::Object *ljf_wrap_c_str(ljf::Context *, const char *str);
+LJFHandle ljf_wrap_c_str(ljf::Context *, const char *str);
 }

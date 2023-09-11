@@ -20,14 +20,14 @@ class Object;
 class Key {
 private:
     LJFAttribute attr_;
-    void *key_;
+    const void *key_;
 
     LJFAttribute mask_attr() const {
         return AttributeTraits::mask(attr_, LJFAttribute::KEY_TYPE_MASK);
     }
 
 public:
-    Key(LJFAttribute attr, void *key) : attr_(attr), key_(key) {}
+    Key(LJFAttribute attr, const void *key) : attr_(attr), key_(key) {}
 
     Key() = default;
     Key(const Key &) = default;
@@ -44,9 +44,9 @@ public:
         assert(is_c_str_key());
         return static_cast<const char *>(key_);
     }
-    Object *get_key_as_object() const {
+    const Object *get_key_as_object() const {
         assert(is_object_key());
-        return static_cast<Object *>(key_);
+        return static_cast<const Object *>(key_);
     }
 
     size_t hash_code() const {
@@ -115,7 +115,7 @@ public:
         ++other.version_;
     }
 
-    ObjectHolder get(void *key, LJFAttribute attr) {
+    ObjectHolder get(const void *key, LJFAttribute attr) {
         Key key_obj{attr, key};
         auto &table =
             AttributeTraits::is_visible(attr) ? hash_table_ : hidden_table_;
@@ -167,7 +167,7 @@ public:
 
     uint64_t array_table_new_index() {
         uint64_t index = array_table_.size();
-        array_table_.push_back(ljf_undefined);
+        array_table_.push_back(reinterpret_cast<Object *>(ljf_undefined));
         return index;
     }
 

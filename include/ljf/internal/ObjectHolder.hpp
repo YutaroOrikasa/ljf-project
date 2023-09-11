@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ljf/runtime.hpp"
 #include "object-fwd.hpp"
 
 namespace ljf {
@@ -50,6 +51,8 @@ public:
 
     Object *get() const noexcept { return obj_; }
 
+    LJFHandle get_handle(Context &ctx) const;
+
     // TODO Make explicit
     // Implicit conversion make dangling pointer, eg:
     // Object *fn(ObjectHolder h) { return h; }
@@ -63,4 +66,9 @@ public:
 
     // operator Object *() defined so operator== and != need not be defined.
 };
+
+namespace internal {
+    ObjectHolder make_new_held_object();
+} // namespace internal
+
 } // namespace ljf

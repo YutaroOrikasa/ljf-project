@@ -18,4 +18,6 @@ void ObjectWrapper::set_impl(const char *key, const ObjectWrapper &value,
         AttributeTraits::or_attr(LJFAttribute::C_STR_KEY, visiblity));
 }
 
+ObjectWrapper make_new_wrapped_object() { return ObjectWrapper(new Object()); }
+
 } // namespace ljf

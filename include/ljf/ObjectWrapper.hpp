@@ -52,4 +52,6 @@ public:
     }
 };
 
+ObjectWrapper make_new_wrapped_object();
+
 } // namespace ljf

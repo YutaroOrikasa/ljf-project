@@ -18,6 +18,9 @@
 #include "ljf/runtime.hpp"
 #include "runtime-internal.hpp"
 
+static_assert(sizeof(LJFHandle) >= sizeof(void *));
+static_assert(sizeof(LJFHandle) >= sizeof(int64_t));
+
 namespace ljf {
 InitMsg im{"ljf runtime loading"};
 DoneMsg dm{"ljf runtime unloading"};
@@ -137,12 +140,6 @@ namespace {
 
 } // namespace
 
-void check_not_null(const Object *obj) {
-    if (!obj) {
-        throw runtime_error("null pointer exception");
-    }
-}
-
 } // namespace ljf
 
 using namespace ljf;
@@ -151,18 +148,18 @@ namespace ljf::internal {
 
 ObjectHolder create_environment(Context *ctx, Object *arg) {
 
-    auto env = ljf_new(ctx);
+    auto env = ctx->get_from_handle(ljf_new(ctx));
 
-    auto env_maps = ljf_new(ctx);
+    auto env_maps = ctx->get_from_handle(ljf_new(ctx));
     set_object_to_hidden_table(env, "ljf.env.maps", env_maps);
 
     if (arg) {
-        auto local_env = ljf_new(ctx);
+        auto local_env = ctx->get_from_handle(ljf_new(ctx));
         local_env->swap(*arg);
         // arg is now empty
 
         // set maps[0]
-        ljf_array_push(env_maps, local_env);
+        env_maps->array_push(local_env);
     }
     return env;
 }
@@ -199,9 +196,9 @@ ObjectHolder create_callee_environment(Environment *parent, Object *arg) {
     // parent_env_maps->dump();
     for (size_t i = 0; i < parent_env_maps->array_size(); i++) {
         // std::cout << "i: " << i << "\n";
-        Object *map = ljf_array_get(parent_env_maps, i);
+        Object *map = parent_env_maps->array_at(i);
         assert(map);
-        ljf_array_push(callee_env_maps, map);
+        callee_env_maps->array_push(map);
     }
 
     return callee_env;
@@ -217,16 +214,24 @@ void ljf_internal_set_native_function(FunctionId id, FunctionPtr fn) {
 }
 
 /**************** table API ***************/
-Object *ljf_get(ljf::Context *ctx, Object *obj, void *key, LJFAttribute attr) {
-    check_not_null(obj);
+LJFHandle ljf_get(ljf::Context *ctx, LJFHandle obj, LJFHandle key,
+                  LJFAttribute attr) {
 
+    auto key_ptr = [&]() -> const void * {
+        if (AttributeTraits::mask(attr, LJFAttribute::KEY_TYPE_MASK) ==
+            LJFAttribute::C_STR_KEY) {
+            return reinterpret_cast<const void *>(key);
+        } else {
+            // assert((attr & LJF_ATTR_KEY_TYPE_MASK) == C_STR_KEY)
+            return ctx->get_from_handle(obj);
+        }
+    }();
     return ctx->register_temporary_object(
-        ctx->get_from_handle(obj)->get(key, attr));
+        ctx->get_from_handle(obj)->get(key_ptr, attr));
 }
 
-void ljf_set(Context *ctx, Object *obj, LJFHandle key_handle_or_cstr,
-             Object *value, LJFAttribute attr) {
-    check_not_null(obj);
+void ljf_set(Context *ctx, LJFHandle obj, LJFHandle key_handle_or_cstr,
+             LJFHandle value, LJFAttribute attr) {
     auto key = [&]() -> void * {
         if (AttributeTraits::mask(attr, LJFAttribute::KEY_TYPE_MASK) ==
             LJFAttribute::C_STR_KEY) {
@@ -240,37 +245,34 @@ void ljf_set(Context *ctx, Object *obj, LJFHandle key_handle_or_cstr,
 
 /**************** array API ***************/
 
-Object *ljf_array_get(Object *obj, size_t index) {
-    check_not_null(obj);
+LJFHandle ljf_array_get(Context *ctx, LJFHandle obj_h, size_t index) {
 
+    auto obj = ctx->get_from_handle(obj_h);
     if (index >= obj->array_size()) {
-        return ljf_undefined;
+        throw std::out_of_range("ljf_array_get");
     }
 
-    return obj->array_at(index);
+    return ctx->register_temporary_object(obj->array_at(index));
 }
 
 void ljf_array_set(Object *obj, size_t index, Object *value) {
-    check_not_null(obj);
 
     obj->array_set_at(index, value);
 }
 
-void ljf_array_push(Object *obj, Object *value) {
-    check_not_null(obj);
-
-    obj->array_push(value);
+void ljf_array_push(Context *ctx, LJFHandle obj, LJFHandle value) {
+    auto obj_raw = ctx->get_from_handle(obj);
+    auto value_raw = ctx->get_from_handle(value);
+    obj_raw->array_push(value_raw);
 }
 
-size_t ljf_array_size(Object *obj) {
-    check_not_null(obj);
-    return obj->array_size();
+size_t ljf_array_size(Context *ctx, LJFHandle obj_h) {
+    return ctx->get_from_handle(obj_h)->array_size();
 }
 
 //*********************//
 FunctionId ljf_get_function_id_from_function_table(Object *obj,
                                                    const char *key) {
-    check_not_null(obj);
 
     try {
         return obj->get_function_id(key);
@@ -282,15 +284,14 @@ FunctionId ljf_get_function_id_from_function_table(Object *obj,
 
 void ljf_set_function_id_to_function_table(Object *obj, const char *key,
                                            FunctionId function_id) {
-    check_not_null(obj);
 
     obj->set_function_id(key, function_id);
 }
 
 /// if arg == null callee's local frame env and argument env will not be
 /// created.
-Object *ljf_call_function(Context *caller_ctx, FunctionId function_id,
-                          Environment *env, Object *arg) {
+LJFHandle ljf_call_function(Context *caller_ctx, FunctionId function_id,
+                            LJFHandle env, LJFHandle arg) {
     // std::cout << "arg\n";
     // if (arg)
     // {
@@ -304,7 +305,7 @@ Object *ljf_call_function(Context *caller_ctx, FunctionId function_id,
     auto &func_data = function_table.get(function_id);
     // std::cout << func_data.naive_llvm_function->getName().str() << "\n";
 
-    auto callee_env = create_callee_environment(env, arg);
+    auto callee_env = create_callee_environment(caller_ctx->get_from_handle(env), caller_ctx->get_from_handle(arg));
 
     auto arg_type = callee_env->calculate_type();
 
@@ -320,12 +321,11 @@ Object *ljf_call_function(Context *caller_ctx, FunctionId function_id,
 
     auto ret = func_ptr(&ctx, callee_env.get());
 
-    thread_local_root->hold_returned_object(ret);
-
     // std::cout << "END " << func_data.naive_llvm_function->getName().str() <<
     // "\n";
 
-    return ret;
+    auto ret_raw =ctx.get_from_handle(ret);
+    return caller_ctx->register_temporary_object(ret_raw);
 }
 
 Object *ljf_new_with_native_data(uint64_t data) {
@@ -335,21 +335,19 @@ Object *ljf_new_with_native_data(uint64_t data) {
     return obj;
 }
 
-Object *ljf_new(Context *ctx) {
+LJFHandle ljf_new(Context *ctx) {
     Object *obj = new Object();
     allocated_memory_size += sizeof(Object);
     return ctx->register_temporary_object(obj);
 }
 
 uint64_t ljf_get_native_data(const Object *obj) {
-    check_not_null(obj);
 
     return obj->get_native_data();
 }
 
-Object *ljf_environment_get(ljf::Context *ctx, Environment *env, void *key,
+LJFHandle ljf_environment_get(ljf::Context *ctx, Environment *env, LJFHandle key_handle,
                             LJFAttribute attr) {
-    check_not_null(env);
 
     auto maps = get_object_from_hidden_table(env, "ljf.env.maps");
 
@@ -358,6 +356,7 @@ Object *ljf_environment_get(ljf::Context *ctx, Environment *env, void *key,
             "ljf_get_object_from_environment: not an Environment");
     }
 
+    auto key = ctx->get_from_handle(key_handle);
     for (size_t i = 0; i < maps->array_size(); i++) {
         // env object is nested.
         // maps->array_at(0) is most inner environment.
@@ -371,9 +370,8 @@ Object *ljf_environment_get(ljf::Context *ctx, Environment *env, void *key,
     return ljf_undefined;
 }
 
-void ljf_environment_set(ljf::Context *ctx, Environment *env, void *key,
-                         Object *value, LJFAttribute attr) {
-    check_not_null(env);
+void ljf_environment_set(ljf::Context *ctx, Environment *env, LJFHandle key,
+                         LJFHandle value, LJFAttribute attr) {
 
     auto maps = get_object_from_hidden_table(env, "ljf.env.maps");
 
@@ -383,14 +381,14 @@ void ljf_environment_set(ljf::Context *ctx, Environment *env, void *key,
     }
 
     auto map0 = maps->array_at(0);
-    ljf_set(ctx, map0, key, value, attr);
+    map0->set(ctx->get_from_handle(key), ctx->get_from_handle(value), attr);
 }
 
 FunctionId ljf_register_native_function(FunctionPtr fn) {
     return function_table.add_native(fn);
 }
 
-Object *ljf_wrap_c_str(Context *, const char *str) {
+LJFHandle ljf_wrap_c_str(Context *, const char *str) {
     static_assert(sizeof(str) <= sizeof(uint64_t));
     ObjectHolder wrapper =
         ljf_new_with_native_data(reinterpret_cast<uint64_t>(str));
@@ -400,7 +398,8 @@ Object *ljf_wrap_c_str(Context *, const char *str) {
                         ljf_new_with_native_data(strlen(str)));
 
     thread_local_root->hold_returned_object(wrapper.get());
-    return wrapper.get();
+    throw "not implemented";
+    // return wrapper.get();
 }
 
 /// return: returned object of module_main()
@@ -464,20 +463,18 @@ int ljf_internal_start_entry_point(ljf_main_t ljf_main,
     } else {
         auto args = ljf_new(ctx);
         for (size_t i = 0; i < argc; i++) {
-            ObjectHolder wrap_holder = ljf_wrap_c_str(ctx, argv[i]);
-            auto wrap = wrap_holder.get();
-            ljf_array_push(args, wrap);
+            auto str = ljf_wrap_c_str(ctx, argv[i]);
+            ljf_array_push(ctx, args, str);
         }
-        ObjectHolder arg = ljf_new(ctx);
-        set_object_to_table(arg.get(), "args", args);
-        ObjectHolder env_holder = create_callee_environment(nullptr, arg.get());
+        auto arg = ljf_new(ctx);
+        auto attr = AttributeTraits::or_attr(LJFAttribute::MUTABLE, LJFAttribute::OBJECT, LJFAttribute::VISIBLE, LJFAttribute::C_STR_KEY);
+        ljf_set(ctx, arg, cast_to_ljf_handle("args"), args, attr);
+        ObjectHolder env_holder = create_callee_environment(nullptr, ctx->get_from_handle(arg));
 
         Object *env = env_holder.get();
         ObjectHolder ret =
             load_source_code(language.c_str(), source_path.c_str(), env, false);
-        if (ret == ljf_undefined) {
-            return 0;
-        }
+        assert(ret != nullptr);
         return ljf_get_native_data(ret.get());
     }
 }

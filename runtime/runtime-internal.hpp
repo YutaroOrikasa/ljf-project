@@ -18,9 +18,10 @@ private:
         std::vector<ObjectHolder> holders_;
 
     public:
-        Object *add(Object *obj) {
+        size_t add(Object *obj) {
+            auto index = holders_.size();
             holders_.push_back(obj);
-            return obj;
+            return index;
         }
     };
     TemporaryHolders temporary_holders_;
@@ -30,8 +31,9 @@ private:
 public:
     explicit Context(llvm::Module *LLVMModule, Context *caller_context)
         : LLVMModule_(LLVMModule), caller_context_(caller_context) {}
-    Object *register_temporary_object(Object *obj) {
-        return temporary_holders_.add(obj);
+    LJFHandle register_temporary_object(Object *obj) {
+        temporary_holders_.add(obj);
+        return reinterpret_cast<LJFHandle>(obj);
     }
 
     // This function is prepared for future moving gc runtime.
@@ -44,8 +46,6 @@ public:
 } // namespace ljf
 
 namespace ljf::internal {
-
-ObjectHolder make_new_held_object();
 
 inline std::unique_ptr<Context> make_temporary_context() {
     return std::make_unique<Context>(nullptr, nullptr);

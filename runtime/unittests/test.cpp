@@ -1,16 +1,16 @@
 #include "gtest/gtest.h"
 
 #include "../runtime-internal.hpp"
-#include "ljf/runtime.hpp"
 #include "ljf/ObjectWrapper.hpp"
+#include "ljf/internal/ObjectHolder.hpp"
+#include "ljf/runtime.hpp"
 
 using namespace ljf;
 using namespace ljf::internal;
 
 TEST(LJFSetGet, SetGetVisible) {
-    auto ctx = make_temporary_context();
-    ObjectWrapper obj = ljf_new(ctx.get());
-    ObjectWrapper elem = ljf_new(ctx.get());
+    ObjectWrapper obj = make_new_wrapped_object();
+    ObjectWrapper elem = make_new_wrapped_object();
     obj.set("elem", elem);
 
     ASSERT_EQ(elem, obj.get("elem"));
@@ -18,9 +18,8 @@ TEST(LJFSetGet, SetGetVisible) {
 }
 
 TEST(LJFSetGet, SetGetHidden) {
-    auto ctx = make_temporary_context();
-    ObjectWrapper obj = ljf_new(ctx.get());
-    ObjectWrapper elem = ljf_new(ctx.get());
+    ObjectWrapper obj = make_new_wrapped_object();
+    ObjectWrapper elem = make_new_wrapped_object();
     obj.set_hidden("elem", elem);
 
     ASSERT_EQ(elem, obj.get_hidden("elem"));
@@ -31,25 +30,16 @@ TEST(LJFSetGet, SetGetHidden) {
 TEST(LJFEnvironment, GetOuterValue) {
     using namespace ljf::internal;
     auto ctx = make_temporary_context();
-    ObjectHolder obj = ljf_new(ctx.get());
+    ObjectHolder obj = make_new_held_object();
     ObjectHolder env0 = create_environment(ctx.get());
-    ljf_environment_set(ctx.get(), env0, cast_to_ljf_handle("obj"), obj,
-                        LJFAttribute::VISIBLE);
+    ljf_environment_set(ctx.get(), env0, cast_to_ljf_handle("obj"),
+                        obj.get_handle(*ctx), LJFAttribute::VISIBLE);
     ObjectHolder env = create_callee_environment(env0, nullptr);
-    ASSERT_EQ(obj,
+    ASSERT_EQ(obj.get_handle(*ctx),
               ljf_environment_get(ctx.get(), env, cast_to_ljf_handle("obj"),
                                   LJFAttribute::VISIBLE));
     ASSERT_THROW(ljf_environment_get(ctx.get(), env,
                                      cast_to_ljf_handle("not_exist"),
                                      LJFAttribute::VISIBLE),
                  std::out_of_range);
-}
-
-TEST(ObjectHolder, NotEqual) {
-    auto ctx = make_temporary_context();
-    ObjectHolder obj1 = ljf_new(ctx.get());
-    ObjectHolder obj2 = ljf_new(ctx.get());
-
-    ASSERT_EQ(obj1, obj1);
-    ASSERT_NE(obj1, obj2);
 }

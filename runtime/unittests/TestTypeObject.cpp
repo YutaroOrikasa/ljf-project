@@ -1,17 +1,16 @@
 #include "../TypeObject.hpp"
 #include "gtest/gtest.h"
 
-static const auto ctx_up = ljf::internal::make_temporary_context();
-static const auto ctx = ctx_up.get();
+using namespace ljf::internal;
 
 // FRIEND_TEST (private member access test) need defining test in namespace
 namespace ljf {
 TEST(calculate_type, Test) {
     auto create_obj = []() {
-        ObjectHolder obj = ljf_new(ctx);
-        ObjectHolder a1 = ljf_new(ctx);
-        ObjectHolder a2 = ljf_new(ctx);
-        ObjectHolder b = ljf_new(ctx);
+        ObjectHolder obj = make_new_held_object();
+        ObjectHolder a1 = make_new_held_object();
+        ObjectHolder a2 = make_new_held_object();
+        ObjectHolder b = make_new_held_object();
         set_object_to_table(obj.get(), "a1", a1.get());
         set_object_to_table(obj.get(), "a2", a2.get());
         set_object_to_table(a1.get(), "b", b.get());
@@ -27,9 +26,9 @@ TEST(calculate_type, Test) {
 }
 
 TEST(calculate_type, TestCircularReference) {
-    ObjectHolder obj = ljf_new(ctx);
-    ObjectHolder a = ljf_new(ctx);
-    ObjectHolder b = ljf_new(ctx);
+    ObjectHolder obj = make_new_held_object();
+    ObjectHolder a = make_new_held_object();
+    ObjectHolder b = make_new_held_object();
 
     set_object_to_table(obj.get(), "a", a.get());
     set_object_to_table(a.get(), "b", b.get());
