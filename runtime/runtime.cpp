@@ -146,14 +146,19 @@ using namespace ljf;
 
 namespace ljf::internal {
 
-ObjectHolder create_environment(Context *ctx, Object *arg) {
+/// @brief If arg_h is ljf_undefined, this function will not move argument to
+/// new env.
+/// @param ctx
+/// @param arg_h
+/// @return
+ObjectHolder create_environment_with_argument(Context *ctx, LJFHandle arg_h) {
 
     auto env = ctx->get_from_handle(ljf_new(ctx));
 
     auto env_maps = ctx->get_from_handle(ljf_new(ctx));
     set_object_to_hidden_table(env, "ljf.env.maps", env_maps);
-
-    if (arg) {
+    if (arg_h != ljf_undefined) {
+        auto arg = ctx->get_from_handle(arg_h);
         auto local_env = ctx->get_from_handle(ljf_new(ctx));
         local_env->swap(*arg);
         // arg is now empty
@@ -169,9 +174,9 @@ ObjectHolder create_environment(Context *ctx,
 
     if (prepare_0th_frame) {
         auto arg = ljf_new(ctx);
-        return create_environment(ctx, arg);
+        return create_environment_with_argument(ctx, arg);
     } else {
-        return create_environment(ctx, nullptr);
+        return create_environment_with_argument(ctx, ljf_undefined);
     }
 }
 
@@ -305,7 +310,8 @@ LJFHandle ljf_call_function(Context *caller_ctx, FunctionId function_id,
     auto &func_data = function_table.get(function_id);
     // std::cout << func_data.naive_llvm_function->getName().str() << "\n";
 
-    auto callee_env = create_callee_environment(caller_ctx->get_from_handle(env), caller_ctx->get_from_handle(arg));
+    auto callee_env = create_callee_environment(
+        caller_ctx->get_from_handle(env), caller_ctx->get_from_handle(arg));
 
     auto arg_type = callee_env->calculate_type();
 
@@ -324,7 +330,7 @@ LJFHandle ljf_call_function(Context *caller_ctx, FunctionId function_id,
     // std::cout << "END " << func_data.naive_llvm_function->getName().str() <<
     // "\n";
 
-    auto ret_raw =ctx.get_from_handle(ret);
+    auto ret_raw = ctx.get_from_handle(ret);
     return caller_ctx->register_temporary_object(ret_raw);
 }
 
@@ -346,8 +352,8 @@ uint64_t ljf_get_native_data(const Object *obj) {
     return obj->get_native_data();
 }
 
-LJFHandle ljf_environment_get(ljf::Context *ctx, Environment *env, LJFHandle key_handle,
-                            LJFAttribute attr) {
+LJFHandle ljf_environment_get(ljf::Context *ctx, Environment *env,
+                              LJFHandle key_handle, LJFAttribute attr) {
 
     auto maps = get_object_from_hidden_table(env, "ljf.env.maps");
 
@@ -467,9 +473,12 @@ int ljf_internal_start_entry_point(ljf_main_t ljf_main,
             ljf_array_push(ctx, args, str);
         }
         auto arg = ljf_new(ctx);
-        auto attr = AttributeTraits::or_attr(LJFAttribute::MUTABLE, LJFAttribute::OBJECT, LJFAttribute::VISIBLE, LJFAttribute::C_STR_KEY);
+        auto attr = AttributeTraits::or_attr(
+            LJFAttribute::MUTABLE, LJFAttribute::OBJECT, LJFAttribute::VISIBLE,
+            LJFAttribute::C_STR_KEY);
         ljf_set(ctx, arg, cast_to_ljf_handle("args"), args, attr);
-        ObjectHolder env_holder = create_callee_environment(nullptr, ctx->get_from_handle(arg));
+        ObjectHolder env_holder =
+            create_callee_environment(nullptr, ctx->get_from_handle(arg));
 
         Object *env = env_holder.get();
         ObjectHolder ret =

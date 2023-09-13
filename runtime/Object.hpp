@@ -167,7 +167,7 @@ public:
 
     uint64_t array_table_new_index() {
         uint64_t index = array_table_.size();
-        array_table_.push_back(reinterpret_cast<Object *>(ljf_undefined));
+        array_table_.push_back(nullptr);
         return index;
     }
 

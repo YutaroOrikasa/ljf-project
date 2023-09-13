@@ -7,7 +7,6 @@ using namespace ljf;
 using namespace ljf::internal;
 
 TEST(TestSystemPropertyUtility, Test) {
-    auto ctx = make_temporary_context();
     ObjectWrapper obj = make_new_wrapped_object();
     ObjectWrapper elem = make_new_wrapped_object();
     set_ljf_system_property(obj, "ljf.elem", elem);
