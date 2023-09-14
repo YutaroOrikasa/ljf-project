@@ -367,9 +367,13 @@ LJFHandle ljf_environment_get(ljf::Context *ctx, Environment *env,
         // env object is nested.
         // maps->array_at(0) is most inner environment.
         auto obj = maps->array_at(i);
-        auto value = obj->get(key, attr);
-        if (value) {
-            return ctx->register_temporary_object(value.get());
+        try
+        {
+            return ctx->register_temporary_object(obj->get(key, attr));
+        }
+        catch(const std::out_of_range& e)
+        {
+            continue;
         }
     }
 

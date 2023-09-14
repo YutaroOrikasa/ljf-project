@@ -6,9 +6,9 @@
 namespace ljf {
 ObjectWrapper ObjectWrapper::get_impl(const char *key,
                                       LJFAttribute visiblity) const {
-    return holder_.get()->get(
+    return ObjectHolder(holder_.get()->get(
         const_cast<char *>(key),
-        AttributeTraits::or_attr(LJFAttribute::C_STR_KEY, visiblity));
+        AttributeTraits::or_attr(LJFAttribute::C_STR_KEY, visiblity)));
 }
 
 void ObjectWrapper::set_impl(const char *key, const ObjectWrapper &value,

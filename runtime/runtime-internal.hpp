@@ -18,6 +18,12 @@ private:
         std::vector<ObjectHolder> holders_;
 
     public:
+        size_t add(IncrementedObjectPtrOrNativeValue &&obj) {
+            auto index = holders_.size();
+            holders_.push_back(std::move(obj));
+            return index;
+        }
+
         size_t add(Object *obj) {
             auto index = holders_.size();
             holders_.push_back(obj);
@@ -31,6 +37,12 @@ private:
 public:
     explicit Context(llvm::Module *LLVMModule, Context *caller_context)
         : LLVMModule_(LLVMModule), caller_context_(caller_context) {}
+    LJFHandle
+    register_temporary_object(IncrementedObjectPtrOrNativeValue &&obj) {
+        temporary_holders_.add(std::move(obj));
+        return static_cast<LJFHandle>(obj);
+    }
+
     LJFHandle register_temporary_object(Object *obj) {
         temporary_holders_.add(obj);
         return reinterpret_cast<LJFHandle>(obj);

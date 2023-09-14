@@ -13,6 +13,7 @@
 
 #include "AttributeTraits.hpp"
 #include "ObjectHolder.hpp"
+#include "ljf/internal/object-fwd.hpp"
 
 namespace ljf {
 class Object;
@@ -115,13 +116,27 @@ public:
         ++other.version_;
     }
 
-    ObjectHolder get(const void *key, LJFAttribute attr) {
+    IncrementedObjectPtrOrNativeValue get(const void *key, LJFAttribute attr) {
         Key key_obj{attr, key};
         auto &table =
             AttributeTraits::is_visible(attr) ? hash_table_ : hidden_table_;
-        std::lock_guard lk{mutex_};
 
-        return ObjectHolder(array_table_.at(table.at(key_obj)));
+        if (AttributeTraits::mask(attr, LJFAttribute::DATA_TYPE_MASK) ==
+            LJFAttribute::OBJECT) {
+            std::lock_guard lk{mutex_};
+            //  We have to increment returned object because:
+            //      returned object will released if other thread decrement refcount
+            auto ret = array_table_.at(table.at(key_obj));
+            increment_ref_count(ret);
+            return static_cast<IncrementedObjectPtrOrNativeValue>(
+                reinterpret_cast<uint64_t>(ret));
+
+        } else {
+            std::lock_guard lk{mutex_};
+            auto ret = array_table_.at(table.at(key_obj));
+            return static_cast<IncrementedObjectPtrOrNativeValue>(
+                reinterpret_cast<uint64_t>(ret));
+        }
     }
 
     void set(void *key, Object *value, LJFAttribute attr) {
@@ -266,7 +281,8 @@ public:
 
 inline void set_object_to_table(Object *obj, const char *key, Object *value) {
     obj->set(const_cast<char *>(key), value,
-              AttributeTraits::or_attr(LJFAttribute::VISIBLE, LJFAttribute::C_STR_KEY));
+             AttributeTraits::or_attr(LJFAttribute::VISIBLE,
+                                      LJFAttribute::C_STR_KEY));
 }
 
 inline ObjectHolder get_object_from_hidden_table(Object *obj, const char *key) {

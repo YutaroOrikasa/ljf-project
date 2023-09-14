@@ -51,6 +51,7 @@ enum class LJFAttribute : uint64_t {
     OBJECT_KEY = 1 << 3,
     //
     // data type, bit 32
+    DATA_TYPE_MASK = 1ul << 32,
     OBJECT = 0ul << 32,
     NATIVE = 1ul << 32,
 };
