@@ -125,7 +125,8 @@ public:
             LJFAttribute::OBJECT) {
             std::lock_guard lk{mutex_};
             //  We have to increment returned object because:
-            //      returned object will released if other thread decrement refcount
+            //      returned object will released if other thread decrement
+            //      refcount
             auto ret = array_table_.at(table.at(key_obj));
             increment_ref_count(ret);
             return static_cast<IncrementedObjectPtrOrNativeValue>(
@@ -154,12 +155,9 @@ public:
             } else {
                 index = table.at(key_obj);
             }
+            array_table_set_index(index, value);
+            ++version_;
         }
-        // assert(value != 0);
-        // assert(value);
-
-        array_table_set_index(index, value);
-        ++version_;
     }
 
     FunctionId get_function_id(const std::string &key) {
