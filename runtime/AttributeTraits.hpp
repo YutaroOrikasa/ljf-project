@@ -23,7 +23,7 @@ public:
     }
     template <typename A, typename... As>
     static LJFAttribute or_attr(A a, As... b) {
-        return static_cast<LJFAttribute>(a, AttributeTraits::or_attr(b...));
+        return AttributeTraits::or_attr(a, AttributeTraits::or_attr(b...));
     }
     static bool is_visible(LJFAttribute attr) {
         return !is_flag_enable(attr, 0b0001);
