@@ -55,6 +55,8 @@ public:
     }
 
     llvm::Module *get_llvm_module() const { return LLVMModule_; }
+
+    Context *get_caller_context() const { return caller_context_; }
 };
 
 } // namespace ljf
