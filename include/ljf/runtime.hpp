@@ -36,36 +36,40 @@ template <typename T> LJFHandle cast_to_ljf_handle(T value) {
     return reinterpret_cast<LJFHandle>(static_cast<uint64_t>(value));
 }
 
-
 template <typename Out> Out &operator<<(Out &out, const Object &);
 } // namespace ljf
 
 enum class LJFAttribute : uint64_t {
+    KEY_ATTR_MASK = UINT32_MAX,
+    DEFAULT = 0,
     // visiblity, bit 0
     VISIBLE = 0 << 0,
     HIDDEN = 1 << 0,
-    // constant type, bit 1, 2
-    MUTABLE = 0 << 1,
-    MAYBE_CONSTANT = 1 << 1,
-    // reserved for future:
-    // CONSTANT = 0b10 << 1
     //
     // key type, bit 3, 4
     KEY_TYPE_MASK = 0b11 << 3,
     C_STR_KEY = 0 << 3,
     OBJECT_KEY = 1 << 3,
     //
+    //
+    VALUE_ATTR_MASK = (unsigned long)(UINT32_MAX) << 32,
     // data type, bit 32
     DATA_TYPE_MASK = 1ul << 32,
     OBJECT = 0ul << 32,
     NATIVE = 1ul << 32,
+    //
+    // constant type, bit 33, 34
+    MUTABLE = 0ul << 33,
+    MAYBE_CONSTANT = 1ul << 33,
+    // reserved for future:
+    // CONSTANT = 0b10 << 33
 };
 
 constexpr LJFHandle ljf_undefined = -1;
 
 extern "C" {
 LJFHandle ljf_get(ljf::Context *, LJFHandle obj, LJFHandle key,
-                     LJFAttribute attr);
+                  LJFAttribute attr);
 
 void ljf_set(ljf::Context *, LJFHandle obj, LJFHandle key, LJFHandle value,
              LJFAttribute attr);
@@ -77,7 +81,7 @@ void ljf_set_function_id_to_function_table(ljf::Object *obj, const char *key,
                                            ljf::FunctionId function_id);
 
 LJFHandle ljf_call_function(ljf::Context *, ljf::FunctionId function_id,
-                               LJFHandle env, LJFHandle arg);
+                            LJFHandle env, LJFHandle arg);
 
 /**************** new API ***************/
 LJFHandle ljf_new(ljf::Context *);
@@ -88,7 +92,7 @@ uint64_t ljf_get_native_data(const ljf::Object *obj);
 
 /**************** environment API ***************/
 LJFHandle ljf_environment_get(ljf::Context *, ljf::Environment *env,
-                                 LJFHandle key, LJFAttribute attr);
+                              LJFHandle key, LJFAttribute attr);
 void ljf_environment_set(ljf::Context *, ljf::Environment *env, LJFHandle key,
                          LJFHandle value, LJFAttribute attr);
 
@@ -103,6 +107,6 @@ void ljf_array_push(ljf::Context *, LJFHandle obj, LJFHandle value);
 
 /**************** other API ***************/
 LJFHandle ljf_import(ljf::Context *, const char *src_path,
-                        const char *language);
+                     const char *language);
 LJFHandle ljf_wrap_c_str(ljf::Context *, const char *str);
 }

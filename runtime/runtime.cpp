@@ -454,14 +454,15 @@ FunctionId ljf_internal_register_llvm_function(llvm::Function *f,
     return function_table.add_llvm(f, module, nullptr);
 }
 
-Object *ljf_internal_get_object_by_index(Object *obj, uint64_t index) {
-    return obj->array_table_get_index(index);
-}
+// disable unsafe api
+// Object *ljf_internal_get_object_by_index(Object *obj, uint64_t index) {
+//     return obj->array_table_get_index(index);
+// }
 
-void ljf_internal_set_object_by_index(Object *obj, uint64_t index,
-                                      Object *value) {
-    obj->array_table_set_index(index, value);
-}
+// void ljf_internal_set_object_by_index(Object *obj, uint64_t index,
+//                                       Object *value) {
+//     obj->array_table_set_index(index, value);
+// }
 
 void ljf_internal_reserve_object_array_table_size(Object *obj, uint64_t size) {
     obj->array_table_reserve(size);

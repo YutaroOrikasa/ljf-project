@@ -81,13 +81,46 @@ std::shared_ptr<TypeObject> calculate_type(Object &obj);
 std::shared_ptr<TypeObject> calculate_type(Object &obj, TypeCalcData &);
 
 class Object {
+public:
+    class ValueType {
+        LJFAttribute attr_;
+        ObjectPtrOrNativeValue value_;
+
+    public:
+        ValueType()
+            : ValueType(LJFAttribute::DEFAULT,
+                        static_cast<ObjectPtrOrNativeValue>(ljf_undefined)) {}
+
+        ValueType(LJFAttribute attr, ObjectPtrOrNativeValue value)
+            : attr_(AttributeTraits::mask(attr, LJFAttribute::VALUE_ATTR_MASK)),
+              value_(value) {}
+
+        LJFAttribute value_attr() const { return attr_; }
+        ObjectPtrOrNativeValue object_ptr_or_native() const { return value_; }
+
+        bool is_object() const {
+            return AttributeTraits::mask(attr_, LJFAttribute::DATA_TYPE_MASK) ==
+                   LJFAttribute::OBJECT;
+        }
+
+        Object *as_object() const {
+            assert(is_object());
+            return reinterpret_cast<Object *>(value_);
+        }
+
+        uint64_t as_native_value() const {
+            assert(!is_object());
+            return static_cast<uint64_t>(value_);
+        }
+    };
+
 private:
     std::recursive_mutex mutex_;
     size_t version_ = 0;
     std::shared_ptr<TypeObject> type_object_;
     std::unordered_map<Key, size_t> hash_table_;
     std::unordered_map<Key, size_t> hidden_table_;
-    std::vector<ObjectPtr> array_table_;
+    std::vector<ValueType> array_table_;
     std::vector<ObjectPtr> array_;
     std::unordered_map<std::string, FunctionId> function_id_table_;
     using native_data_t = std::uint64_t;
@@ -121,26 +154,19 @@ public:
         auto &table =
             AttributeTraits::is_visible(attr) ? hash_table_ : hidden_table_;
 
-        if (AttributeTraits::mask(attr, LJFAttribute::DATA_TYPE_MASK) ==
-            LJFAttribute::OBJECT) {
+        {
             std::lock_guard lk{mutex_};
+            auto ret = array_table_.at(table.at(key_obj));
             //  We have to increment returned object because:
             //      returned object will released if other thread decrement
             //      refcount
-            auto ret = array_table_.at(table.at(key_obj));
-            increment_ref_count(ret);
+            increment_ref_count_if_object(ret);
             return static_cast<IncrementedObjectPtrOrNativeValue>(
-                reinterpret_cast<uint64_t>(ret));
-
-        } else {
-            std::lock_guard lk{mutex_};
-            auto ret = array_table_.at(table.at(key_obj));
-            return static_cast<IncrementedObjectPtrOrNativeValue>(
-                reinterpret_cast<uint64_t>(ret));
+                ret.object_ptr_or_native());
         }
     }
 
-    void set(const void *key, Object *value, LJFAttribute attr) {
+    void set(const void *key, ObjectPtrOrNativeValue value, LJFAttribute attr) {
 
         Key key_obj{attr, key};
         auto &table =
@@ -155,8 +181,30 @@ public:
             } else {
                 index = table.at(key_obj);
             }
-            array_table_set_index(index, value);
+            ValueType v{attr, value};
+            increment_ref_count_if_object(v);
+            decrement_ref_count_if_object(array_table_[index]);
+            array_table_[index] = v;
             ++version_;
+        }
+    }
+
+    void set(const void *key, Object* value, LJFAttribute attr) {
+        set(key, cast_object_to_ObjectPtrOrNativeValue(value), attr);
+    }
+
+    static void increment_ref_count_if_object(const ValueType &value) {
+
+        if (value.is_object()) {
+            auto value_obj_ptr = value.as_object();
+            increment_ref_count(value_obj_ptr);
+        }
+    }
+
+    static void decrement_ref_count_if_object(const ValueType &value) {
+        if (value.is_object()) {
+            auto value_obj_ptr = value.as_object();
+            decrement_ref_count(value_obj_ptr);
         }
     }
 
@@ -168,19 +216,22 @@ public:
         function_id_table_.insert_or_assign(key, function_id);
     }
 
-    Object *&array_table_get_index(uint64_t index) {
-        return array_table_[index];
-    }
+    // disable unsafe api
+    // Object *&array_table_get_index(uint64_t index) {
+    //     return array_table_[index];
+    // }
 
-    Object *&array_table_set_index(uint64_t index, Object *value) {
-        increment_ref_count(value);
-        decrement_ref_count(array_table_[index]);
-        return array_table_[index] = value;
-    }
+    // Object *&array_table_set_index(uint64_t index, Object *value) {
+    //     increment_ref_count(value);
+    //     decrement_ref_count(array_table_[index]);
+    //     return array_table_[index] = value;
+    // }
 
     uint64_t array_table_new_index() {
         uint64_t index = array_table_.size();
-        array_table_.push_back(nullptr);
+        array_table_.push_back(
+            ValueType{LJFAttribute::DEFAULT,
+                      static_cast<ObjectPtrOrNativeValue>(ljf_undefined)});
         return index;
     }
 
@@ -258,7 +309,7 @@ public:
         // dump();
 
         for (auto &&obj : array_table_) {
-            decrement_ref_count(obj);
+            decrement_ref_count_if_object(obj);
         }
 
         for (auto &&obj : array_) {
@@ -278,7 +329,8 @@ public:
 };
 
 inline void set_object_to_table(Object *obj, const char *key, Object *value) {
-    obj->set(const_cast<char *>(key), value,
+    obj->set(const_cast<char *>(key),
+             cast_object_to_ObjectPtrOrNativeValue(value),
              AttributeTraits::or_attr(LJFAttribute::VISIBLE,
                                       LJFAttribute::C_STR_KEY));
 }
@@ -291,7 +343,8 @@ inline ObjectHolder get_object_from_hidden_table(Object *obj, const char *key) {
 
 inline void set_object_to_hidden_table(Object *obj, const char *key,
                                        Object *value) {
-    obj->set(const_cast<char *>(key), value,
+    obj->set(const_cast<char *>(key),
+             cast_object_to_ObjectPtrOrNativeValue(value),
              AttributeTraits::or_attr(LJFAttribute::HIDDEN,
                                       LJFAttribute::C_STR_KEY));
 }

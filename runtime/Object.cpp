@@ -4,7 +4,7 @@
 namespace ljf {
 
 void increment_ref_count(Object *obj) {
-    if (obj) {
+    if (obj != reinterpret_cast<Object *>(ljf_undefined)) {
         std::lock_guard lk{*obj};
         obj->ref_count_++;
     }
@@ -13,7 +13,7 @@ void increment_ref_count(Object *obj) {
 void decrement_ref_count(Object *obj) {
     // std::cerr << "decrement_ref_count() obj: " << obj << std::endl;
 
-    if (!obj) {
+    if (obj == reinterpret_cast<Object *>(ljf_undefined)) {
         return;
     }
 
