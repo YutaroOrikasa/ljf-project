@@ -53,6 +53,8 @@ public:
     Object *get_from_handle(LJFHandle handle) {
         return reinterpret_cast<Object *>(handle);
     }
+
+    llvm::Module *get_llvm_module() const { return LLVMModule_; }
 };
 
 } // namespace ljf

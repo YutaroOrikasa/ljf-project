@@ -91,8 +91,9 @@ public:
         return add({nullptr, nullptr, fn});
     }
 
-    FunctionId add_llvm(llvm::Function *fn, llvm::Module *module) {
-        return add({fn, module, nullptr});
+    FunctionId add_llvm(llvm::Function *fn, llvm::Module *module,
+                        FunctionPtr fn_ptr) {
+        return add({fn, module, fn_ptr});
     }
 
     void set_native(FunctionId id, FunctionPtr fn) {
@@ -116,10 +117,6 @@ public:
 
 namespace {
     FunctionTable function_table;
-
-    FunctionId register_llvm_function(llvm::Function *f, llvm::Module *module) {
-        return function_table.add_llvm(f, module);
-    }
 } // namespace
 
 // Roots
@@ -398,6 +395,13 @@ FunctionId ljf_register_native_function(FunctionPtr fn) {
     return function_table.add_native(fn);
 }
 
+FunctionId ljf_register_llvm_function(Context*ctx, const char *function_name, FunctionPtr fn_ptr) {
+    auto LLVMModule = ctx->get_llvm_module();
+    auto fn = LLVMModule->getFunction(function_name);
+    assert(fn && "no such llvm function");
+    return function_table.add_llvm(fn, LLVMModule, fn_ptr);
+}
+
 LJFHandle ljf_wrap_c_str(Context *, const char *str) {
     static_assert(sizeof(str) <= sizeof(uint64_t));
     ObjectHolder wrapper =
@@ -441,7 +445,7 @@ Object *ljf_load_source_code(const char *language, const char *source_path,
 
 FunctionId ljf_internal_register_llvm_function(llvm::Function *f,
                                                llvm::Module *module) {
-    return ljf::register_llvm_function(f, module);
+    return function_table.add_llvm(f, module, nullptr);
 }
 
 Object *ljf_internal_get_object_by_index(Object *obj, uint64_t index) {
