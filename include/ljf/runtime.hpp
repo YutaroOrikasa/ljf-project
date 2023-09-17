@@ -65,7 +65,7 @@ enum class LJFAttribute : uint64_t {
     // CONSTANT = 0b10 << 33
 };
 
-constexpr LJFHandle ljf_undefined = -1;
+constexpr LJFHandle ljf_undefined = 0;
 
 extern "C" {
 LJFHandle ljf_get(ljf::Context *, LJFHandle obj, LJFHandle key,
