@@ -4,6 +4,8 @@
 #include <ljf/ljf.hpp>
 #include <ljf/runtime.hpp>
 
+#include <deque>
+
 namespace llvm {
 class Function;
 } // namespace llvm
@@ -15,7 +17,7 @@ class Context {
 private:
     class TemporaryHolders {
     private:
-        std::vector<ObjectHolder> holders_;
+        std::deque<ObjectHolder> holders_;
 
     public:
         size_t add(IncrementedObjectPtrOrNativeValue &&obj) {
