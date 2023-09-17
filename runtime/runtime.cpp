@@ -361,7 +361,7 @@ LJFHandle ljf_environment_get(ljf::Context *ctx, Environment *env,
             "ljf_get_object_from_environment: not an Environment");
     }
 
-    auto key = ctx->get_from_handle(key_handle);
+    auto key = ctx->get_key_from_handle(key_handle, attr);
     for (size_t i = 0; i < maps->array_size(); i++) {
         // env object is nested.
         // maps->array_at(0) is most inner environment.
@@ -390,7 +390,7 @@ void ljf_environment_set(ljf::Context *ctx, Environment *env, LJFHandle key,
     }
 
     auto map0 = maps->array_at(0);
-    map0->set(ctx->get_from_handle(key), ctx->get_from_handle(value), attr);
+    map0->set(ctx->get_key_from_handle(key, attr), ctx->get_from_handle(value), attr);
 }
 
 FunctionId ljf_register_native_function(FunctionPtr fn) {

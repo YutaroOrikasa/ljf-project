@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AttributeTraits.hpp"
 #include "ObjectHolder.hpp"
 #include <ljf/ljf.hpp>
 #include <ljf/runtime.hpp>
@@ -52,6 +53,15 @@ public:
 
     Object *get_from_handle(LJFHandle handle) {
         return reinterpret_cast<ObjectHolder *>(handle)->get();
+    }
+
+    const void *get_key_from_handle(LJFHandle handle, LJFAttribute attr) {
+        if (AttributeTraits::mask(attr, LJFAttribute::KEY_TYPE_MASK) ==
+            LJFAttribute::C_STR_KEY) {
+            return const_cast<const void *>(reinterpret_cast<void *>(handle));
+        } else {
+            return reinterpret_cast<ObjectHolder *>(handle)->get();
+        }
     }
 
     llvm::Module *get_llvm_module() const { return LLVMModule_; }
