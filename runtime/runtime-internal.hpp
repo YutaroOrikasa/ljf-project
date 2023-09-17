@@ -24,10 +24,9 @@ private:
             return index;
         }
 
-        size_t add(Object *obj) {
-            auto index = holders_.size();
+        ObjectHolder *add(Object *obj) {
             holders_.push_back(obj);
-            return index;
+            return &holders_.back();
         }
     };
     TemporaryHolders temporary_holders_;
@@ -43,15 +42,14 @@ public:
         return static_cast<LJFHandle>(obj);
     }
 
+    // On this implementation, LJFHandle is address of local ObjectHolder in
+    // TemporaryHolders
     LJFHandle register_temporary_object(Object *obj) {
-        temporary_holders_.add(obj);
-        return reinterpret_cast<LJFHandle>(obj);
+        return reinterpret_cast<LJFHandle>(temporary_holders_.add(obj));
     }
 
-    // This function is prepared for future moving gc runtime.
-    // Now this function does nothing.
     Object *get_from_handle(LJFHandle handle) {
-        return reinterpret_cast<Object *>(handle);
+        return reinterpret_cast<ObjectHolder *>(handle)->get();
     }
 
     llvm::Module *get_llvm_module() const { return LLVMModule_; }
