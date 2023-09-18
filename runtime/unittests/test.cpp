@@ -35,9 +35,9 @@ TEST(LJFEnvironment, GetOuterValue) {
     ljf_environment_set(ctx.get(), env0, cast_to_ljf_handle("obj"),
                         obj.get_handle(*ctx), LJFAttribute::VISIBLE);
     ObjectHolder env = create_callee_environment(env0, nullptr);
-    ASSERT_EQ(obj.get_handle(*ctx),
-              ljf_environment_get(ctx.get(), env, cast_to_ljf_handle("obj"),
-                                  LJFAttribute::VISIBLE));
+    ASSERT_EQ(obj,
+              ctx->get_from_handle(ljf_environment_get(ctx.get(), env, cast_to_ljf_handle("obj"),
+                                  LJFAttribute::VISIBLE)));
     ASSERT_THROW(ljf_environment_get(ctx.get(), env,
                                      cast_to_ljf_handle("not_exist"),
                                      LJFAttribute::VISIBLE),
