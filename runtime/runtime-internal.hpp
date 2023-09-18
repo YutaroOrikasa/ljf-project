@@ -21,10 +21,9 @@ private:
         std::deque<ObjectHolder> holders_;
 
     public:
-        size_t add(IncrementedObjectPtrOrNativeValue &&obj) {
-            auto index = holders_.size();
+        ObjectHolder *add(IncrementedObjectPtrOrNativeValue &&obj) {
             holders_.push_back(std::move(obj));
-            return index;
+            return &holders_.back();
         }
 
         ObjectHolder *add(Object *obj) {
@@ -39,10 +38,13 @@ private:
 public:
     explicit Context(llvm::Module *LLVMModule, Context *caller_context)
         : LLVMModule_(LLVMModule), caller_context_(caller_context) {}
+
+    // On this implementation, LJFHandle is address of local ObjectHolder in
+    // TemporaryHolders
     LJFHandle
     register_temporary_object(IncrementedObjectPtrOrNativeValue &&obj) {
-        temporary_holders_.add(std::move(obj));
-        return static_cast<LJFHandle>(obj);
+        return reinterpret_cast<LJFHandle>(
+            temporary_holders_.add(std::move(obj)));
     }
 
     // On this implementation, LJFHandle is address of local ObjectHolder in
