@@ -376,7 +376,7 @@ LJFHandle ljf_environment_get(ljf::Context *ctx, Environment *env,
         }
     }
 
-    return ljf_undefined;
+    throw std::out_of_range("LJF environment: key not found");
 }
 
 void ljf_environment_set(ljf::Context *ctx, Environment *env, LJFHandle key,
