@@ -23,7 +23,11 @@ private:
     LJFAttribute attr_;
     const void *key_;
 
-    LJFAttribute mask_attr() const {
+    LJFAttribute mask_key_attr() const {
+        return AttributeTraits::mask(attr_, LJFAttribute::KEY_ATTR_MASK);
+    }
+
+    LJFAttribute mask_key_type_attr() const {
         return AttributeTraits::mask(attr_, LJFAttribute::KEY_TYPE_MASK);
     }
 
@@ -36,9 +40,11 @@ public:
     Key &operator=(const Key &) = default;
     Key &operator=(Key &&) = default;
 
-    bool is_c_str_key() const { return mask_attr() == LJFAttribute::C_STR_KEY; }
+    bool is_c_str_key() const {
+        return mask_key_type_attr() == LJFAttribute::C_STR_KEY;
+    }
     bool is_object_key() const {
-        return mask_attr() == LJFAttribute::OBJECT_KEY;
+        return mask_key_type_attr() == LJFAttribute::OBJECT_KEY;
     }
 
     const char *get_key_as_c_str() const {
@@ -60,7 +66,7 @@ public:
     }
 
     bool operator==(const Key &other) const {
-        return (mask_attr() == other.mask_attr()) && key_ == other.key_;
+        return (mask_key_attr() == other.mask_key_attr()) && key_ == other.key_;
     }
 };
 } // namespace ljf
@@ -119,7 +125,6 @@ private:
     size_t version_ = 0;
     std::shared_ptr<TypeObject> type_object_;
     std::unordered_map<Key, size_t> hash_table_;
-    std::unordered_map<Key, size_t> hidden_table_;
     std::vector<ValueType> array_table_;
     std::vector<ObjectPtr> array_;
     std::unordered_map<std::string, FunctionId> function_id_table_;
@@ -140,7 +145,6 @@ public:
 
         type_object_.swap(other.type_object_);
         hash_table_.swap(other.hash_table_);
-        hidden_table_.swap(other.hidden_table_);
         array_table_.swap(other.array_table_);
         array_.swap(other.array_);
         function_id_table_.swap(other.function_id_table_);
@@ -151,12 +155,10 @@ public:
 
     IncrementedObjectPtrOrNativeValue get(const void *key, LJFAttribute attr) {
         Key key_obj{attr, key};
-        auto &table =
-            AttributeTraits::is_visible(attr) ? hash_table_ : hidden_table_;
 
         {
             std::lock_guard lk{mutex_};
-            auto ret = array_table_.at(table.at(key_obj));
+            auto ret = array_table_.at(hash_table_.at(key_obj));
             //  We have to increment returned object because:
             //      returned object will released if other thread decrement
             //      refcount
@@ -169,17 +171,15 @@ public:
     void set(const void *key, ObjectPtrOrNativeValue value, LJFAttribute attr) {
 
         Key key_obj{attr, key};
-        auto &table =
-            AttributeTraits::is_visible(attr) ? hash_table_ : hidden_table_;
 
         size_t index;
         {
             std::lock_guard lk{mutex_};
-            if (!table.count(key_obj)) {
+            if (!hash_table_.count(key_obj)) {
                 index = array_table_new_index();
-                table[key_obj] = index;
+                hash_table_[key_obj] = index;
             } else {
-                index = table.at(key_obj);
+                index = hash_table_.at(key_obj);
             }
             ValueType v{attr, value};
             increment_ref_count_if_object(v);

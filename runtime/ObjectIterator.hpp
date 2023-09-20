@@ -13,6 +13,7 @@ public:
 
 class Object::TableIterator {
 private:
+    TableVisiblity visiblity_;
     size_t version_;
     ObjectHolder obj_;
     std::unordered_map<Key, size_t>::iterator map_iter_;
@@ -51,19 +52,12 @@ public:
     };
 
     explicit TableIterator(ObjectHolder obj, TableVisiblity visiblity)
-        : obj_(obj) {
+        : visiblity_(visiblity), obj_(obj) {
         std::lock_guard lk{*obj_};
         version_ = obj->version_;
-        auto &table = *[&]() {
-            if (visiblity == TableVisiblity::VISIBLE) {
-                return &obj_->hash_table_;
-            } else {
-                return &obj_->hidden_table_;
-            }
-        }();
 
-        map_iter_ = table.begin();
-        map_iter_end_ = table.end();
+        map_iter_ = obj->hash_table_.begin();
+        map_iter_end_ = obj->hash_table_.end();
     }
 
     explicit TableIterator(
