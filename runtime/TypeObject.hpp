@@ -107,7 +107,7 @@ calculate_type(Object &obj, TypeCalcData &type_calc_data) {
         auto type_object = std::make_shared<TypeObject>();
 
         for (auto iter = obj.iter_hash_table(); !iter.is_end();
-             iter = iter.next()) {
+             iter.next()) {
             if (iter.key().is_object_key()) {
                 throw "not implemented";
             }
@@ -117,7 +117,7 @@ calculate_type(Object &obj, TypeCalcData &type_calc_data) {
         }
 
         for (auto iter = obj.iter_hidden_table(); !iter.is_end();
-             iter = iter.next()) {
+             iter.next()) {
             if (iter.key().is_object_key()) {
                 throw "not implemented";
             }
