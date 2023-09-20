@@ -1,8 +1,11 @@
 #pragma once
 
+#include "AttributeTraits.hpp"
 #include "ObjectHolder.hpp"
 #include <ljf/ljf.hpp>
 #include <ljf/runtime.hpp>
+
+#include <deque>
 
 namespace llvm {
 class Function;
@@ -15,19 +18,17 @@ class Context {
 private:
     class TemporaryHolders {
     private:
-        std::vector<ObjectHolder> holders_;
+        std::deque<ObjectHolder> holders_;
 
     public:
-        size_t add(IncrementedObjectPtrOrNativeValue &&obj) {
-            auto index = holders_.size();
+        ObjectHolder *add(IncrementedObjectPtrOrNativeValue &&obj) {
             holders_.push_back(std::move(obj));
-            return index;
+            return &holders_.back();
         }
 
-        size_t add(Object *obj) {
-            auto index = holders_.size();
+        ObjectHolder *add(Object *obj) {
             holders_.push_back(obj);
-            return index;
+            return &holders_.back();
         }
     };
     TemporaryHolders temporary_holders_;
@@ -37,21 +38,32 @@ private:
 public:
     explicit Context(llvm::Module *LLVMModule, Context *caller_context)
         : LLVMModule_(LLVMModule), caller_context_(caller_context) {}
+
+    // On this implementation, LJFHandle is address of local ObjectHolder in
+    // TemporaryHolders
     LJFHandle
     register_temporary_object(IncrementedObjectPtrOrNativeValue &&obj) {
-        temporary_holders_.add(std::move(obj));
-        return static_cast<LJFHandle>(obj);
+        return reinterpret_cast<LJFHandle>(
+            temporary_holders_.add(std::move(obj)));
     }
 
+    // On this implementation, LJFHandle is address of local ObjectHolder in
+    // TemporaryHolders
     LJFHandle register_temporary_object(Object *obj) {
-        temporary_holders_.add(obj);
-        return reinterpret_cast<LJFHandle>(obj);
+        return reinterpret_cast<LJFHandle>(temporary_holders_.add(obj));
     }
 
-    // This function is prepared for future moving gc runtime.
-    // Now this function does nothing.
     Object *get_from_handle(LJFHandle handle) {
-        return reinterpret_cast<Object *>(handle);
+        return reinterpret_cast<ObjectHolder *>(handle)->get();
+    }
+
+    const void *get_key_from_handle(LJFHandle handle, LJFAttribute attr) {
+        if (AttributeTraits::mask(attr, LJFAttribute::KEY_TYPE_MASK) ==
+            LJFAttribute::C_STR_KEY) {
+            return const_cast<const void *>(reinterpret_cast<void *>(handle));
+        } else {
+            return reinterpret_cast<ObjectHolder *>(handle)->get();
+        }
     }
 
     llvm::Module *get_llvm_module() const { return LLVMModule_; }

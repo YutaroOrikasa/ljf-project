@@ -2,6 +2,7 @@
 
 #include "ljf/runtime.hpp"
 #include "object-fwd.hpp"
+#include <cassert>
 
 namespace ljf {
 
@@ -17,6 +18,7 @@ public:
 
     /*implicit*/ ObjectHolder(IncrementedObjectPtrOrNativeValue &&o) noexcept
         : obj_(reinterpret_cast<Object *>(static_cast<uint64_t>(o))) {
+        assert(static_cast<uint64_t>(o));
         o = IncrementedObjectPtrOrNativeValue::NULL_PTR;
     }
 

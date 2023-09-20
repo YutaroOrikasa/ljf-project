@@ -14,7 +14,7 @@ ObjectWrapper ObjectWrapper::get_impl(const char *key,
 void ObjectWrapper::set_impl(const char *key, const ObjectWrapper &value,
                              LJFAttribute visiblity) const {
     holder_.get()->set(
-        const_cast<char *>(key), value.holder_.get(),
+        const_cast<char *>(key), cast_object_to_ObjectPtrOrNativeValue(value.holder_.get()),
         AttributeTraits::or_attr(LJFAttribute::C_STR_KEY, visiblity));
 }
 

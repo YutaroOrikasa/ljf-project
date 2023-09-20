@@ -70,7 +70,7 @@ public:
         check();
 
         auto &key = map_iter_->first;
-        Object *value = obj_->array_table_.at(map_iter_->second);
+        Object *value = obj_->array_table_.at(map_iter_->second).as_object();
         return KeyValue{key, value};
     }
 

@@ -361,7 +361,7 @@ LJFHandle ljf_environment_get(ljf::Context *ctx, Environment *env,
             "ljf_get_object_from_environment: not an Environment");
     }
 
-    auto key = ctx->get_from_handle(key_handle);
+    auto key = ctx->get_key_from_handle(key_handle, attr);
     for (size_t i = 0; i < maps->array_size(); i++) {
         // env object is nested.
         // maps->array_at(0) is most inner environment.
@@ -376,7 +376,7 @@ LJFHandle ljf_environment_get(ljf::Context *ctx, Environment *env,
         }
     }
 
-    return ljf_undefined;
+    throw std::out_of_range("LJF environment: key not found");
 }
 
 void ljf_environment_set(ljf::Context *ctx, Environment *env, LJFHandle key,
@@ -390,7 +390,7 @@ void ljf_environment_set(ljf::Context *ctx, Environment *env, LJFHandle key,
     }
 
     auto map0 = maps->array_at(0);
-    map0->set(ctx->get_from_handle(key), ctx->get_from_handle(value), attr);
+    map0->set(ctx->get_key_from_handle(key, attr), ctx->get_from_handle(value), attr);
 }
 
 FunctionId ljf_register_native_function(FunctionPtr fn) {
@@ -454,14 +454,15 @@ FunctionId ljf_internal_register_llvm_function(llvm::Function *f,
     return function_table.add_llvm(f, module, nullptr);
 }
 
-Object *ljf_internal_get_object_by_index(Object *obj, uint64_t index) {
-    return obj->array_table_get_index(index);
-}
+// disable unsafe api
+// Object *ljf_internal_get_object_by_index(Object *obj, uint64_t index) {
+//     return obj->array_table_get_index(index);
+// }
 
-void ljf_internal_set_object_by_index(Object *obj, uint64_t index,
-                                      Object *value) {
-    obj->array_table_set_index(index, value);
-}
+// void ljf_internal_set_object_by_index(Object *obj, uint64_t index,
+//                                       Object *value) {
+//     obj->array_table_set_index(index, value);
+// }
 
 void ljf_internal_reserve_object_array_table_size(Object *obj, uint64_t size) {
     obj->array_table_reserve(size);
