@@ -15,8 +15,6 @@ private:
     bool circular_reference_ = false;
     std::unordered_map<std::string, std::shared_ptr<TypeObject>>
         hash_table_types_;
-    std::unordered_map<std::string, std::shared_ptr<TypeObject>>
-        hidden_table_types_;
     std::vector<std::shared_ptr<TypeObject>> array_types_;
 
 private:
@@ -40,7 +38,6 @@ public:
     bool operator==(const TypeObject &other) const {
         return (circular_reference_ == other.circular_reference_) &&
                (hash_table_types_ == other.hash_table_types_) &&
-               (hidden_table_types_ == other.hidden_table_types_) &&
                (array_types_ == other.array_types_);
     };
 
@@ -54,11 +51,6 @@ public:
         size_t hash = 0;
 
         for (auto &&[k, v] : hash_table_types_) {
-            hash ^= std::hash<std::string>()(k);
-            hash ^= v->hash();
-        }
-
-        for (auto &&[k, v] : hidden_table_types_) {
             hash ^= std::hash<std::string>()(k);
             hash ^= v->hash();
         }
