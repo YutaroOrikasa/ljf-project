@@ -7,14 +7,14 @@ namespace ljf {
 ObjectWrapper ObjectWrapper::get_impl(const char *key,
                                       LJFAttribute visiblity) const {
     return ObjectHolder(holder_.get()->get(
-        const_cast<char *>(key),
+        key,
         AttributeTraits::or_attr(LJFAttribute::C_STR_KEY, visiblity)));
 }
 
 void ObjectWrapper::set_impl(const char *key, const ObjectWrapper &value,
                              LJFAttribute visiblity) const {
     holder_.get()->set(
-        const_cast<char *>(key), cast_object_to_ObjectPtrOrNativeValue(value.holder_.get()),
+        key, cast_object_to_ObjectPtrOrNativeValue(value.holder_.get()),
         AttributeTraits::or_attr(LJFAttribute::C_STR_KEY, visiblity));
 }
 
