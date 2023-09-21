@@ -16,8 +16,8 @@ TEST(ObjectIterator, HashTable) {
     auto iter = obj->iter_hash_table();
     EXPECT_EQ(iter.get().key.get_key_as_c_str(), "elem");
     EXPECT_EQ(iter.get().value, elem);
-    auto iter_next = iter.next();
-    ASSERT_TRUE(iter_next.is_end());
+    iter.next();
+    ASSERT_TRUE(iter.is_end());
 }
 
 TEST(ObjectIterator, BrokenIter) {
