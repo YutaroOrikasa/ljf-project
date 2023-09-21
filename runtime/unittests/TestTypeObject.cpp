@@ -5,17 +5,28 @@ using namespace ljf::internal;
 
 // FRIEND_TEST (private member access test) need defining test in namespace
 namespace ljf {
-TEST(calculate_type, Test) {
-    auto create_obj = []() {
-        ObjectHolder obj = make_new_held_object();
-        ObjectHolder a1 = make_new_held_object();
-        ObjectHolder a2 = make_new_held_object();
-        ObjectHolder b = make_new_held_object();
-        set_object_to_table(obj.get(), "a1", a1.get());
-        set_object_to_table(obj.get(), "a2", a2.get());
-        set_object_to_table(a1.get(), "b", b.get());
-        return obj;
-    };
+
+constexpr auto create_obj = []() {
+    ObjectHolder obj = make_new_held_object();
+    ObjectHolder a1 = make_new_held_object();
+    ObjectHolder a2 = make_new_held_object();
+    ObjectHolder b = make_new_held_object();
+    set_object_to_table(obj.get(), "a1", a1.get());
+    set_object_to_table(obj.get(), "a2", a2.get());
+    set_object_to_table(a1.get(), "b", b.get());
+    return obj;
+};
+
+// TEST(calculate_type, Test) {
+
+//     auto obj1 = create_obj();
+
+//     obj1->calculate_type();
+
+//     EXPECT_EQ(*obj1->calculate_type(), );
+// }
+
+TEST(calculate_type, TestEquivalence) {
 
     auto obj1 = create_obj();
     auto obj2 = create_obj();

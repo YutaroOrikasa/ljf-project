@@ -66,31 +66,75 @@ public:
         map_iter_end_ = table.end();
     }
 
-    KeyValue get() const {
+    explicit TableIterator(
+        ObjectHolder obj,
+        std::unordered_map<Key, size_t>::iterator map_iter_end,
+        TableVisiblity visiblity)
+        : obj_(obj), map_iter_(map_iter_end), map_iter_end_(map_iter_end) {
+        std::lock_guard lk{*obj_};
+        version_ = obj->version_;
+
+    }
+
+    /// @brief return current pointing KeyValue and go next
+    /// This function has same semantics as *(iter++)
+    /// @return current pointing KeyValue
+    KeyValue next() {
         std::lock_guard lk{*obj_};
         check();
 
         auto &key = map_iter_->first;
         Object *value = obj_->array_table_.at(map_iter_->second).as_object();
+
+        ++map_iter_;
         return KeyValue{key, value};
     }
 
-    void next() {
-        std::lock_guard lk{*obj_};
-        check();
+    TableIterator operator++() {
         ++map_iter_;
+        return *this;
     }
 
-    Key key() const { return get().key; }
+    KeyValue operator*() {
+        std::lock_guard lk{*obj_};
+        check();
 
-    ObjectHolder value() const { return get().value; }
+        auto &key = map_iter_->first;
+        Object *value = obj_->array_table_.at(map_iter_->second).as_object();
+
+        return KeyValue{key, value};
+    }
+
+    bool operator==(const TableIterator &other) const {
+        // Do not check (version_ == other.version_)
+        // because iter == end will never true if version is changed.
+        return map_iter_ == other.map_iter_;
+    }
+
+    bool operator!=(const TableIterator &other) const {
+        return !(*this == other);
+    }
+
     bool is_end() const { return map_iter_ == map_iter_end_; }
 
     explicit operator bool() const { return !is_end(); }
 };
 
-inline Object::TableIterator Object::iter_hash_table() {
-    return Object::TableIterator(this, TableVisiblity::VISIBLE);
+class Object::TableRange {
+private:
+    TableIterator begin_;
+    TableIterator end_;
+
+public:
+    TableRange(TableIterator begin, TableIterator end)
+        : begin_(begin), end_(end) {}
+    TableIterator begin() { return begin_; }
+    TableIterator end() { return end_; }
+};
+
+inline Object::TableRange Object::iter_hash_table() {
+    return TableRange(TableIterator(this, TableVisiblity::VISIBLE),
+                      TableIterator(this, this->hash_table_.end(), TableVisiblity::VISIBLE));
 }
 
 inline Object::TableIterator Object::iter_hidden_table() {

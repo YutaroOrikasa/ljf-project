@@ -1,6 +1,6 @@
+#include "../ObjectHolder.hpp"
 #include "../ObjectIterator.hpp"
 #include "gtest/gtest.h"
-#include "../ObjectHolder.hpp"
 
 using namespace ljf;
 using namespace ljf::internal;
@@ -13,11 +13,33 @@ TEST(ObjectIterator, HashTable) {
     ObjectHolder elem = make_new_held_object();
     set_object_to_table(obj.get(), "elem", elem.get());
 
-    auto iter = obj->iter_hash_table();
-    EXPECT_EQ(iter.get().key.get_key_as_c_str(), "elem");
-    EXPECT_EQ(iter.get().value, elem);
-    iter.next();
-    ASSERT_TRUE(iter.is_end());
+    auto range = obj->iter_hash_table();
+    auto iter = range.begin();
+    auto end = range.end();
+    auto kv = *iter;
+    ASSERT_TRUE(iter != end);
+    EXPECT_EQ(kv.key.get_key_as_c_str(), "elem");
+    EXPECT_EQ(kv.value, elem);
+    ++iter;
+    ASSERT_TRUE(iter == end);
+}
+
+TEST(ObjectIterator, TestRange) {
+    ObjectHolder obj = make_new_held_object();
+    ObjectHolder elem = make_new_held_object();
+    set_object_to_table(obj.get(), "elem", elem.get());
+
+    auto range = obj->iter_hash_table();
+    auto iter = range.begin();
+    auto end = range.end();
+    auto kv = *iter;
+    EXPECT_EQ(kv.key.get_key_as_c_str(), "elem");
+    EXPECT_EQ(kv.value, elem);
+
+    ASSERT_FALSE(iter == end);
+    ASSERT_TRUE(iter != end);
+    ++iter;
+    ASSERT_TRUE(iter == end);
 }
 
 TEST(ObjectIterator, BrokenIter) {
@@ -25,13 +47,13 @@ TEST(ObjectIterator, BrokenIter) {
     ObjectHolder elem = make_new_held_object();
     set_object_to_table(obj.get(), "elem", elem.get());
 
-    auto iter = obj->iter_hash_table();
-    EXPECT_NO_THROW(iter.get());
-    EXPECT_NO_THROW(iter.next());
+    auto range = obj->iter_hash_table();
+    auto iter = range.begin();
+    EXPECT_NO_THROW(*iter);
 
-    auto iter2 = obj->iter_hash_table();
+    auto range2 = obj->iter_hash_table();
+    auto iter2 = range.begin();
     set_object_to_table(obj.get(), "elem2", elem.get());
 
-    EXPECT_THROW(iter2.get(), BrokenIteratorError);
-    EXPECT_THROW(iter2.next(), BrokenIteratorError);
+    ASSERT_THROW(*iter2, BrokenIteratorError);
 }

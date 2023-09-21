@@ -318,9 +318,11 @@ public:
     }
 
     class TableIterator;
-    TableIterator iter_hash_table();
+    // TableIterator iter_hash_table();
     TableIterator iter_hidden_table();
 
+    class TableRange;
+    TableRange iter_hash_table();
     class ArrayIterator;
     ArrayIterator iter_array();
 

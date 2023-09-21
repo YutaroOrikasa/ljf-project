@@ -106,23 +106,23 @@ calculate_type(Object &obj, TypeCalcData &type_calc_data) {
     try {
         auto type_object = std::make_shared<TypeObject>();
 
-        for (auto iter = obj.iter_hash_table(); !iter.is_end();
-             iter.next()) {
-            if (iter.key().is_object_key()) {
+        for (auto &&kv : obj.iter_hash_table()){
+            if (kv.key.is_object_key()) {
                 throw "not implemented";
             }
 
-            type_object->hash_table_types_[iter.key().get_key_as_c_str()] =
-                iter.value()->calculate_type(type_calc_data);
+            type_object->hash_table_types_[kv.key.get_key_as_c_str()] =
+                kv.value->calculate_type(type_calc_data);
         }
 
-        for (auto iter = obj.iter_hidden_table(); !iter.is_end();
-             iter.next()) {
-            if (iter.key().is_object_key()) {
+        for (auto iter = obj.iter_hidden_table(); !iter.is_end();) {
+            auto kv = iter.next();
+            if (kv.key.is_object_key()) {
                 throw "not implemented";
             }
-            type_object->hidden_table_types_[iter.key().get_key_as_c_str()] =
-                iter.value()->calculate_type(type_calc_data);
+
+            type_object->hidden_table_types_[kv.key.get_key_as_c_str()] =
+                kv.value->calculate_type(type_calc_data);
         }
 
         for (auto iter = obj.iter_array(); !iter.is_end(); iter = iter.next()) {
