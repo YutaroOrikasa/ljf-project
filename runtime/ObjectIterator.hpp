@@ -13,24 +13,11 @@ public:
 
 class Object::TableIterator {
 private:
-    TableVisiblity visiblity_;
-    size_t version_;
     ObjectHolder obj_;
+    size_t version_;
     using I = std::unordered_map<Key, size_t>::iterator;
     std::unordered_map<Key, size_t>::iterator map_iter_;
     std::unordered_map<Key, size_t>::iterator map_iter_end_;
-
-    // TODO remove this when compile ok
-    // /// Caller must hold lock of obj.
-    // explicit TableIterator(
-    //     ObjectHolder obj,
-    //     const std::unordered_map<Key, size_t>::iterator &map_iter,
-    //     const std::unordered_map<Key, size_t>::iterator &map_iter_end)
-    //     : obj_(obj) {
-    //     version_ = obj->version_;
-    //     map_iter_ = map_iter;
-    //     map_iter_end_ = map_iter_end;
-    // }
 
     /// - check object version
     /// - check iterator not ended
@@ -52,22 +39,16 @@ public:
         ObjectHolder value;
     };
 
-
-
     /// @brief Caller MUST lock obj.
     /// @param obj
     /// @param iter
-    explicit TableIterator(ObjectHolder obj, I iter, TableVisiblity visiblity)
-        : visiblity_(visiblity), obj_(obj), map_iter_(iter) {
-        version_ = obj->version_;
-
-        // hold iterators in lock
+    explicit TableIterator(ObjectHolder obj, I iter)
+        : obj_(obj), version_(obj->version_), map_iter_(iter) {
         map_iter_end_ = obj->hash_table_.end();
     }
 
-
     /// @brief return current pointing KeyValue and go next
-    /// This function has same semantics as *(iter++)
+    /// description This function has same semantics as *(iter++)
     /// @return current pointing KeyValue
     KeyValue next() {
         std::lock_guard lk{*obj_};
@@ -125,8 +106,8 @@ public:
 inline Object::TableRange Object::iter_hash_table() {
     std::lock_guard lk{*this};
     return TableRange(
-        TableIterator(this, this->hash_table_.begin(), TableVisiblity::VISIBLE),
-        TableIterator(this, this->hash_table_.end(), TableVisiblity::VISIBLE));
+        TableIterator(this, this->hash_table_.begin()),
+        TableIterator(this, this->hash_table_.end()));
 }
 
 class Object::ArrayIterator {
