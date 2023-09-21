@@ -115,15 +115,6 @@ calculate_type(Object &obj, TypeCalcData &type_calc_data) {
                 kv.value->calculate_type(type_calc_data);
         }
 
-        for (auto iter = obj.iter_hidden_table(); !iter.is_end();) {
-            auto kv = iter.next();
-            if (kv.key.is_object_key()) {
-                throw "not implemented";
-            }
-
-            type_object->hidden_table_types_[kv.key.get_key_as_c_str()] =
-                kv.value->calculate_type(type_calc_data);
-        }
 
         for (auto iter = obj.iter_array(); !iter.is_end(); iter = iter.next()) {
             type_object->array_types_.push_back(

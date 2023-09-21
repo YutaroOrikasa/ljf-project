@@ -131,9 +131,6 @@ inline Object::TableRange Object::iter_hash_table() {
                       TableIterator(this, this->hash_table_.end(), TableVisiblity::VISIBLE));
 }
 
-inline Object::TableIterator Object::iter_hidden_table() {
-    return Object::TableIterator(this, TableVisiblity::HIDDEN);
-}
 
 class Object::ArrayIterator {
 private:
