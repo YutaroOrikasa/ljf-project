@@ -16,6 +16,7 @@ private:
     TableVisiblity visiblity_;
     size_t version_;
     ObjectHolder obj_;
+    using I = std::unordered_map<Key, size_t>::iterator;
     std::unordered_map<Key, size_t>::iterator map_iter_;
     std::unordered_map<Key, size_t>::iterator map_iter_end_;
 
@@ -51,24 +52,19 @@ public:
         ObjectHolder value;
     };
 
-    explicit TableIterator(ObjectHolder obj, TableVisiblity visiblity)
-        : visiblity_(visiblity), obj_(obj) {
-        std::lock_guard lk{*obj_};
+
+
+    /// @brief Caller MUST lock obj.
+    /// @param obj
+    /// @param iter
+    explicit TableIterator(ObjectHolder obj, I iter, TableVisiblity visiblity)
+        : visiblity_(visiblity), obj_(obj), map_iter_(iter) {
         version_ = obj->version_;
 
-        map_iter_ = obj->hash_table_.begin();
+        // hold iterators in lock
         map_iter_end_ = obj->hash_table_.end();
     }
 
-    explicit TableIterator(
-        ObjectHolder obj,
-        std::unordered_map<Key, size_t>::iterator map_iter_end,
-        TableVisiblity visiblity)
-        : obj_(obj), map_iter_(map_iter_end), map_iter_end_(map_iter_end) {
-        std::lock_guard lk{*obj_};
-        version_ = obj->version_;
-
-    }
 
     /// @brief return current pointing KeyValue and go next
     /// This function has same semantics as *(iter++)
@@ -127,10 +123,11 @@ public:
 };
 
 inline Object::TableRange Object::iter_hash_table() {
-    return TableRange(TableIterator(this, TableVisiblity::VISIBLE),
-                      TableIterator(this, this->hash_table_.end(), TableVisiblity::VISIBLE));
+    std::lock_guard lk{*this};
+    return TableRange(
+        TableIterator(this, this->hash_table_.begin(), TableVisiblity::VISIBLE),
+        TableIterator(this, this->hash_table_.end(), TableVisiblity::VISIBLE));
 }
-
 
 class Object::ArrayIterator {
 private:
