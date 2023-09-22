@@ -236,6 +236,7 @@ LJFHandle ljf_get(ljf::Context *ctx, LJFHandle obj, LJFHandle key,
 
 void ljf_set(Context *ctx, LJFHandle obj, LJFHandle key_handle_or_cstr,
              LJFHandle value, LJFAttribute attr) {
+    assert(AttributeTraits::mask(attr, LJF_ATTR_DATA_TYPE_MASK) == LJF_ATTR_BOXED_OBJECT);
     auto key = [&]() -> void * {
         if (AttributeTraits::mask(attr, LJF_ATTR_KEY_TYPE_MASK) ==
             LJF_ATTR_C_STR_KEY) {
@@ -489,7 +490,7 @@ int ljf_internal_start_entry_point(ljf_main_t ljf_main,
         }
         auto arg = ljf_new(ctx);
         auto attr = AttributeTraits::or_attr(
-            LJF_ATTR_MUTABLE, LJF_ATTR_OBJECT, LJF_ATTR_VISIBLE,
+            LJF_ATTR_MUTABLE, LJF_ATTR_BOXED_OBJECT, LJF_ATTR_VISIBLE,
             LJF_ATTR_C_STR_KEY);
         ljf_set(ctx, arg, cast_to_ljf_handle("args"), args, attr);
         ObjectHolder env_holder =

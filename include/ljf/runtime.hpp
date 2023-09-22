@@ -58,9 +58,11 @@ constexpr LJFAttribute LJF_ATTR_OBJECT_KEY = 1 << 3;
 constexpr LJFAttribute LJF_ATTR_VALUE_ATTR_MASK = (unsigned long)(UINT32_MAX)
                                                   << 32;
 // data type, bit 32
+// Unboxed object is made by JIT/AOT compiler (future plan)
 constexpr LJFAttribute LJF_ATTR_DATA_TYPE_MASK = 1ul << 32;
-constexpr LJFAttribute LJF_ATTR_OBJECT = 0ul << 32;
-constexpr LJFAttribute LJF_ATTR_NATIVE = 1ul << 32;
+constexpr LJFAttribute LJF_ATTR_BOXED_OBJECT = 0ul << 32;
+constexpr LJFAttribute LJF_ATTR_UNBOXED_OBJECT = 1ul << 32;
+
 //
 // constant type, bit 33, 34
 constexpr LJFAttribute LJF_ATTR_MUTABLE = 0ul << 33;

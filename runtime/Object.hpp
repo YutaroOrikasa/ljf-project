@@ -110,7 +110,7 @@ public:
 
         bool is_object() const {
             return AttributeTraits::mask(attr_, LJF_ATTR_DATA_TYPE_MASK) ==
-                   LJF_ATTR_OBJECT;
+                   LJF_ATTR_BOXED_OBJECT;
         }
 
         Object *as_object() const {
