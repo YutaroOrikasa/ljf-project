@@ -14,6 +14,7 @@
 #include "AttributeTraits.hpp"
 #include "ObjectHolder.hpp"
 #include "ljf/internal/object-fwd.hpp"
+#include "runtime-internal.hpp"
 
 namespace ljf {
 class Object;
@@ -95,7 +96,10 @@ public:
     public:
         ValueType()
             : ValueType(LJFAttribute::DEFAULT,
-                        static_cast<ObjectPtrOrNativeValue>(ljf_undefined)) {}
+                        cast_object_to_ObjectPtrOrNativeValue(
+                            // ljf_internal_nullptr means uninitialized in this context
+                            // eg, sparse array.
+                            internal::ljf_internal_nullptr)) {}
 
         ValueType(LJFAttribute attr, ObjectPtrOrNativeValue value)
             : attr_(AttributeTraits::mask(attr, LJFAttribute::VALUE_ATTR_MASK)),
@@ -229,9 +233,10 @@ public:
 
     uint64_t array_table_new_index() {
         uint64_t index = array_table_.size();
-        array_table_.push_back(
-            ValueType{LJFAttribute::DEFAULT,
-                      static_cast<ObjectPtrOrNativeValue>(ljf_undefined)});
+        array_table_.push_back(ValueType{LJFAttribute::DEFAULT,
+                                         // ljf_internal_nullptr means variable will be initialized in future.
+                                         cast_object_to_ObjectPtrOrNativeValue(
+                                             internal::ljf_internal_nullptr)});
         return index;
     }
 

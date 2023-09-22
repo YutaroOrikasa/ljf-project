@@ -156,7 +156,7 @@ ObjectHolder create_environment_with_argument(Context *ctx, LJFHandle arg_h) {
 
     auto env_maps = ctx->get_from_handle(ljf_new(ctx));
     set_object_to_hidden_table(env, "ljf.env.maps", env_maps);
-    if (arg_h != ljf_undefined) {
+    if (arg_h != ljf_internal_null_handle) {
         auto arg = ctx->get_from_handle(arg_h);
         auto local_env = ctx->get_from_handle(ljf_new(ctx));
         local_env->swap(*arg);
@@ -175,7 +175,7 @@ ObjectHolder create_environment(Context *ctx,
         auto arg = ljf_new(ctx);
         return create_environment_with_argument(ctx, arg);
     } else {
-        return create_environment_with_argument(ctx, ljf_undefined);
+        return create_environment_with_argument(ctx, ljf_internal_null_handle);
     }
 }
 

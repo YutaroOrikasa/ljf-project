@@ -84,6 +84,10 @@ namespace ljf::internal {
 /// an invalid address.
 constexpr Object *ljf_internal_nullptr = nullptr;
 
+/// @details Externally we don't allow to appear null or undefined.
+/// This is allowed to use internally only.
+constexpr LJFHandle ljf_internal_null_handle = 0;
+
 inline std::unique_ptr<Context> make_temporary_context() {
     return std::make_unique<Context>(nullptr, nullptr);
 }
