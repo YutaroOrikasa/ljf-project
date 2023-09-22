@@ -46,18 +46,18 @@ public:
                           LJFAttribute attr) const;
 
     ObjectWrapper get(const char *key) const {
-        return get_impl(key, LJFAttribute::VISIBLE);
+        return get_impl(key, LJF_ATTR_VISIBLE);
     }
 
     ObjectWrapper get_hidden(const char *key) const {
-        return get_impl(key, LJFAttribute::HIDDEN);
+        return get_impl(key, LJF_ATTR_HIDDEN);
     }
 
     void set(const char *key, const ObjectWrapper &value) const {
-        set_impl(key, value, LJFAttribute::VISIBLE);
+        set_impl(key, value, LJF_ATTR_VISIBLE);
     }
     void set_hidden(const char *key, const ObjectWrapper &value) const {
-        set_impl(key, value, LJFAttribute::HIDDEN);
+        set_impl(key, value, LJF_ATTR_HIDDEN);
     }
 };
 

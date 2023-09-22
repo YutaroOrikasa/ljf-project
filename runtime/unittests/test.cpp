@@ -33,11 +33,11 @@ TEST(LJFEnvironment, GetOuterValue) {
     ObjectHolder obj = make_new_held_object();
     ObjectHolder env0 = create_environment(ctx.get());
     ljf_environment_set(ctx.get(), env0, cast_to_ljf_handle("obj"),
-                        obj.get_handle(*ctx), LJFAttribute::VISIBLE);
+                        obj.get_handle(*ctx), LJF_ATTR_VISIBLE);
     ObjectHolder env = create_callee_environment(env0, nullptr);
     ASSERT_EQ(obj,
               ctx->get_from_handle(ljf_environment_get(ctx.get(), env, cast_to_ljf_handle("obj"),
-                                  LJFAttribute::VISIBLE)));
+                                  LJF_ATTR_VISIBLE)));
 }
 
 TEST(LJFEnvironment, GetNotExistValue) {
@@ -48,6 +48,6 @@ TEST(LJFEnvironment, GetNotExistValue) {
 
     ASSERT_THROW(ljf_environment_get(ctx.get(), env,
                                      cast_to_ljf_handle("not_exist"),
-                                     LJFAttribute::VISIBLE),
+                                     LJF_ATTR_VISIBLE),
                  std::out_of_range);
 }

@@ -8,14 +8,14 @@ ObjectWrapper ObjectWrapper::get_impl(const char *key,
                                       LJFAttribute visiblity) const {
     return ObjectHolder(holder_.get()->get(
         key,
-        AttributeTraits::or_attr(LJFAttribute::C_STR_KEY, visiblity)));
+        AttributeTraits::or_attr(LJF_ATTR_C_STR_KEY, visiblity)));
 }
 
 void ObjectWrapper::set_impl(const char *key, const ObjectWrapper &value,
                              LJFAttribute visiblity) const {
     holder_.get()->set(
         key, cast_object_to_ObjectPtrOrNativeValue(value.holder_.get()),
-        AttributeTraits::or_attr(LJFAttribute::C_STR_KEY, visiblity));
+        AttributeTraits::or_attr(LJF_ATTR_C_STR_KEY, visiblity));
 }
 
 uint64_t ObjectWrapper::get_native_value(const char *key,

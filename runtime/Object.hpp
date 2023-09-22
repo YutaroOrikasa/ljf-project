@@ -25,11 +25,11 @@ private:
     const void *key_;
 
     LJFAttribute mask_key_attr() const {
-        return AttributeTraits::mask(attr_, LJFAttribute::KEY_ATTR_MASK);
+        return AttributeTraits::mask(attr_, LJF_ATTR_KEY_ATTR_MASK);
     }
 
     LJFAttribute mask_key_type_attr() const {
-        return AttributeTraits::mask(attr_, LJFAttribute::KEY_TYPE_MASK);
+        return AttributeTraits::mask(attr_, LJF_ATTR_KEY_TYPE_MASK);
     }
 
 public:
@@ -42,10 +42,10 @@ public:
     Key &operator=(Key &&) = default;
 
     bool is_c_str_key() const {
-        return mask_key_type_attr() == LJFAttribute::C_STR_KEY;
+        return mask_key_type_attr() == LJF_ATTR_C_STR_KEY;
     }
     bool is_object_key() const {
-        return mask_key_type_attr() == LJFAttribute::OBJECT_KEY;
+        return mask_key_type_attr() == LJF_ATTR_OBJECT_KEY;
     }
 
     const char *get_key_as_c_str() const {
@@ -95,22 +95,22 @@ public:
 
     public:
         ValueType()
-            : ValueType(LJFAttribute::DEFAULT,
+            : ValueType(LJF_ATTR_DEFAULT,
                         cast_object_to_ObjectPtrOrNativeValue(
                             // ljf_internal_nullptr means uninitialized in this context
                             // eg, sparse array.
                             internal::ljf_internal_nullptr)) {}
 
         ValueType(LJFAttribute attr, ObjectPtrOrNativeValue value)
-            : attr_(AttributeTraits::mask(attr, LJFAttribute::VALUE_ATTR_MASK)),
+            : attr_(AttributeTraits::mask(attr, LJF_ATTR_VALUE_ATTR_MASK)),
               value_(value) {}
 
         LJFAttribute value_attr() const { return attr_; }
         ObjectPtrOrNativeValue object_ptr_or_native() const { return value_; }
 
         bool is_object() const {
-            return AttributeTraits::mask(attr_, LJFAttribute::DATA_TYPE_MASK) ==
-                   LJFAttribute::OBJECT;
+            return AttributeTraits::mask(attr_, LJF_ATTR_DATA_TYPE_MASK) ==
+                   LJF_ATTR_OBJECT;
         }
 
         Object *as_object() const {
@@ -233,7 +233,7 @@ public:
 
     uint64_t array_table_new_index() {
         uint64_t index = array_table_.size();
-        array_table_.push_back(ValueType{LJFAttribute::DEFAULT,
+        array_table_.push_back(ValueType{LJF_ATTR_DEFAULT,
                                          // ljf_internal_nullptr means variable will be initialized in future.
                                          cast_object_to_ObjectPtrOrNativeValue(
                                              internal::ljf_internal_nullptr)});
@@ -336,22 +336,22 @@ public:
 inline void set_object_to_table(Object *obj, const char *key, Object *value) {
     obj->set(const_cast<char *>(key),
              cast_object_to_ObjectPtrOrNativeValue(value),
-             AttributeTraits::or_attr(LJFAttribute::VISIBLE,
-                                      LJFAttribute::C_STR_KEY));
+             AttributeTraits::or_attr(LJF_ATTR_VISIBLE,
+                                      LJF_ATTR_C_STR_KEY));
 }
 
 inline ObjectHolder get_object_from_hidden_table(Object *obj, const char *key) {
     return obj->get(const_cast<char *>(key),
-                    AttributeTraits::or_attr(LJFAttribute::HIDDEN,
-                                             LJFAttribute::C_STR_KEY));
+                    AttributeTraits::or_attr(LJF_ATTR_HIDDEN,
+                                             LJF_ATTR_C_STR_KEY));
 }
 
 inline void set_object_to_hidden_table(Object *obj, const char *key,
                                        Object *value) {
     obj->set(const_cast<char *>(key),
              cast_object_to_ObjectPtrOrNativeValue(value),
-             AttributeTraits::or_attr(LJFAttribute::HIDDEN,
-                                      LJFAttribute::C_STR_KEY));
+             AttributeTraits::or_attr(LJF_ATTR_HIDDEN,
+                                      LJF_ATTR_C_STR_KEY));
 }
 void increment_ref_count(Object *obj);
 void decrement_ref_count(Object *obj);

@@ -58,8 +58,8 @@ public:
     }
 
     const void *get_key_from_handle(LJFHandle handle, LJFAttribute attr) {
-        if (AttributeTraits::mask(attr, LJFAttribute::KEY_TYPE_MASK) ==
-            LJFAttribute::C_STR_KEY) {
+        if (AttributeTraits::mask(attr, LJF_ATTR_KEY_TYPE_MASK) ==
+            LJF_ATTR_C_STR_KEY) {
             return const_cast<const void *>(reinterpret_cast<void *>(handle));
         } else {
             return reinterpret_cast<ObjectHolder *>(handle)->get();

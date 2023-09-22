@@ -39,32 +39,34 @@ template <typename T> LJFHandle cast_to_ljf_handle(T value) {
 template <typename Out> Out &operator<<(Out &out, const Object &);
 } // namespace ljf
 
-enum class LJFAttribute : uint64_t {
-    KEY_ATTR_MASK = UINT32_MAX,
-    DEFAULT = 0,
-    // visiblity, bit 0
-    VISIBLE = 0 << 0,
-    HIDDEN = 1 << 0,
-    //
-    // key type, bit 3, 4
-    KEY_TYPE_MASK = 0b11 << 3,
-    C_STR_KEY = 0 << 3,
-    OBJECT_KEY = 1 << 3,
-    //
-    //
-    VALUE_ATTR_MASK = (unsigned long)(UINT32_MAX) << 32,
-    // data type, bit 32
-    DATA_TYPE_MASK = 1ul << 32,
-    OBJECT = 0ul << 32,
-    NATIVE = 1ul << 32,
-    //
-    // constant type, bit 33, 34
-    MUTABLE = 0ul << 33,
-    MAYBE_CONSTANT = 1ul << 33,
-    // reserved for future:
-    // CONSTANT = 0b10 << 33
-};
+// LJFAttribute is defined as const integer, not enum
+// because bitwise operation is not allowed with enum in c++.
+using LJFAttribute = uint64_t;
 
+constexpr LJFAttribute LJF_ATTR_KEY_ATTR_MASK = UINT32_MAX;
+constexpr LJFAttribute LJF_ATTR_DEFAULT = 0;
+// visiblity, bit 0
+constexpr LJFAttribute LJF_ATTR_VISIBLE = 0 << 0;
+constexpr LJFAttribute LJF_ATTR_HIDDEN = 1 << 0;
+//
+// key type, bit 3, 4
+constexpr LJFAttribute LJF_ATTR_KEY_TYPE_MASK = 0b11 << 3;
+constexpr LJFAttribute LJF_ATTR_C_STR_KEY = 0 << 3;
+constexpr LJFAttribute LJF_ATTR_OBJECT_KEY = 1 << 3;
+//
+//
+constexpr LJFAttribute LJF_ATTR_VALUE_ATTR_MASK = (unsigned long)(UINT32_MAX)
+                                                  << 32;
+// data type, bit 32
+constexpr LJFAttribute LJF_ATTR_DATA_TYPE_MASK = 1ul << 32;
+constexpr LJFAttribute LJF_ATTR_OBJECT = 0ul << 32;
+constexpr LJFAttribute LJF_ATTR_NATIVE = 1ul << 32;
+//
+// constant type, bit 33, 34
+constexpr LJFAttribute LJF_ATTR_MUTABLE = 0ul << 33;
+constexpr LJFAttribute LJF_ATTR_MAYBE_CONSTANT = 1ul << 33;
+// reserved for future:
+// CONSTANT = 0b10 << 33
 
 extern "C" {
 LJFHandle ljf_get(ljf::Context *, LJFHandle obj, LJFHandle key,

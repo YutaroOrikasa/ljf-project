@@ -13,7 +13,7 @@ constexpr auto ljf_c_str_length = "ljf.c_str_length";
 inline LJFHandle get_ljf_native_system_property(const ObjectWrapper &obj,
                                                 const char *key) {
 
-    return obj.get_native_value(key, LJFAttribute::VISIBLE /* LJF_ATTR_C_STR_KEY | LJF_ATTR_HIDDEN |
+    return obj.get_native_value(key, LJF_ATTR_VISIBLE /* LJF_ATTR_C_STR_KEY | LJF_ATTR_HIDDEN |
                                    LJF_ATTR_NATIVE */);
 }
 
@@ -21,7 +21,7 @@ inline void set_ljf_native_system_property(const ObjectWrapper &obj,
                                            const char *key, LJFHandle handle) {
 
     obj.set_native_value(
-        key, handle, LJFAttribute::HIDDEN
+        key, handle, LJF_ATTR_HIDDEN
         /* LJF_ATTR_C_STR_KEY | LJF_ATTR_HIDDEN | LJF_ATTR_NATIVE */);
 }
 

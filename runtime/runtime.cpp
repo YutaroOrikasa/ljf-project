@@ -222,8 +222,8 @@ LJFHandle ljf_get(ljf::Context *ctx, LJFHandle obj, LJFHandle key,
                   LJFAttribute attr) {
 
     auto key_ptr = [&]() -> const void * {
-        if (AttributeTraits::mask(attr, LJFAttribute::KEY_TYPE_MASK) ==
-            LJFAttribute::C_STR_KEY) {
+        if (AttributeTraits::mask(attr, LJF_ATTR_KEY_TYPE_MASK) ==
+            LJF_ATTR_C_STR_KEY) {
             return reinterpret_cast<const void *>(key);
         } else {
             // assert((attr & LJF_ATTR_KEY_TYPE_MASK) == C_STR_KEY)
@@ -237,8 +237,8 @@ LJFHandle ljf_get(ljf::Context *ctx, LJFHandle obj, LJFHandle key,
 void ljf_set(Context *ctx, LJFHandle obj, LJFHandle key_handle_or_cstr,
              LJFHandle value, LJFAttribute attr) {
     auto key = [&]() -> void * {
-        if (AttributeTraits::mask(attr, LJFAttribute::KEY_TYPE_MASK) ==
-            LJFAttribute::C_STR_KEY) {
+        if (AttributeTraits::mask(attr, LJF_ATTR_KEY_TYPE_MASK) ==
+            LJF_ATTR_C_STR_KEY) {
             return reinterpret_cast<void *>(key_handle_or_cstr);
         } else {
             return ctx->get_from_handle(key_handle_or_cstr);
@@ -489,8 +489,8 @@ int ljf_internal_start_entry_point(ljf_main_t ljf_main,
         }
         auto arg = ljf_new(ctx);
         auto attr = AttributeTraits::or_attr(
-            LJFAttribute::MUTABLE, LJFAttribute::OBJECT, LJFAttribute::VISIBLE,
-            LJFAttribute::C_STR_KEY);
+            LJF_ATTR_MUTABLE, LJF_ATTR_OBJECT, LJF_ATTR_VISIBLE,
+            LJF_ATTR_C_STR_KEY);
         ljf_set(ctx, arg, cast_to_ljf_handle("args"), args, attr);
         ObjectHolder env_holder =
             create_callee_environment(nullptr, ctx->get_from_handle(arg));
