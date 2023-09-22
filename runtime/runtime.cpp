@@ -335,7 +335,7 @@ LJFHandle ljf_call_function(Context *caller_ctx, FunctionId function_id,
     return caller_ctx->register_temporary_object(ret_raw);
 }
 
-LJFHandle ljf_new_with_native_data(Context *ctx, uint64_t data) {
+LJFHandle ljf_new_with_native_data(Context *ctx, native_data_t data) {
     Object *obj = new Object(data);
     allocated_memory_size += sizeof(Object);
     return ctx->register_temporary_object(obj);

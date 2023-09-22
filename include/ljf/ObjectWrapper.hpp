@@ -52,6 +52,6 @@ public:
     }
 };
 
-ObjectWrapper make_new_wrapped_object();
+ObjectWrapper make_new_wrapped_object(native_data_t data = 0);
 
 } // namespace ljf

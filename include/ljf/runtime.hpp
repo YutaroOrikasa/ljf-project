@@ -11,6 +11,7 @@ using LJFHandle = uint64_t;
 namespace ljf {
 class Object;
 class Context;
+using native_data_t = uint64_t;
 using Environment = Object;
 using FunctionId = std::size_t;
 
@@ -89,7 +90,7 @@ LJFHandle ljf_call_function(ljf::Context *, ljf::FunctionId function_id,
 /**************** new API ***************/
 LJFHandle ljf_new(ljf::Context *);
 
-LJFHandle ljf_new_with_native_data(ljf::Context *ctx, uint64_t data);
+LJFHandle ljf_new_with_native_data(ljf::Context *ctx, ljf::native_data_t data);
 
 uint64_t ljf_get_native_data(const ljf::Object *obj);
 
