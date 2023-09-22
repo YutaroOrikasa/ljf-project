@@ -75,6 +75,15 @@ public:
 
 namespace ljf::internal {
 
+/// @brief We require using ljf_internal_nullptr instead of nullptr for easily
+/// maintenance.
+/// @details Internally and externally we prohibit using nullptr as <Object *>
+/// for avoiding confusing.
+/// Semantics of ljf_internal_nullptr will be changed per context.
+/// Definition of ljf_internal_nullptr is allowed to be non nullptr such as some
+/// an invalid address.
+constexpr Object *ljf_internal_nullptr = nullptr;
+
 inline std::unique_ptr<Context> make_temporary_context() {
     return std::make_unique<Context>(nullptr, nullptr);
 }
