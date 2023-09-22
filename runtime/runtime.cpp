@@ -236,7 +236,8 @@ LJFHandle ljf_get(ljf::Context *ctx, LJFHandle obj, LJFHandle key,
 
 void ljf_set(Context *ctx, LJFHandle obj, LJFHandle key_handle_or_cstr,
              LJFHandle value, LJFAttribute attr) {
-    assert(AttributeTraits::mask(attr, LJF_ATTR_DATA_TYPE_MASK) == LJF_ATTR_BOXED_OBJECT);
+    assert(AttributeTraits::mask(attr, LJF_ATTR_DATA_TYPE_MASK) ==
+           LJF_ATTR_BOXED_OBJECT);
     auto key = [&]() -> void * {
         if (AttributeTraits::mask(attr, LJF_ATTR_KEY_TYPE_MASK) ==
             LJF_ATTR_C_STR_KEY) {
@@ -334,18 +335,13 @@ LJFHandle ljf_call_function(Context *caller_ctx, FunctionId function_id,
     return caller_ctx->register_temporary_object(ret_raw);
 }
 
-Object *ljf_new_with_native_data(uint64_t data) {
+LJFHandle ljf_new_with_native_data(Context *ctx, uint64_t data) {
     Object *obj = new Object(data);
-    allocated_memory_size += sizeof(Object);
-    thread_local_root->hold_returned_object(obj);
-    return obj;
-}
-
-LJFHandle ljf_new(Context *ctx) {
-    Object *obj = new Object();
     allocated_memory_size += sizeof(Object);
     return ctx->register_temporary_object(obj);
 }
+
+LJFHandle ljf_new(Context *ctx) { return ljf_new_with_native_data(ctx, 0); }
 
 uint64_t ljf_get_native_data(const Object *obj) {
 
@@ -367,12 +363,9 @@ LJFHandle ljf_environment_get(ljf::Context *ctx, Environment *env,
         // env object is nested.
         // maps->array_at(0) is most inner environment.
         auto obj = maps->array_at(i);
-        try
-        {
+        try {
             return ctx->register_temporary_object(obj->get(key, attr));
-        }
-        catch(const std::out_of_range& e)
-        {
+        } catch (const std::out_of_range &e) {
             continue;
         }
     }
@@ -391,14 +384,16 @@ void ljf_environment_set(ljf::Context *ctx, Environment *env, LJFHandle key,
     }
 
     auto map0 = maps->array_at(0);
-    map0->set(ctx->get_key_from_handle(key, attr), ctx->get_from_handle(value), attr);
+    map0->set(ctx->get_key_from_handle(key, attr), ctx->get_from_handle(value),
+              attr);
 }
 
 FunctionId ljf_register_native_function(FunctionPtr fn) {
     return function_table.add_native(fn);
 }
 
-FunctionId ljf_register_llvm_function(Context*ctx, const char *function_name, FunctionPtr fn_ptr) {
+FunctionId ljf_register_llvm_function(Context *ctx, const char *function_name,
+                                      FunctionPtr fn_ptr) {
     auto LLVMModule = ctx->get_llvm_module();
     auto fn = LLVMModule->getFunction(function_name);
     assert(fn && "no such llvm function");
@@ -489,9 +484,9 @@ int ljf_internal_start_entry_point(ljf_main_t ljf_main,
             ljf_array_push(ctx, args, str);
         }
         auto arg = ljf_new(ctx);
-        auto attr = AttributeTraits::or_attr(
-            LJF_ATTR_MUTABLE, LJF_ATTR_BOXED_OBJECT, LJF_ATTR_VISIBLE,
-            LJF_ATTR_C_STR_KEY);
+        auto attr =
+            AttributeTraits::or_attr(LJF_ATTR_MUTABLE, LJF_ATTR_BOXED_OBJECT,
+                                     LJF_ATTR_VISIBLE, LJF_ATTR_C_STR_KEY);
         ljf_set(ctx, arg, cast_to_ljf_handle("args"), args, attr);
         ObjectHolder env_holder =
             create_callee_environment(nullptr, ctx->get_from_handle(arg));

@@ -89,7 +89,7 @@ LJFHandle ljf_call_function(ljf::Context *, ljf::FunctionId function_id,
 /**************** new API ***************/
 LJFHandle ljf_new(ljf::Context *);
 
-ljf::Object *ljf_new_object_with_native_data(uint64_t data);
+LJFHandle ljf_new_with_native_data(ljf::Context *ctx, uint64_t data);
 
 uint64_t ljf_get_native_data(const ljf::Object *obj);
 
