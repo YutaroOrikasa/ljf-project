@@ -18,17 +18,6 @@ void ObjectWrapper::set_impl(const char *key, const ObjectWrapper &value,
         AttributeTraits::or_attr(LJF_ATTR_C_STR_KEY, visiblity));
 }
 
-uint64_t ObjectWrapper::get_native_value(const char *key,
-                                         LJFAttribute attr) const {
-    return static_cast<uint64_t>(holder_->get(key, attr));
-}
-
-void ObjectWrapper::set_native_value(const char *key, uint64_t value,
-                                     LJFAttribute attr) const {
-    throw "stab";
-    // holder_->set(key, value, attr);
-}
-
 ObjectWrapper make_new_wrapped_object() { return ObjectWrapper(new Object()); }
 
 } // namespace ljf
