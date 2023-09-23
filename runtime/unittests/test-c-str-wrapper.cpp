@@ -17,13 +17,11 @@ TEST(LJFCStrWrapper, Test) {
     auto c_str = "hello";
     auto c_str_wrapper = ljf_wrap_c_str(ctx.get(), c_str);
     auto c_str_obj = ObjectWrapper(ctx->get_from_handle(c_str_wrapper));
-    auto c_str_ptr_as_handle =
+    auto c_str_ptr_as_native =
         get_ljf_native_system_property(c_str_obj, ljf_native_value_c_str);
 
-    ASSERT_EQ(c_str, cast_native_data_to_c_str(c_str_ptr_as_handle));
-    auto len_obj = get_ljf_system_property(c_str_obj, ljf_c_str_length);
-    auto len = get_ljf_native_system_property(len_obj, ljf_native_value_int64);
-    ASSERT_EQ(strlen(c_str), len);
+    ASSERT_EQ(c_str, cast_native_data_to_c_str(c_str_ptr_as_native));
+
 }
 
 TEST(LJFCStrWrapper, TestLength) {
@@ -33,6 +31,6 @@ TEST(LJFCStrWrapper, TestLength) {
     auto c_str_obj = ObjectWrapper(ctx->get_from_handle(c_str_wrapper));
 
     auto len_obj = get_ljf_system_property(c_str_obj, ljf_c_str_length);
-    auto len = get_ljf_native_system_property(len_obj, ljf_native_value_int64);
+    auto len = len_obj.get_wrapped_pointer()->get_native_data();
     ASSERT_EQ(strlen(c_str), len);
 }

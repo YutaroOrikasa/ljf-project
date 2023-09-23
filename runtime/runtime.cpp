@@ -402,14 +402,11 @@ FunctionId ljf_register_llvm_function(Context *ctx, const char *function_name,
 
 LJFHandle ljf_wrap_c_str(Context *ctx, const char *str) {
     static_assert(sizeof(str) <= sizeof(uint64_t));
-    auto str_obj = make_new_wrapped_object();
+    auto str_as_native_data = (native_data_t)(str);
+    auto str_obj = make_new_wrapped_object(str_as_native_data);
 
-    set_ljf_native_system_property(str_obj, ljf_native_value_c_str,
-                                   cast_to_ljf_handle(str));
-
-    auto int_obj = make_new_wrapped_object();
-    set_ljf_native_system_property(int_obj, ljf_native_value_c_str,
-                                   cast_to_ljf_handle(strlen(str)));
+    auto int_obj =
+        make_new_wrapped_object(static_cast<native_data_t>(strlen(str)));
 
     set_ljf_system_property(str_obj, ljf_c_str_length, int_obj);
 
