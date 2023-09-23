@@ -67,7 +67,16 @@ public:
     }
 
     bool operator==(const Key &other) const {
-        return (mask_key_attr() == other.mask_key_attr()) && key_ == other.key_;
+
+        if (mask_key_attr() != other.mask_key_attr()) {
+            return false;
+        }
+        if (is_c_str_key()) {
+            return std::string_view(get_key_as_c_str()) ==
+                   std::string_view(other.get_key_as_c_str());
+        } else {
+            throw "not implemented";
+        }
     }
 };
 } // namespace ljf
@@ -97,8 +106,8 @@ public:
         ValueType()
             : ValueType(LJF_ATTR_DEFAULT,
                         cast_object_to_ObjectPtrOrNativeValue(
-                            // ljf_internal_nullptr means uninitialized in this context
-                            // eg, sparse array.
+                            // ljf_internal_nullptr means uninitialized in this
+                            // context eg, sparse array.
                             internal::ljf_internal_nullptr)) {}
 
         ValueType(LJFAttribute attr, ObjectPtrOrNativeValue value)
@@ -192,7 +201,7 @@ public:
         }
     }
 
-    void set(const void *key, Object* value, LJFAttribute attr) {
+    void set(const void *key, Object *value, LJFAttribute attr) {
         set(key, cast_object_to_ObjectPtrOrNativeValue(value), attr);
     }
 
@@ -233,7 +242,8 @@ public:
     uint64_t array_table_new_index() {
         uint64_t index = array_table_.size();
         array_table_.push_back(ValueType{LJF_ATTR_DEFAULT,
-                                         // ljf_internal_nullptr means variable will be initialized in future.
+                                         // ljf_internal_nullptr means variable
+                                         // will be initialized in future.
                                          cast_object_to_ObjectPtrOrNativeValue(
                                              internal::ljf_internal_nullptr)});
         return index;
@@ -335,22 +345,20 @@ public:
 inline void set_object_to_table(Object *obj, const char *key, Object *value) {
     obj->set(const_cast<char *>(key),
              cast_object_to_ObjectPtrOrNativeValue(value),
-             AttributeTraits::or_attr(LJF_ATTR_VISIBLE,
-                                      LJF_ATTR_C_STR_KEY));
+             AttributeTraits::or_attr(LJF_ATTR_VISIBLE, LJF_ATTR_C_STR_KEY));
 }
 
 inline ObjectHolder get_object_from_hidden_table(Object *obj, const char *key) {
-    return obj->get(const_cast<char *>(key),
-                    AttributeTraits::or_attr(LJF_ATTR_HIDDEN,
-                                             LJF_ATTR_C_STR_KEY));
+    return obj->get(
+        const_cast<char *>(key),
+        AttributeTraits::or_attr(LJF_ATTR_HIDDEN, LJF_ATTR_C_STR_KEY));
 }
 
 inline void set_object_to_hidden_table(Object *obj, const char *key,
                                        Object *value) {
     obj->set(const_cast<char *>(key),
              cast_object_to_ObjectPtrOrNativeValue(value),
-             AttributeTraits::or_attr(LJF_ATTR_HIDDEN,
-                                      LJF_ATTR_C_STR_KEY));
+             AttributeTraits::or_attr(LJF_ATTR_HIDDEN, LJF_ATTR_C_STR_KEY));
 }
 void increment_ref_count(Object *obj);
 void decrement_ref_count(Object *obj);
