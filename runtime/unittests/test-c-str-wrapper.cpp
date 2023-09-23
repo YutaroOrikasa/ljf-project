@@ -15,13 +15,10 @@ static const char *cast_native_data_to_c_str(native_data_t data) {
 TEST(LJFCStrWrapper, Test) {
     auto ctx = make_temporary_context();
     auto c_str = "hello";
-    auto c_str_wrapper = ljf_wrap_c_str(ctx.get(), c_str);
-    auto c_str_obj = ObjectWrapper(ctx->get_from_handle(c_str_wrapper));
-    auto c_str_ptr_as_native =
-        get_ljf_native_system_property(c_str_obj, ljf_native_value_c_str);
+    auto c_str_wrapper_handle = ljf_wrap_c_str(ctx.get(), c_str);
+    auto c_str_wrapper = ctx->get_from_handle(c_str_wrapper_handle);
 
-    ASSERT_EQ(c_str, cast_native_data_to_c_str(c_str_ptr_as_native));
-
+    ASSERT_EQ(c_str, cast_native_data_to_c_str(c_str_wrapper->get_native_data()));
 }
 
 TEST(LJFCStrWrapper, TestLength) {
