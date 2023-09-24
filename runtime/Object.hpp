@@ -109,12 +109,18 @@ public:
                             // ljf_internal_nullptr means uninitialized in this
                             // context eg, sparse array.
                             internal::ljf_internal_nullptr)) {}
-
         ValueType(LJFAttribute attr, ObjectPtrOrNativeValue value)
-            : attr_(AttributeTraits::mask(attr, LJF_ATTR_VALUE_ATTR_MASK)),
-              value_(value) {}
+            : attr_(attr), value_(value) {}
+        ValueType(LJFAttribute attr, Object *value)
+            : attr_(attr),
+              value_(cast_object_to_ObjectPtrOrNativeValue(value)) {
+            assert(AttributeTraits::mask(attr, LJF_ATTR_DATA_TYPE_MASK) ==
+                   LJF_ATTR_BOXED_OBJECT);
+        }
 
-        LJFAttribute value_attr() const { return attr_; }
+        LJFAttribute value_attr() const {
+            return AttributeTraits::mask(attr_, LJF_ATTR_VALUE_ATTR_MASK);
+        }
         ObjectPtrOrNativeValue object_ptr_or_native() const { return value_; }
 
         bool is_object() const {
@@ -185,7 +191,7 @@ public:
         }
     }
 
-    void set(const void *key, ObjectPtrOrNativeValue value, LJFAttribute attr) {
+    void set(const void *key, Object *value, LJFAttribute attr) {
 
         Key key_obj{attr, key};
 
@@ -204,10 +210,6 @@ public:
             array_table_[index] = v;
             ++version_;
         }
-    }
-
-    void set(const void *key, Object *value, LJFAttribute attr) {
-        set(key, cast_object_to_ObjectPtrOrNativeValue(value), attr);
     }
 
     static void increment_ref_count_if_object(const ValueType &value) {
@@ -348,8 +350,7 @@ public:
 };
 
 inline void set_object_to_table(Object *obj, const char *key, Object *value) {
-    obj->set(const_cast<char *>(key),
-             cast_object_to_ObjectPtrOrNativeValue(value),
+    obj->set(const_cast<char *>(key), value,
              AttributeTraits::or_attr(LJF_ATTR_VISIBLE, LJF_ATTR_C_STR_KEY));
 }
 
@@ -361,8 +362,7 @@ inline ObjectHolder get_object_from_hidden_table(Object *obj, const char *key) {
 
 inline void set_object_to_hidden_table(Object *obj, const char *key,
                                        Object *value) {
-    obj->set(const_cast<char *>(key),
-             cast_object_to_ObjectPtrOrNativeValue(value),
+    obj->set(const_cast<char *>(key), value,
              AttributeTraits::or_attr(LJF_ATTR_HIDDEN, LJF_ATTR_C_STR_KEY));
 }
 void increment_ref_count(Object *obj);

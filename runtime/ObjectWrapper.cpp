@@ -17,9 +17,8 @@ ObjectWrapper ObjectWrapper::get_impl(const char *key,
 
 void ObjectWrapper::set_impl(const char *key, const ObjectWrapper &value,
                              LJFAttribute visiblity) const {
-    holder_.get()->set(
-        key, cast_object_to_ObjectPtrOrNativeValue(value.holder_.get()),
-        AttributeTraits::or_attr(LJF_ATTR_C_STR_KEY, visiblity));
+    holder_.get()->set(key, value.holder_.get(),
+                       AttributeTraits::or_attr(LJF_ATTR_C_STR_KEY, visiblity));
 }
 
 native_data_t ObjectWrapper::get_native_data() const {
