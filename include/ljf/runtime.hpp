@@ -73,7 +73,7 @@ constexpr LJFAttribute LJF_ATTR_MAYBE_CONSTANT = 1ul << 33;
 
 extern "C" {
 LJFHandle ljf_get(ljf::Context *, LJFHandle obj, LJFHandle key,
-                  LJFAttribute attr);
+                  LJFAttribute attr, LJFHandle default_value);
 
 void ljf_set(ljf::Context *, LJFHandle obj, LJFHandle key, LJFHandle value,
              LJFAttribute attr);
@@ -96,7 +96,8 @@ uint64_t ljf_get_native_data(const ljf::Object *obj);
 
 /**************** environment API ***************/
 LJFHandle ljf_environment_get(ljf::Context *, ljf::Environment *env,
-                              LJFHandle key, LJFAttribute attr);
+                              LJFHandle key, LJFAttribute attr,
+                              LJFHandle default_value);
 void ljf_environment_set(ljf::Context *, ljf::Environment *env, LJFHandle key,
                          LJFHandle value, LJFAttribute attr);
 

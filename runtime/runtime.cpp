@@ -219,7 +219,7 @@ void ljf_internal_set_native_function(FunctionId id, FunctionPtr fn) {
 
 /**************** table API ***************/
 LJFHandle ljf_get(ljf::Context *ctx, LJFHandle obj, LJFHandle key,
-                  LJFAttribute attr) {
+                  LJFAttribute attr, LJFHandle default_value) {
 
     auto key_ptr = [&]() -> const void * {
         if (AttributeTraits::mask(attr, LJF_ATTR_KEY_TYPE_MASK) ==
@@ -230,8 +230,11 @@ LJFHandle ljf_get(ljf::Context *ctx, LJFHandle obj, LJFHandle key,
             return ctx->get_from_handle(obj);
         }
     }();
-    return ctx->register_temporary_object(
-        ctx->get_from_handle(obj)->get(key_ptr, attr));
+    auto ret = ctx->get_from_handle(obj)->get(key_ptr, attr);
+    if (ret == IncrementedObjectPtrOrNativeValue::NULL_PTR) {
+        return default_value;
+    }
+    return ctx->register_temporary_object(std::move(ret));
 }
 
 void ljf_set(Context *ctx, LJFHandle obj, LJFHandle key_handle_or_cstr,
@@ -349,7 +352,8 @@ uint64_t ljf_get_native_data(const Object *obj) {
 }
 
 LJFHandle ljf_environment_get(ljf::Context *ctx, Environment *env,
-                              LJFHandle key_handle, LJFAttribute attr) {
+                              LJFHandle key_handle, LJFAttribute attr,
+                              LJFHandle default_value) {
 
     auto maps = get_object_from_hidden_table(env, "ljf.env.maps");
 
@@ -362,15 +366,15 @@ LJFHandle ljf_environment_get(ljf::Context *ctx, Environment *env,
     for (size_t i = 0; i < maps->array_size(); i++) {
         // env object is nested.
         // maps->array_at(0) is most inner environment.
-        auto obj = maps->array_at(i);
-        try {
-            return ctx->register_temporary_object(obj->get(key, attr));
-        } catch (const std::out_of_range &e) {
+        auto env_i = maps->array_at(i);
+        auto obj = env_i->get(key, attr);
+        if (obj == IncrementedObjectPtrOrNativeValue::NULL_PTR) {
             continue;
         }
+        return ctx->register_temporary_object(std::move(obj));
     }
 
-    throw std::out_of_range("LJF environment: key not found");
+    return default_value;
 }
 
 void ljf_environment_set(ljf::Context *ctx, Environment *env, LJFHandle key,

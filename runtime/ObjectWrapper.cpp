@@ -6,9 +6,13 @@
 namespace ljf {
 ObjectWrapper ObjectWrapper::get_impl(const char *key,
                                       LJFAttribute visiblity) const {
-    return ObjectHolder(holder_.get()->get(
-        key,
-        AttributeTraits::or_attr(LJF_ATTR_C_STR_KEY, visiblity)));
+    auto ret = holder_.get()->get(
+        key, AttributeTraits::or_attr(LJF_ATTR_C_STR_KEY, visiblity));
+    if (ret == IncrementedObjectPtrOrNativeValue::NULL_PTR) {
+        throw std::out_of_range("Object not found in table");
+    }
+
+    return ObjectHolder(std::move(ret));
 }
 
 void ObjectWrapper::set_impl(const char *key, const ObjectWrapper &value,

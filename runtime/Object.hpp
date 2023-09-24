@@ -170,7 +170,12 @@ public:
 
         {
             std::lock_guard lk{mutex_};
-            auto ret = array_table_.at(hash_table_.at(key_obj));
+            auto it = hash_table_.find(key_obj);
+            if (it == hash_table_.end()) {
+                return IncrementedObjectPtrOrNativeValue::NULL_PTR;
+            }
+
+            auto ret = array_table_.at(it->second);
             //  We have to increment returned object because:
             //      returned object will released if other thread decrement
             //      refcount
