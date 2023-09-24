@@ -18,6 +18,10 @@ void ObjectWrapper::set_impl(const char *key, const ObjectWrapper &value,
         AttributeTraits::or_attr(LJF_ATTR_C_STR_KEY, visiblity));
 }
 
+native_data_t ObjectWrapper::get_native_data() const {
+    return get_wrapped_pointer()->get_native_data();
+}
+
 ObjectWrapper make_new_wrapped_object(native_data_t data) {
     return ObjectWrapper(new Object(data));
 }

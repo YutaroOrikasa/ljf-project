@@ -36,6 +36,8 @@ public:
     /// @return
     Object *get_wrapped_pointer() const { return holder_.get(); }
 
+    native_data_t get_native_data() const;
+
     ObjectWrapper get(const char *key) const {
         return get_impl(key, LJF_ATTR_VISIBLE);
     }
