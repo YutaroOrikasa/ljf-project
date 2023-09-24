@@ -21,7 +21,7 @@ private:
         std::deque<ObjectHolder> holders_;
 
     public:
-        ObjectHolder *add(IncrementedObjectPtrOrNativeValue &&obj) {
+        ObjectHolder *add(IncrementedObjectPtr &&obj) {
             holders_.push_back(std::move(obj));
             return &holders_.back();
         }
@@ -42,7 +42,7 @@ public:
     // On this implementation, LJFHandle is address of local ObjectHolder in
     // TemporaryHolders
     LJFHandle
-    register_temporary_object(IncrementedObjectPtrOrNativeValue &&obj) {
+    register_temporary_object(IncrementedObjectPtr &&obj) {
         return reinterpret_cast<LJFHandle>(
             temporary_holders_.add(std::move(obj)));
     }

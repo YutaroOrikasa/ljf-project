@@ -171,23 +171,23 @@ public:
         ++other.version_;
     }
 
-    IncrementedObjectPtrOrNativeValue get(const void *key, LJFAttribute attr) {
+    IncrementedObjectPtr get(const void *key, LJFAttribute attr) {
         Key key_obj{attr, key};
 
         {
             std::lock_guard lk{mutex_};
             auto it = hash_table_.find(key_obj);
             if (it == hash_table_.end()) {
-                return IncrementedObjectPtrOrNativeValue::NULL_PTR;
+                return IncrementedObjectPtr::NULL_PTR;
             }
 
-            auto ret = array_table_.at(it->second);
+            auto obj = array_table_.at(it->second);
             //  We have to increment returned object because:
             //      returned object will released if other thread decrement
             //      refcount
-            increment_ref_count_if_object(ret);
-            return static_cast<IncrementedObjectPtrOrNativeValue>(
-                ret.object_ptr_or_native());
+            auto ret = obj.as_object();
+            increment_ref_count(ret);
+            return static_cast<IncrementedObjectPtr>(reinterpret_cast<uintptr_t>(ret));
         }
     }
 

@@ -231,7 +231,7 @@ LJFHandle ljf_get(ljf::Context *ctx, LJFHandle obj, LJFHandle key,
         }
     }();
     auto ret = ctx->get_from_handle(obj)->get(key_ptr, attr);
-    if (ret == IncrementedObjectPtrOrNativeValue::NULL_PTR) {
+    if (ret == IncrementedObjectPtr::NULL_PTR) {
         return default_value;
     }
     return ctx->register_temporary_object(std::move(ret));
@@ -368,7 +368,7 @@ LJFHandle ljf_environment_get(ljf::Context *ctx, Environment *env,
         // maps->array_at(0) is most inner environment.
         auto env_i = maps->array_at(i);
         auto obj = env_i->get(key, attr);
-        if (obj == IncrementedObjectPtrOrNativeValue::NULL_PTR) {
+        if (obj == IncrementedObjectPtr::NULL_PTR) {
             continue;
         }
         return ctx->register_temporary_object(std::move(obj));

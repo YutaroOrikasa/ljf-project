@@ -1,9 +1,11 @@
 #pragma once
+
+#include <cstdint>
 namespace ljf {
 
 class Object;
 enum class ObjectPtrOrNativeValue : uint64_t {};
-enum class IncrementedObjectPtrOrNativeValue : uint64_t {
+enum class IncrementedObjectPtr : uintptr_t {
     NULL_PTR = 0
 };
 

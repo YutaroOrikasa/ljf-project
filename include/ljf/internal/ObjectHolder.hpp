@@ -16,10 +16,10 @@ public:
         increment_ref_count(obj_);
     }
 
-    /*implicit*/ ObjectHolder(IncrementedObjectPtrOrNativeValue &&o) noexcept
+    /*implicit*/ ObjectHolder(IncrementedObjectPtr &&o) noexcept
         : obj_(reinterpret_cast<Object *>(static_cast<uint64_t>(o))) {
         assert(static_cast<uint64_t>(o));
-        o = IncrementedObjectPtrOrNativeValue::NULL_PTR;
+        o = IncrementedObjectPtr::NULL_PTR;
     }
 
     /*implicit*/ ObjectHolder(const ObjectHolder &other) noexcept

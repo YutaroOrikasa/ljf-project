@@ -8,7 +8,7 @@ ObjectWrapper ObjectWrapper::get_impl(const char *key,
                                       LJFAttribute visiblity) const {
     auto ret = holder_.get()->get(
         key, AttributeTraits::or_attr(LJF_ATTR_C_STR_KEY, visiblity));
-    if (ret == IncrementedObjectPtrOrNativeValue::NULL_PTR) {
+    if (ret == IncrementedObjectPtr::NULL_PTR) {
         throw std::out_of_range("Object not found in table");
     }
 
