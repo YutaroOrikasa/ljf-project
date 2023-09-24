@@ -16,16 +16,6 @@ struct LJFSetGet : public ::testing::Test {
 };
 } // namespace
 
-namespace
-{
-struct LJFEnvironment : public ::testing::Test {
-    std::unique_ptr<ljf::Context> ctx = make_temporary_context();
-    ObjectHolder obj = make_new_held_object();
-    ObjectHolder env0 = create_environment(ctx.get());
-    ObjectHolder env = create_callee_environment(env0, nullptr);
-};
-} // namespace
-
 
 TEST_F(LJFSetGet, SetGetVisible) {
      obj.set("elem", elem);
@@ -41,6 +31,15 @@ TEST_F(LJFSetGet, SetGetHidden) {
 
     ASSERT_THROW(obj.get("elem"), std::out_of_range);
 }
+
+namespace {
+struct LJFEnvironment : public ::testing::Test {
+    std::unique_ptr<ljf::Context> ctx = make_temporary_context();
+    ObjectHolder obj = make_new_held_object();
+    ObjectHolder env0 = create_environment(ctx.get());
+    ObjectHolder env = create_callee_environment(env0, nullptr);
+};
+} // namespace
 
 TEST_F(LJFEnvironment, GetOuterValue) {
 
