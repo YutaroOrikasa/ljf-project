@@ -9,7 +9,7 @@
 #include <variant>
 #include <vector>
 
-namespace ljf {
+namespace ljf::ir {
 
 namespace detail {
     struct LLVMStuff {
