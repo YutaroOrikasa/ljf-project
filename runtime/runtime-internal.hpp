@@ -114,7 +114,7 @@ void ljf_internal_resize_object_array_table_size(ljf::Object *obj,
 
 namespace ljf {
 // called with dlopen and dlsym
-typedef void (*ljf_internal_initialize_t)(const CompilerMap &compiler_map,
+typedef void (*ljf_internal_initialize_t)(const ImporterMap &,
                                           const std::string &ljf_tmpdir,
                                           const std::string &runtime_filename);
 typedef int (*ljf_internal_start_entry_point_t)(ljf_main_t ljf_main,

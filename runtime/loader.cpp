@@ -35,7 +35,7 @@ namespace {
     llvm::LLVMContext llvm_context;
 
     struct LoaderContext {
-        CompilerMap compiler_map;
+        ImporterMap importer_map;
         std::string ljf_tmpdir;
         std::string ljf_runtime_filename;
     };
@@ -66,11 +66,11 @@ ObjectHolder load_source_code(const std::string &language,
                               const std::string &source_path, Object *env) {
 
     check_context_initialized();
-    if (!context->compiler_map.count(language)) {
+    if (!context->importer_map.count(language)) {
         throw std::invalid_argument("No such compiler for `" + language + "`");
     }
     llvm::Module *module =
-        context->compiler_map.at(language)->compile(source_path).release();
+        context->importer_map.at(language)->compile(source_path).release();
     if (!module) {
         throw std::runtime_error("compiling of `" + language + "` code failed");
     }
@@ -231,7 +231,7 @@ using namespace ljf;
 
 // ljf_internal
 extern "C" {
-void ljf_internal_initialize(const CompilerMap &compiler_map,
+void ljf_internal_initialize(const ImporterMap &importer_map,
                              const std::string &ljf_tmpdir,
                              const std::string &runtime_filename) {
     if (context) {
@@ -239,7 +239,7 @@ void ljf_internal_initialize(const CompilerMap &compiler_map,
     }
 
     context = std::make_unique<LoaderContext>(
-        LoaderContext{compiler_map, ljf_tmpdir, runtime_filename});
+        LoaderContext{importer_map, ljf_tmpdir, runtime_filename});
 
     // remove ljf_tmpdir
     if (auto err_code =

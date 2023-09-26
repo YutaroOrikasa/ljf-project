@@ -35,6 +35,7 @@ public:
     /// @brief Please use carefully (eg. dangling returned pointer).
     /// @return
     Object *get_wrapped_pointer() const { return holder_.get(); }
+    ObjectHolder get_holder() const { return holder_; }
 
     native_data_t get_native_data() const;
 

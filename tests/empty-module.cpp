@@ -1,26 +1,3 @@
-// loading llvm bitcode from given filename.
-
-#include <llvm/ADT/SmallString.h>
-#include <llvm/AsmParser/Parser.h>
-#include <llvm/Bitcode/BitcodeWriter.h>
-#include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Module.h>
-#include <llvm/IR/ModuleSummaryIndex.h>
-#include <llvm/IR/Verifier.h>
-#include <llvm/Support/FileSystem.h>
-#include <llvm/Support/Path.h>
-#include <llvm/Support/SourceMgr.h>
-#include <llvm/Support/ToolOutputFile.h>
-#include <llvm/Support/raw_ostream.h>
-
-#include <gperftools/profiler.h>
-
-#include <iostream>
-#include <map>
-
-#include <cstdlib>
-#include <dlfcn.h>
 
 #include <ljf/ljf.hpp>
 #include <ljf/runtime.hpp>
@@ -29,7 +6,7 @@ using namespace ljf;
 
 using namespace std::literals::string_literals;
 
-class LLVMAsmCompiler : public ljf::Importer {
+class EmptyModuleCompiler : public ljf::Importer {
 private:
     llvm::LLVMContext llvm_context;
     llvm::SMDiagnostic err;

@@ -6,6 +6,8 @@
 #include <vector>
 
 #include "Object.hpp"
+#include "ObjectHolder.hpp"
+#include "ljf/ObjectWrapper.hpp"
 
 namespace ljf {
 
@@ -15,6 +17,7 @@ class GlobalRoot {
 private:
     std::mutex mutex;
     std::unordered_map<std::thread::id, ThreadLocalRoot *> threads;
+    ObjectHolder global_root_object_;
 
 public:
     void add_thread(std::thread::id id, ThreadLocalRoot *thread) {
@@ -35,6 +38,13 @@ public:
             f(thread);
         }
     }
+
+    void init_global_root_object(ObjectWrapper root) {
+        assert(global_root_object_ == nullptr);
+        global_root_object_ = root.get_holder();
+    }
+
+    ObjectHolder get_global_root_object() const { return global_root_object_; }
 };
 
 class ThreadLocalRoot {

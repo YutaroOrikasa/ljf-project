@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "ljf/ObjectWrapper.hpp"
 #include "ljf/ljf.hpp"
 #include "runtime/runtime-internal.hpp"
 
@@ -28,6 +29,7 @@ constexpr auto DLOPEN_LJF_RUNTIME_FLAGS = RTLD_LAZY | RTLD_GLOBAL;
 
 namespace ljf {
 static ljf_internal_initialize_t ljf_internal_initialize;
+static decltype(&ljf_import) ljf_import_ptr;
 static ljf_internal_start_entry_point_t ljf_internal_start_entry_point;
 
 static void load_ljf_runtime(const std::string &runtime_filename) {
@@ -62,25 +64,32 @@ static void load_ljf_runtime(const std::string &runtime_filename) {
         ljf_internal_initialize = reinterpret_cast<ljf_internal_initialize_t>(
             ljf_internal_initialize_addr);
 
-        auto ljf_internal_start_entry_point_addr =
-            dlsym(rt_handle, "ljf_internal_start_entry_point");
-        if (!ljf_internal_start_entry_point_addr) {
+        auto ljf_import_addr = dlsym(rt_handle, "ljf_import");
+        if (!ljf_import_addr) {
             throw std::runtime_error(
                 "internal runtime function not found (dlsym): "s + dlerror());
         }
-        ljf_internal_start_entry_point =
-            reinterpret_cast<ljf_internal_start_entry_point_t>(
-                ljf_internal_start_entry_point_addr);
+        ljf_import_ptr =
+            reinterpret_cast<decltype(ljf_import_ptr)>(ljf_import_addr);
     }
 }
 
-void initialize(const CompilerMap &compiler_map, const std::string &ljf_tmpdir,
+void initialize(const ImporterMap &importer_map, const std::string &ljf_tmpdir,
                 const std::string &runtime_filename) {
 
     load_ljf_runtime(runtime_filename);
     assert(ljf_internal_initialize);
 
-    ljf_internal_initialize(compiler_map, ljf_tmpdir, runtime_filename);
+    ljf_internal_initialize(importer_map, ljf_tmpdir, runtime_filename);
+}
+
+ljf::ObjectWrapper import_main_module(const std::string &src_path,
+                                      const std::string &language, int argc,
+                                      const char **argv) {
+    auto ctx = internal::make_temporary_context();
+    auto result_handle =
+        ljf_import_ptr(ctx.get(), src_path.c_str(), language.c_str());
+    return ctx->get_from_handle(result_handle);
 }
 
 int start_entry_point_of_source(const std::string &language,

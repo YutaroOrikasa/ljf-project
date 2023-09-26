@@ -112,6 +112,6 @@ void ljf_array_push(ljf::Context *, LJFHandle obj, LJFHandle value);
 
 /**************** other API ***************/
 LJFHandle ljf_import(ljf::Context *, const char *src_path,
-                     const char *language);
+                     const char *language, LJFHandle base_env, LJFHandle arg);
 LJFHandle ljf_wrap_c_str(ljf::Context *, const char *str);
 }

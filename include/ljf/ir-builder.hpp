@@ -27,24 +27,11 @@ namespace detail {
 
 } // namespace detail
 
-class Module {
-    detail::LLVMStuff llvmStuff_;
-
-public:
-    explicit Module(const std::string &ModuleID) : llvmStuff_(ModuleID) {}
-
-    FunctionBuilder create_function() {
-        std::vector<llvm::Type *> ArgsTy = {
-            llvmStuff_.LjfContextTy, // LJF Context
-            llvmStuff_.LjfObjectTy   // Environment and arguments object
-        };
-        llvm::FunctionType *FT =
-            llvm::FunctionType::get(llvmStuff_.LjfObjectTy, ArgsTy, false);
-        return;
-    }
+class FunctionBuilder;
+class ObjectRegister {
+    friend FunctionBuilder;
+    llvm::Value *Value;
 };
-
-class ObjectRegister {};
 class CStrLiteral {};
 
 using Key = std::variant<CStrLiteral &, ObjectRegister &>;
@@ -58,11 +45,30 @@ struct Attribute {
 };
 
 class FunctionBuilder {
-    detail::LLVMStuff *llvmStuff_;
+    detail::LLVMStuff &llvmStuff_;
+    std::unique_ptr<llvm::IRBuilder<>> Builder;
+    llvm::Function *Func;
 
 public:
-    explicit FunctionBuilder(detail::LLVMStuff &llvmStuff)
-        : llvmStuff_(&llvmStuff) {}
+    FunctionBuilder(detail::LLVMStuff &llvmStuff, std::string_view name)
+        : llvmStuff_(llvmStuff),
+          Builder(std::make_unique<llvm::IRBuilder<>>(llvmStuff_.llvmContext)) {
+        std::vector<llvm::Type *> ArgsTy = {
+            llvmStuff_.LjfContextTy, // LJF Context
+            llvmStuff_.LjfObjectTy   // Environment and arguments object
+        };
+        llvm::FunctionType *FT =
+            llvm::FunctionType::get(llvmStuff_.LjfObjectTy, ArgsTy, false);
+        Func = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, name,
+                                      llvmStuff_.llvmModule);
+        llvm::BasicBlock *BB =
+            llvm::BasicBlock::Create(llvmStuff_.llvmContext, "", Func);
+        Builder->SetInsertPoint(BB);
+    }
+
+    void create_ret(const ObjectRegister &ret_obj) {
+        Builder->CreateRet(ret_obj.Value);
+    }
 
     template <typename Fn>
     void create_if(const ObjectRegister &cond, Fn &&then_body) {}
@@ -144,4 +150,21 @@ public:
     ObjectRegister create_ljf_float_object_from_string(std::string value) {}
 };
 
-} // namespace ljf
+class Module {
+    detail::LLVMStuff llvmStuff_;
+
+public:
+    explicit Module(const std::string &ModuleID) : llvmStuff_(ModuleID) {}
+
+    FunctionBuilder create_function() { return; }
+
+    FunctionBuilder create_module_main_function() {
+        // LJF module main function's signature:
+        // LJFHandle ljf_module_main(ljf::Context *, LJFHandle env);
+        // Returned object is module object.
+
+        return FunctionBuilder(llvmStuff_, "ljf_module_main");
+    }
+};
+
+} // namespace ljf::ir
