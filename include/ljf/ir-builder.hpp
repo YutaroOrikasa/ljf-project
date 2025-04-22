@@ -71,15 +71,23 @@ public:
     }
 
     template <typename Fn>
-    void create_if(const ObjectRegister &cond, Fn &&then_body) {}
+    void create_if(const ObjectRegister &cond, Fn &&then_body) {
+        throw "LJF Function builder: not implemented";
+    }
 
     template <typename Fn0, typename Fn1>
     void create_if_else(const ObjectRegister &cond, Fn0 &&then_body,
-                        Fn1 &&else_body) {}
+                        Fn1 &&else_body) {
+        throw "LJF Function builder: not implemented";
+    }
 
-    ObjectRegister create_new() {}
+    ObjectRegister create_new() {
+        throw "LJF Function builder: not implemented";
+    }
     ObjectRegister create_call(const ObjectRegister &function_object,
-                               const ObjectRegister &arguments_object) {}
+                               const ObjectRegister &arguments_object) {
+        throw "LJF Function builder: not implemented";
+    }
 
     /// @brief
     /// @tparam Fn (FunctionBuilder &Iteration_body_builder) -> void
@@ -88,7 +96,9 @@ public:
     /// @return
     template <typename Fn>
     ObjectRegister create_iteration(const ObjectRegister &iterable_object,
-                                    Fn &&Iteration_body) {}
+                                    Fn &&Iteration_body) {
+        throw "LJF Function builder: not implemented";
+    }
 
     /// @brief create cry-catch-finally
     /// @tparam FnTry (FunctionBuilder &try_body_builder) -> void
@@ -101,7 +111,9 @@ public:
     template <typename FnTry, typename FnCatch, typename FnFinally>
     ObjectRegister create_try_catch_finally(FnTry &&try_body,
                                             FnCatch &&catch_body,
-                                            FnFinally &&finally_body) {}
+                                            FnFinally &&finally_body) {
+        throw "LJF Function builder: not implemented";
+    }
 
     /// @brief create cry-catch-finally
     /// @tparam FnTry (FunctionBuilder &try_body_builder) -> void
@@ -111,7 +123,9 @@ public:
     /// @param catch_body
     /// @return
     template <typename FnTry, typename FnCatch>
-    ObjectRegister create_try_catch(FnTry &&try_body, FnCatch &&catch_body) {}
+    ObjectRegister create_try_catch(FnTry &&try_body, FnCatch &&catch_body) {
+        throw "LJF Function builder: not implemented";
+    }
 
     /// @brief create cry-catch-finally
     /// @tparam FnTry (FunctionBuilder &try_body_builder) -> void
@@ -121,33 +135,63 @@ public:
     /// @return
     template <typename FnTry, typename FnFinally>
     ObjectRegister create_try_finally(FnTry &&try_body,
-                                      FnFinally &&finally_body) {}
+                                      FnFinally &&finally_body) {
+        throw "LJF Function builder: not implemented";
+    }
 
-    ObjectRegister create_get(const ObjectRegister &object, const Key &key) {}
+    ObjectRegister create_get(const ObjectRegister &object, const Key &key) {
+        throw "LJF Function builder: not implemented";
+    }
     ObjectRegister create_set(const ObjectRegister &object, const Key &key,
-                              const ObjectRegister &elem) {}
-    ObjectRegister create_array_get(const ObjectRegister &object) {}
-    ObjectRegister create_array_set(const ObjectRegister &object) {}
+                              const ObjectRegister &elem) {
+        throw "LJF Function builder: not implemented";
+    }
+    ObjectRegister create_array_get(const ObjectRegister &object) {
+        throw "LJF Function builder: not implemented";
+    }
+    ObjectRegister create_array_set(const ObjectRegister &object) {
+        throw "LJF Function builder: not implemented";
+    }
     ObjectRegister create_environment_get(const ObjectRegister &env,
-                                          const Key &key) {}
+                                          const Key &key) {
+        throw "LJF Function builder: not implemented";
+    }
     ObjectRegister create_environment_set(const ObjectRegister &env,
                                           const Key &key,
                                           const ObjectRegister &elem,
-                                          bool deep_set = false) {}
+                                          bool deep_set = false) {
+        throw "LJF Function builder: not implemented";
+    }
 
-    ObjectRegister create_ljf_undefined_object() {}
-    ObjectRegister create_ljf_int64_object(int64_t value) {}
-    ObjectRegister create_ljf_float_object(double value) {}
+    ObjectRegister create_ljf_undefined_object() {
+        throw "LJF Function builder: not implemented";
+    }
+    ObjectRegister create_ljf_int64_object(int64_t value) {
+        throw "LJF Function builder: not implemented";
+    }
+    ObjectRegister create_ljf_float_object(double value) {
+        throw "LJF Function builder: not implemented";
+    }
 
-    ObjectRegister create_ljf_big_int_object(std::vector<int64_t> value) {}
-    ObjectRegister create_ljf_int64_object_from_string(std::string value) {}
-    ObjectRegister create_ljf_big_int_object_from_string(std::string value) {}
+    ObjectRegister create_ljf_big_int_object(std::vector<int64_t> value) {
+        throw "LJF Function builder: not implemented";
+    }
+    ObjectRegister create_ljf_int64_object_from_string(std::string value) {
+        throw "LJF Function builder: not implemented";
+    }
+    ObjectRegister create_ljf_big_int_object_from_string(std::string value) {
+        throw "LJF Function builder: not implemented";
+    }
 
     /// @brief if value is represented in 64bit int, this function creates
     /// LJFInt64 object, otherwise creates LJFBigInt object.
-    ObjectRegister create_ljf_integer_object_from_string(std::string value) {}
+    ObjectRegister create_ljf_integer_object_from_string(std::string value) {
+        throw "LJF Function builder: not implemented";
+    }
 
-    ObjectRegister create_ljf_float_object_from_string(std::string value) {}
+    ObjectRegister create_ljf_float_object_from_string(std::string value) {
+        throw "LJF Function builder: not implemented";
+    }
 };
 
 class Module {
@@ -156,7 +200,9 @@ class Module {
 public:
     explicit Module(const std::string &ModuleID) : llvmStuff_(ModuleID) {}
 
-    FunctionBuilder create_function() { return; }
+    FunctionBuilder create_function() {
+        throw "LJF Function builder: not implemented";
+    }
 
     FunctionBuilder create_module_main_function() {
         // LJF module main function's signature:
